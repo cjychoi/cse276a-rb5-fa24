@@ -21,19 +21,21 @@ find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 
-include_directories(include)
-add_executable(${PROJECT_NAME}_node src/rb5_control_node.cpp)
-ament_target_dependencies(${PROJECT_NAME}_node rclcpp)
+# include_directories(include)
+# add_executable(${PROJECT_NAME}_node src/rb5_control_node.cpp)
+# ament_target_dependencies(${PROJECT_NAME}_node rclcpp)
 
-install(TARGETS
-  ${PROJECT_NAME}_node
-  DESTINATION lib/${PROJECT_NAME}
-)
+# install(TARGETS
+#   ${PROJECT_NAME}_node
+#   DESTINATION lib/${PROJECT_NAME}
+# )
 
 ament_python_install_package(${PROJECT_NAME})
 
 install(PROGRAMS
-  scripts/rb5_mpi_control.py
+  rb5_ros2_control/mpi_control.py
+  rb5_ros2_control/rb5_control_node.py
+  rb5_ros2_control/rb5_keyjoy_control_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

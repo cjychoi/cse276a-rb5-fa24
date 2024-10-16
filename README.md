@@ -1,20 +1,19 @@
 # Rb5 related packages in ROS2
 
-These packages and developed using ROS dashing on Ubuntu 18.04.
-For ROS2 foxy or others, see notes below.
+These packages are developed using ROS Foxy on Ubuntu 20.04.
 
 ## 1. rb5_ros2_vision
 
 use the following command to launch the main camera on rb5
 
 ``` bash
-ros2 launch rb5_ros2_vision rb_camera_main_ocv.launch
+ros2 launch rb5_ros2_vision rb_camera_main_ocv_launch.py
 ```
 make sure that 'use_rb_cam' parameter is set to true.
 
 use the following command to launch on a webcam
 ``` bash
-ros2 launch rb5_ros2_vision rb_camera_webcam_ocv.launch
+ros2 launch rb5_ros2_vision rb_camera_webcam_ocv_launch.py
 ```
 make sure that 'use_rb_cam' parameter is set to false.
 
