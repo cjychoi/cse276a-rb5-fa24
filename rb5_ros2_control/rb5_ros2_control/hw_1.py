@@ -18,9 +18,9 @@ class WaypointNavigator:
 
         # Control parameters
         self.k_v = 30  # Speed for straight movement
-        self.k_w = 38  # Speed for rotation
+        self.k_w = 56  # Speed for rotation
         self.dist_per_sec = 10 / 1  # 10 cm per 1 second at speed 30   
-        self.rad_per_sec = math.pi / 3.6  # Pi radians per 3.6 seconds at speed 38
+        self.rad_per_sec = math.pi / 2  # Pi radians per 2 seconds at speed 56
         self.tolerance = 0.1  # Distance tolerance to waypoint (meters)
 
     def load_waypoints(self, filename):
@@ -29,13 +29,25 @@ class WaypointNavigator:
             for line in f.readlines():
                 x, y, theta = map(float, line.strip().split(','))      
                 waypoints.append((x, y, theta))
+        print('waypoints: ', waypoints)
         return waypoints
 
     def calculate_distance(self, x1, y1, x2, y2):
-        return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+        return (math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2))/2
 
     def calculate_angle(self, x1, y1, x2, y2):
-        return math.atan2(y2 - y1, x2 - x1)
+        if (x1 == x2) and (y1 != y2):
+            if (y2 > y1):
+                return 0
+            else:
+                return math.pi
+        elif (y1 == y2) and (x1 != x2):
+            if (x1 > x2):
+                return math.pi / 2
+            else:
+                return -(math.pi / 2)
+        else:
+            return math.atan2(y2 - y1, x2 - x1) - math.pi/2
 
     def reached_waypoint(self, x_goal, y_goal):
         x, y, _ = self.get_current_position()  # Placeholder function to get the robot's position
@@ -47,7 +59,10 @@ class WaypointNavigator:
         return current_position[0], current_position[1], current_position[2]  # x, y, theta
 
     def set_current_position(self, waypoint):
-        current_position = waypoint
+        current_position[0] = waypoint[0]
+        current_position[1] = waypoint[1]
+        current_position[2] = waypoint[2]
+        print('set current position: ', waypoint)
 
     def rotate_to_angle(self, angle_diff):
         # Calculate rotation time based on angle difference
@@ -64,7 +79,7 @@ class WaypointNavigator:
         self.mpi_ctrl.carStop()
 
     def navigate_to_waypoint(self, x_goal, y_goal, theta_goal):        
-        print(4)
+        print('navigate to waypoint')
         while not self.reached_waypoint(x_goal, y_goal):
             x, y, theta = self.get_current_position()
 
@@ -73,16 +88,18 @@ class WaypointNavigator:
             print('distance: ', distance)
             angle_to_goal = self.calculate_angle(x, y, x_goal, y_goal) 
             angle_diff = angle_to_goal - theta
+            print('angle_to_goal: ', angle_to_goal, ' | theta: ', theta)
             print('angle_diff: ', angle_diff)
 
             if abs(angle_diff) > 0.1:  # Rotate first if not facing the goal
-                print('5a')
                 self.rotate_to_angle(angle_diff)
+                self.set_current_position([x, y, angle_to_goal])       
             else:  # Move straight if facing the goal
-                print('5b')
                 self.move_straight(distance)
-
-        self.mpi_ctrl.carStop()
+                angle_diff = theta_goal - angle_to_goal
+                self.rotate_to_angle(angle_diff)
+                self.set_current_position([x_goal, y_goal, theta_goal])
+                print(2)
 
     def start_navigation(self):
         print(2)
@@ -101,5 +118,4 @@ class WaypointNavigator:
 if __name__ == "__main__":
     # Assuming waypoints.txt is the file with the list of waypoints    
     navigator = WaypointNavigator(waypoint_file='waypoints.txt')       
-    print(1)
     navigator.start_navigation()
