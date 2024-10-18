@@ -16,4 +16,4 @@ cd /root/cse276a_ws/src/rb5_ros2 && source /opt/ros/foxy/setup.bash && cd /root/
 ---
 ## HW1
 [HW1 Report](https://docs.google.com/document/d/1tgoSK-LGrkjnmwbC2iX3vB4yHsQcUyFOQoaKGKj4cTM/edit?tab=t.0)
-
+[Demo Video](https://youtu.be/aajG44xzSN8)
