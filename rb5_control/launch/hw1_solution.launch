@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="rb5_control" exec="mpi_twist_control_node.py" name="mpi_twist_control_node"/>
+  <node pkg="rb5_control" exec="hw1_solution.py" name="hw1_solution_node"/>
+</launch>
