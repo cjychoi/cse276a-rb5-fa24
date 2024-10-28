@@ -8,10 +8,29 @@ Members: Andrew Choi (A69033628), Nishanth Chidambaram (A69031827)
 ### Navigate to the source code
 ```cd src/rb5_ros2/rb5_ros2_control/rb5_ros2_control```
 
-cd /root/cse276a_ws/src/rb5_ros2 && source /opt/ros/foxy/setup.bash && cd /root/cse276a_ws && colcon build && source install/setup.bash && cd src/rb5_ros2/rb5_ros2_control/rb5_ros2_control
+```cd /root/cse276a_ws/src/rb5_ros2 && source /opt/ros/foxy/setup.bash && cd /root/cse276a_ws && colcon build && source install/setup.bash && cd src/rb5_ros2/rb5_ros2_control/rb5_ros2_control```
 
 ### Run hw 1 code
 ```python3 hw_1.py```
+
+- Connect to Internet
+```iw phy0 interface add ap0 type __ap```
+
+```cd /root/cse276a_ws/src/rb5_ros2```
+
+
+- Build workspace & Source 
+```source /opt/ros/foxy/setup.bash```
+```cd /root/cse276a_ws && colcon build```
+```source install/setup.bash```
+- Run camera
+```ros2 launch rb5_ros2_vision rb_camera_main_ocv_launch.py```
+
+
+- For ros2 commands on local
+- On zsh
+```micromamba activate ros_env```
+```rviz2```
 
 ---
 ## HW1
