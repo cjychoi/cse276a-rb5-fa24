@@ -9,7 +9,9 @@ Members: Andrew Choi (A69033628), Nishanth Chidambaram (A69031827)
 ### Connect to the Internet
 
 ```iw phy0 interface add ap0 type __ap```
-```cd /root/cse276a_ws/src/rb5_ros2```
+
+
+
 
 ### Build workspace & Source
   
@@ -18,6 +20,10 @@ Members: Andrew Choi (A69033628), Nishanth Chidambaram (A69031827)
 ### Run camera
   
 ```ros2 launch rb5_ros2_vision rb_camera_main_ocv_launch.py```
+
+
+### Source file
+```cd src/rb5_ros2/rb5_ros2_vision/launch```
 
 
 ### For ros2 commands on local
@@ -32,6 +38,8 @@ Members: Andrew Choi (A69033628), Nishanth Chidambaram (A69031827)
 ``` cd src/rb5_ros2/rb5_ros2_vision/launch ```
 
 ```cd /root/cse276a_ws/src/rb5_ros2 &&  source /opt/ros/foxy/setup.bash && cd /root/cse276a_ws && colcon build && source install/setup.bash && cd src/rb5_ros2/rb5_ros2_control/rb5_ros2_control```
+
+```cd /root/cse276a_ws/src/rb5_ros2```
 
 ---
 ## HW1
