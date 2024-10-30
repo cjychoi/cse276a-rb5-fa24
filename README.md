@@ -48,3 +48,7 @@ Members: Andrew Choi (A69033628), Nishanth Chidambaram (A69031827)
 
 Run hw 1 code
 ```python3 hw_1.py```
+
+## HW2
+[HW2 Report](https://docs.google.com/document/d/1fSxU7LPmJGaLbF6K0kpocTLwebwbZqaJzBPrKvLl9I0/edit?tab=t.0)
+[Demo Video]
