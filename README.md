@@ -13,10 +13,7 @@ Members: Andrew Choi (A69033628), Nishanth Chidambaram (A69031827)
 
 ### Build workspace & Source
   
-```source /opt/ros/foxy/setup.bash```
-```cd /root/cse276a_ws && colcon build```
-```source install/setup.bash```
-
+```source /opt/ros/foxy/setup.bash && cd /root/cse276a_ws && colcon build &&  source install/setup.bash```
 
 ### Run camera
   
@@ -34,7 +31,7 @@ Members: Andrew Choi (A69033628), Nishanth Chidambaram (A69031827)
 ```cd src/rb5_ros2/rb5_ros2_control/rb5_ros2_control```
 ``` cd src/rb5_ros2/rb5_ros2_vision/launch ```
 
-```cd /root/cse276a_ws/src/rb5_ros2 && source /opt/ros/foxy/setup.bash && cd /root/cse276a_ws && colcon build && source install/setup.bash && cd src/rb5_ros2/rb5_ros2_control/rb5_ros2_control```
+```cd /root/cse276a_ws/src/rb5_ros2 &&  source /opt/ros/foxy/setup.bash && cd /root/cse276a_ws && colcon build && source install/setup.bash && cd src/rb5_ros2/rb5_ros2_control/rb5_ros2_control```
 
 ---
 ## HW1
