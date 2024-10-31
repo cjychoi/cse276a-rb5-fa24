@@ -68,7 +68,7 @@ class YoloCameraNode(Node):
         else:
             return None
 
-    def calculate_rotation_angle(bbox_center_x, frame_width):
+    def calculate_rotation_angle(self, bbox_center_x, frame_width):
         frame_center_x = frame_width / 2
         offset_x = bbox_center_x - frame_center_x  # Offset from center of the frame
         angle = (offset_x / frame_width) * self.FOV_HORIZONTAL  # Proportional angle in radians
@@ -102,17 +102,17 @@ class YoloCameraNode(Node):
                     distance = self.estimate_distance(width)
 
                     # Calculate bounding box center
-                    bbox_center_x = x + (width / 2)
+                    self.bbox_center_x = x + (width / 2)
                 
                     # Calculate rotation angle to center the object
-                    angle = self.calculate_rotation_angle(bbox_center_x, frame.shape[1])
+                    angle = self.calculate_rotation_angle(self.bbox_center_x, self.frame.shape[1])
  
                     # Print angle and distance
                     print(f"Distance: {distance} cm")
                     print(f"Rotation angle: {angle} radians")
 
 
-                    self.temp(distance)
+                    self.temp(self.distance)
 
     def temp(self, distance):
         # Move forward distance - 10
