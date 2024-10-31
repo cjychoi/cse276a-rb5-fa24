@@ -105,7 +105,7 @@ class YoloCameraNode(Node):
                     bbox_center_x = x + (width / 2)
                 
                     # Calculate rotation angle to center the object
-                    angle = calculate_rotation_angle(bbox_center_x, frame.shape[1])
+                    angle = self.calculate_rotation_angle(bbox_center_x, frame.shape[1])
  
                     # Print angle and distance
                     print(f"Distance: {distance} cm")
