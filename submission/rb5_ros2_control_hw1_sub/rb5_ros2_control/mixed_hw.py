@@ -1,291 +1,157 @@
-# imports
-# 1
-import time
-import math
-from mpi_control import MegaPiController
-
-# 2
 import cv2
 import numpy as np
+import time
+import math
+import matplotlib.pyplot as plt
 from ultralytics import YOLO
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
-from rclpy.parameter import Parameter
+from mpi_control import MegaPiController
 
-# 1
-current_position = [0.0, 0.0, 0.0]        # initialize global array to hold current position
-distance = 0
-angle_to_rotate = 0
+# Initialize a global variable to store the robot's path
+robot_path = []
 
-class WaypointNavigator:    #class to hold all functions
-    global current_position    # declare current_position as global array
-    global distance
-    global angle_to_rotate
-    def __init__(self):
-
-        # Initialize the MegaPiController
-        self.mpi_ctrl = MegaPiController(port='/dev/ttyUSB0', verbose=True)
-        time.sleep(1)  # Allow some time for the connection to establish
-
-        # Control parameters prepared from calibration
-        self.k_v = 30  # Speed for straight movement
-        self.k_w = 55  # Speed for rotational movement
-        self.dist_per_sec = 10 / 1  # 10 cm per 1 second at speed 30 for straight movement   
-        self.rad_per_sec = math.pi / 2  # Pi radians per 2 seconds at speed 55 for rotational movement
-        self.tolerance = 0.1  # Distance tolerance to waypoint (meters)
-
-    def calculate_distance(self, x1, y1, x2, y2):        # calculate distance of goal from current location of robot
-        return (math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2))/2
-
-    def calculate_angle(self, x1, y1, x2, y2):        # calculate angular distance of goal from current rotation of robot
-        if (x1 == x2) and (y1 != y2):        # if goal position is on x-axis of robot
-            if (y2 > y1):
-                return 0
-            else:
-                return math.pi
-        elif (y1 == y2) and (x1 != x2):        # if goal position is on y-axis of robot
-            if (x1 > x2):
-                return math.pi / 2
-            else:
-                return -(math.pi / 2)
-        else:                                # if x and y movement necessary to get to goal
-            return math.atan2(y2 - y1, x2 - x1) - math.pi/2
-
-    def reached_waypoint(self, x_goal, y_goal):    # when the robot has moved or rotated, check if rotation or straight movement is needed to reach goal position
-        x, y, _ = self.get_current_position()    # get the robot's current position
-        distance = self.calculate_distance(x, y, x_goal, y_goal)       
-        return distance < self.tolerance
-
-    def get_current_position(self):    # get the robot's current position from global array
-        return current_position[0], current_position[1], current_position[2]  # x, y, theta
-
-    def set_current_position(self, waypoint):    # store the robot's current position in global array
-        current_position[0] = waypoint[0]
-        current_position[1] = waypoint[1]
-        current_position[2] = waypoint[2]
-        print('set current position: ', waypoint)
-
-    def rotate_to_angle(self, angle_diff):    # rotate robot to rotational goal by amount of time
-        # Calculate rotation time based on angle difference
-        rotation_time = abs(angle_diff) / self.rad_per_sec
-        self.mpi_ctrl.carRotate(self.k_w if angle_diff > 0 else -self.k_w)
-        time.sleep(rotation_time)
-        self.mpi_ctrl.carStop()
-
-    def move_straight(self, distance):        # move robot straight by amount of time
-        # Calculate movement time based on distance
-        movement_time = abs(distance) / (self.dist_per_sec / 100)  # Convert cm/s to m/s
-        self.mpi_ctrl.carStraight(self.k_v)
-        time.sleep(movement_time)
-        self.mpi_ctrl.carStop()
-
-    def navigate_to_waypoint(self, distance, angle_to_rotate, theta_goal)        #m move robot to x,y,theta goal position
-        print('navigate to waypoint')
-        while not self.reached_waypoint(x_goal, y_goal):        # while not in position, checked by comparing goal position and current position
-            x, y, theta = self.get_current_position()
-
-            # print('distance: ', distance)
-            # angle_diff = angle_to_rotate - theta
-            # print('angle_to_goal: ', angle_to_goal, ' | theta: ', theta)
-            # print('angle_diff: ', angle_diff)
-
-            self.rotate_to_angle(angle_to_rotate)
-            self.set_current_position([x, y, angle_to_rotate + theta])       
-
-            self.move_straight(distance)
-            
-            # rotate to theta goal position
-            x, y, theta = self.get_current_position()
-            angle_diff = theta - theta_goal
-            self.rotate_to_angle(-angle_diff)
-            self.set_current_position([x_goal, y_goal, theta_goal])
-
-    def start_navigation(self, theta):    # start movement of robot to waypoints
-        self.navigate_to_waypoint(distance, angle_to_rotate, theta)  
-        self.set_current_position(waypoint)
-
-        print("All waypoints reached.")
-        self.mpi_ctrl.carStop()
-        self.mpi_ctrl.close()
-
-    def shutdown(self):
-        self.mpi_ctrl.carStop()
-        self.mpi_ctrl.close()
-        print("Navigator shut down successfully.")
-
-# 2
 class YoloCameraNode(Node):
-    global distance
-    global angle_to_rotate
-    def __init__(self, waypoint_name, waypoint_size):        
-        # Object Detection
-        super().__init__('yolo_camera_node')
-        
-        # Get parameters from the launch file
-        self.declare_parameter('camera_id', '0')
-        self.declare_parameter('topic_name', '/camera_0')
-        self.declare_parameter('frame_rate', 30)
+    def __init__(self):
+        super().__init__('yolo_camera_node')
+        self.declare_parameter('camera_id', '0')
+        self.declare_parameter('topic_name', '/camera_0')
+        self.declare_parameter('frame_rate', 30)
 
-        # Retrieve parameters
-        self.camera_id = self.get_parameter('camera_id').value
-        self.topic_name = self.get_parameter('topic_name').value
-        self.frame_rate = self.get_parameter('frame_rate').value
-        
-        self.bridge = CvBridge()
-        self.frame = None  # To store the incoming frame
+        self.camera_id = self.get_parameter('camera_id').value
+        self.topic_name = self.get_parameter('topic_name').value
+        self.frame_rate = self.get_parameter('frame_rate').value
 
-        # Target object
-        self.target_object = waypoint_name
+        self.bridge = CvBridge()
+        self.frame = None
+        self.target_object = "person"
+        self.model = YOLO('yolov8n.pt')
 
-        # Load the YOLOv8 model
-        self.model = YOLO('yolov8n.pt')  # YOLOv8 nano model
+        self.KNOWN_WIDTH = 8.0
+        self.FOCAL_LENGTH = 902.8
+        self.CAMERA_WIDTH = 640
+        self.CAMERA_CENTER = self.CAMERA_WIDTH / 2
 
-        # Focal length and known width
-        self.KNOWN_WIDTH = waypoint_size  # Width of the object in cm (adjust based on the object)
-        self.FOCAL_LENGTH = 902.8  # Focal length of the camera in pixels (example)
+        self.subscription = self.create_subscription(
+            Image,
+            self.topic_name,
+            self.image_callback,
+            10
+        )
 
-        # Camera parameters for calculating the center
-        self.CAMERA_WIDTH = 640  # Width of the camera frame in pixels
-        self.CAMERA_CENTER = self.CAMERA_WIDTH / 2  # Calculate the center of the camera's field of view
+        self.timer = self.create_timer(1 / self.frame_rate, self.process_frame)
 
-        # Subscribe to the camera topic
-        self.subscription = self.create_subscription(
-            Image,
-            self.topic_name,
-            self.image_callback,
-            10
-        )
+    def image_callback(self, msg):
+        try:
+            self.frame = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+        except Exception as e:
+            self.get_logger().error(f"Error converting ROS Image to OpenCV: {e}")
 
-        # Timer to process at the desired frame rate
-        self.timer = self.create_timer(1 / self.frame_rate, self.process_frame)
+    def estimate_distance(self, bbox_width):
+        return (self.KNOWN_WIDTH * self.FOCAL_LENGTH) / bbox_width if bbox_width > 0 else None
 
-    def image_callback(self, msg):
-        try:
-            # Convert ROS Image message to OpenCV image
-            self.frame = self.bridge.imgmsg_to_cv2(msg, "bgr8")
-        except Exception as e:
-            self.get_logger().error(f"Error converting ROS Image to OpenCV: {e}")
+    def calculate_angle_to_center(self, bbox_center_x):
+        offset = bbox_center_x - self.CAMERA_CENTER
+        FOV = 1.0472
+        return (offset / self.CAMERA_WIDTH) * FOV
 
-    def estimate_distance(self, bbox_width):
-        if bbox_width > 0:
-            distance = (self.KNOWN_WIDTH * self.FOCAL_LENGTH) / bbox_width
-            return distance
-        else:
-            return None
+    def process_frame(self):
+        if self.frame is None:
+            return
 
-    def calculate_angle_to_center(self, bbox_center_x):
-        # Calculate the offset of the bounding box center from the camera's center
-        offset = bbox_center_x - self.CAMERA_CENTER
-        
-        # Field of view of the camera in radians (example: 60 degrees -> 1.0472 radians)
-        FOV = 1.0472
-        
-        # Calculate the angle to rotate based on the offset and field of view
-        angle_to_rotate = (offset / self.CAMERA_WIDTH) * FOV
-        return angle_to_rotate
+        results = self.model(self.frame)
+        if len(results) == 0 or results[0].boxes.shape[0] == 0:
+            self.rotate_and_search(-45)
+            return
 
-    def process_frame(self):
-        if self.frame is None:
-            self.get_logger().info("No frame received yet...")
-            return
+        for result in results:
+            detection_count = result.boxes.shape[0]
+            for i in range(detection_count):
+                cls = int(result.boxes.cls[i].item())
+                name = result.names[cls]
+                if name == self.target_object:
+                    bounding_box = result.boxes.xyxy[i].cpu().numpy()
+                    x, y = int(bounding_box[0]), int(bounding_box[1])
+                    width = int(bounding_box[2] - x)
 
-        # Detect objects using YOLOv8
-        results = self.model(self.frame)
-        
-        # Check if any objects were detected
-        if len(results) == 0 or results[0].boxes.shape[0] == 0:
-            self.get_logger().info("Object not found. Rotating -45 degrees.")
-            self.rotate_and_search(-45)
-            return
+                    distance = self.estimate_distance(width)
+                    bbox_center_x = x + width / 2
+                    angle_to_rotate = self.calculate_angle_to_center(bbox_center_x)
+                    return distance, angle_to_rotate
 
-        # If there are detections, process them
-        for result in results:
-            detection_count = result.boxes.shape[0]
-            self.get_logger().info(f'Detection count: {detection_count}')
-            for i in range(detection_count):
-                cls = int(result.boxes.cls[i].item())
-                name = result.names[cls]
-                self.get_logger().info(f'name: {name}')
-                if name == self.target_object:
-                    self.get_logger().info(f'Object found: {self.target_object}')
+    def rotate_and_search(self, degrees):
+        radians_to_rotate = math.radians(degrees)
+        self.get_logger().info(f"Rotating by {degrees} degrees ({radians_to_rotate} radians).")
+        self.temp2(radians_to_rotate)
 
-                    bounding_box = result.boxes.xyxy[i].cpu().numpy()
-                    x = int(bounding_box[0])
-                    y = int(bounding_box[1])
-                    width = int(bounding_box[2] - x)
-                    height = int(bounding_box[3] - y)
-
-                    # Estimate the distance to the object
-                    distance = self.estimate_distance(width)
-
-                    # Calculate the bounding box center
-                    bbox_center_x = x + width / 2
-                    
-                    # Calculate the angle to rotate to center the object
-                    angle_to_rotate = self.calculate_angle_to_center(bbox_center_x)
-
-                    return angle_to_rotate, distance
-
-                  #   if abs(angle_to_rotate) > 0.1:  # If the object is not centered
-                  #       self.temp2(angle_to_rotate)
-                  # #      self.rotate_to_angel(angle_to_rotate)
-                  #   else:
-                  #       self.get_logger().info(f"Estimated distance to object: {distance} cm")
-                  #       self.temp(distance - 10)
-
-    def rotate_and_search(self, degrees):
-        # Convert degrees to radians
-        radians_to_rotate = math.radians(degrees)
-        self.get_logger().info(f"Rotating by {degrees} degrees ({radians_to_rotate} radians).")
-        
-        # Rotate the robot
-        self.rotate_to_angle(radians_to_rotate)
-        
-        # After rotating, try to search for the object again
-        self.get_logger().info("Searching for object again after rotation.")
-
-    def temp(self, distance):
-        # Rotate the robot based on the angle
-        self.get_logger().info(f"Distance: {distance}")
-#        self.navigator.rotate_to_angle(angle_to_rotate)
-
-    def temp2(self, angle_to_rotate):
-        # Rotate the robot based on the angle
-        self.get_logger().info(f"Rotating robot by {angle_to_rotate} radians to center object.")
-#        self.navigator.rotate_to_angle(angle_to_rotate)
+    def temp2(self, angle_to_rotate):
+        self.get_logger().info(f"Rotating robot by {angle_to_rotate} radians to center object.")
 
 
-def load_waypoints(filename):        # load waypoints from file
-    waypoints = []
-    with open(filename, 'r') as f:        # open file, read waypoints line-by-line, put into array of arrays
-        for line in f.readlines():
-            name, size, theta = map(float, line.strip().split(','))      
-            waypoints.append((name, size, theta))
-    print('waypoints: ', waypoints)
-    return waypoints
+class WaypointNavigator:
+    def __init__(self, waypoint_file, yolo_node):
+        self.mpi_ctrl = MegaPiController(port='/dev/ttyUSB0', verbose=True)
+        time.sleep(1)
+        self.waypoints = self.load_waypoints(waypoint_file)
+        self.current_waypoint_idx = 0
 
-if __name__ == "__main__":
+        self.k_v = 30
+        self.k_w = 55
+        self.dist_per_sec = 10 / 1
+        self.rad_per_sec = math.pi / 2
+        self.tolerance = 0.1
+        self.yolo_node = yolo_node
 
-    # Load waypoints from a file
-    waypoints = load_waypoints('object.txt')
+    def load_waypoints(self, filename):
+        waypoints = []
+        with open(filename, 'r') as f:
+            for line in f.readlines():
+                x, y, theta = map(float, line.strip().split(','))
+                waypoints.append((x, y, theta))
+        return waypoints
 
-    for (waypoint in waypoints):
-        name, size, theta = waypoint
-        # 2
-        rclpy.init(args=args)
-        yolo_camera_node = YoloCameraNode(name, size)
-        rclpy.spin(yolo_camera_node)
-    
-        # Cleanup
-        yolo_camera_node.destroy_node()
-        rclpy.shutdown()
-        #1
-        # Assuming waypoints.txt is the file with the list of waypoints    
-        navigator = WaypointNavigator()       # load list of waypoints into program
-        navigator.start_navigation(theta)                                       # start movement
-    
-        navigator.shutdown()
+    def rotate_to_angle(self, angle_diff):
+        rotation_time = abs(angle_diff) / self.rad_per_sec
+        self.mpi_ctrl.carRotate(self.k_w if angle_diff > 0 else -self.k_w)
+        time.sleep(rotation_time)
+        self.mpi_ctrl.carStop()
+
+    def move_straight(self, distance):
+        movement_time = abs(distance) / (self.dist_per_sec / 100)
+        self.mpi_ctrl.carStraight(self.k_v)
+        time.sleep(movement_time)
+        self.mpi_ctrl.carStop()
+
+    def navigate_to_goal(self):
+        distance, angle_to_rotate = self.yolo_node.process_frame()
+        if distance and angle_to_rotate:
+            if abs(angle_to_rotate) > 0.1:
+                self.rotate_to_angle(angle_to_rotate)
+            else:
+                self.move_straight(distance - 10)
+                robot_path.append((distance, angle_to_rotate))  # Track position
+
+    def plot_movement(self):
+        x, y = zip(*[(pt[0], pt[1]) for pt in robot_path])
+        plt.plot(x, y, marker='o')
+        plt.title("Robot Movement Path")
+        plt.xlabel("X Position")
+        plt.ylabel("Y Position")
+        plt.grid(True)
+        plt.show()
 
 
+def main(args=None):
+    rclpy.init(args=args)
+    yolo_camera_node = YoloCameraNode()
+    navigator = WaypointNavigator('waypoints.txt', yolo_camera_node)
+    while navigator.current_waypoint_idx < len(navigator.waypoints):
+        navigator.navigate_to_goal()
+    navigator.plot_movement()
+    yolo_camera_node.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
