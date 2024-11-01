@@ -57,6 +57,9 @@ class WaypointNavigator(Node):    #class to hold all functions
         self.rad_per_sec = math.pi / 2  # Pi radians per 2 seconds at speed 55 for rotational movement
         self.tolerance = 0.1  # Distance tolerance to waypoint (meters)
 
+        self.mpi_ctrl = MegaPiController(port='/dev/ttyUSB0', verbose=True)
+        time.sleep(1)  # Allow some time for the connection to establish
+
         def load_waypoints(self, filename):        # load waypoints from file
             waypoints = []
             with open(filename, 'r') as f:        # open file, read waypoints line-by-line, put into array of arrays
@@ -148,8 +151,6 @@ class WaypointNavigator(Node):    #class to hold all functions
 
 def main(args=None):
     # Initialize the MegaPiController
-    self.mpi_ctrl = MegaPiController(port='/dev/ttyUSB0', verbose=True)
-    time.sleep(1)  # Allow some time for the connection to establish
     rclpy.init(args=args)
     navigator = WaypointNavigator(waypoint_file='waypoints.txt')       # load list of waypoints into program
 #    navigator.start_navigation()                                       # start movement
