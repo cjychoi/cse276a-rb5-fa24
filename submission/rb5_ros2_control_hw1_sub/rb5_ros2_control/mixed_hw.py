@@ -268,7 +268,7 @@ def load_waypoints(self, filename):        # load waypoints from file
 if __name__ == "__main__":
 
     # Load waypoints from a file
-    waypoints = load_waypoints(waypoint_file)
+    waypoints = load_waypoints('object.txt')
 
     #1
     # Assuming waypoints.txt is the file with the list of waypoints    
