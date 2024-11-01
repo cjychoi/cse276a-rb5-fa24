@@ -59,6 +59,17 @@ class WaypointNavigator(Node):    #class to hold all functions
 
         self.mpi_ctrl = MegaPiController(port='/dev/ttyUSB0', verbose=True)
         time.sleep(1)  # Allow some time for the connection to establish
+
+         # Subscribe to the camera topic
+        self.subscription = self.create_subscription(
+            Image,
+            self.topic_name,
+            self.image_callback,
+            10
+        )
+
+        # Timer to process at the desired frame rate
+        self.timer = self.create_timer(1 / self.frame_rate, self.process_frame)
         
     def load_waypoints(self, filename):        # load waypoints from file
         waypoints = []
@@ -67,7 +78,86 @@ class WaypointNavigator(Node):    #class to hold all functions
                 waypoints.append(line)
         print('waypoints: ', waypoints)
         return waypoints
-            
+
+
+     def image_callback(self, msg):
+        try:
+            # Convert ROS Image message to OpenCV image
+            self.frame = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+        except Exception as e:
+            self.get_logger().error(f"Error converting ROS Image to OpenCV: {e}")
+
+    def estimate_distance(self, bbox_width):
+        if bbox_width > 0:
+            distance = (self.KNOWN_WIDTH * self.FOCAL_LENGTH) / bbox_width
+            return distance
+        else:
+            return None
+
+    def calculate_angle_to_center(self, bbox_center_x):
+        # Calculate the offset of the bounding box center from the camera's center
+        offset = bbox_center_x - self.CAMERA_CENTER
+        
+        # Field of view of the camera in radians (example: 60 degrees -> 1.0472 radians)
+        FOV = 1.0472
+        
+        # Calculate the angle to rotate based on the offset and field of view
+        angle_to_rotate = (offset / self.CAMERA_WIDTH) * FOV
+        return angle_to_rotate
+
+    def process_frame(self):
+        if self.frame is None:
+            self.get_logger().info("No frame received yet...")
+            return
+
+        # Detect objects using YOLOv8
+        results = self.model(self.frame)
+        
+        # Check if any objects were detected
+        if len(results) == 0 or results[0].boxes.shape[0] == 0:
+            self.get_logger().info("Object not found. Rotating -45 degrees.")
+            self.rotate_and_search(-45)
+            return
+
+        # If there are detections, process them
+        for result in results:
+            detection_count = result.boxes.shape[0]
+            self.get_logger().info(f'Detection count: {detection_count}')
+            for i in range(detection_count):
+                cls = int(result.boxes.cls[i].item())
+                name = result.names[cls]
+                self.get_logger().info(f'name: {name}')
+                if name == self.target_object:
+                    self.get_logger().info(f'Object found: {self.target_object}')
+
+                    bounding_box = result.boxes.xyxy[i].cpu().numpy()
+                    x = int(bounding_box[0])
+                    y = int(bounding_box[1])
+                    width = int(bounding_box[2] - x)
+                    height = int(bounding_box[3] - y)
+
+                    # Estimate the distance to the object
+                    distance = self.estimate_distance(width)
+
+                    # Calculate the bounding box center
+                    bbox_center_x = x + width / 2
+                    
+                    # Calculate the angle to rotate to center the object
+                    angle_to_rotate = self.calculate_angle_to_center(bbox_center_x)
+
+                    if abs(angle_to_rotate) > 0.1:  # If the object is not centered
+                        self.temp2(angle_to_rotate)
+                        # self.rotate_to_angel(angle_to_rotate)
+                    else:
+                        self.get_logger().info(f"Estimated distance to object: {distance} cm")
+                        # self.move_straight(distance - 10)
+
+    def temp2(self, angle_to_rotate):
+        # Rotate the robot based on the angle
+        self.get_logger().info(f"Rotating robot by {angle_to_rotate} radians to center object.")
+#        self.navigator.rotate_to_angle(angle_to_rotate)
+    
+ '''           
     def calculate_distance(self, x1, y1, x2, y2):        # calculate distance of goal from current location of robot
         return (math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2))/2
 
@@ -84,7 +174,7 @@ class WaypointNavigator(Node):    #class to hold all functions
                 return -(math.pi / 2)
         else:                                # if x and y movement necessary to get to goal
             return math.atan2(y2 - y1, x2 - x1) - math.pi/2
-
+'''
     def reached_waypoint(self, x_goal, y_goal):    # when the robot has moved or rotated, check if rotation or straight movement is needed to reach goal position
         x, y, _ = self.get_current_position()    # get the robot's current position
         distance = self.calculate_distance(x, y, x_goal, y_goal)       
