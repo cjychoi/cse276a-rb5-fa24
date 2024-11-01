@@ -5,8 +5,8 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
-from rclpy.parameter import Parameter
 import math
+from rb5_controller.pid_controller import PIDcontroller
 
 class YoloCameraNode(Node):
     def __init__(self):        
@@ -22,20 +22,15 @@ class YoloCameraNode(Node):
         
         self.bridge = CvBridge()
         self.frame = None
-
-        # Target object
         self.target_object = "cell phone"
 
-        # Load the YOLOv8 model
         self.model = YOLO('yolov8n.pt')
-
-        # Known parameters
         self.KNOWN_WIDTH = 8.0  
         self.FOCAL_LENGTH = 902.8  
         self.CAMERA_WIDTH = 640  
         self.CAMERA_CENTER = self.CAMERA_WIDTH / 2  
 
-        # Subscribe to camera topic
+        # Subscribe to the camera topic
         self.subscription = self.create_subscription(
             Image,
             self.topic_name,
@@ -43,7 +38,7 @@ class YoloCameraNode(Node):
             10
         )
 
-        # Timer for frame processing
+        # Timer to process at the desired frame rate
         self.timer = self.create_timer(1 / self.frame_rate, self.process_frame)
 
     def image_callback(self, msg):
