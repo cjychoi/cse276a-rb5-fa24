@@ -157,7 +157,7 @@ class WaypointNavigator(Node):    #class to hold all functions
         self.get_logger().info(f"Rotating robot by {angle_to_rotate} radians to center object.")
 #        self.navigator.rotate_to_angle(angle_to_rotate)
     
- '''           
+            
     def calculate_distance(self, x1, y1, x2, y2):        # calculate distance of goal from current location of robot
         return (math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2))/2
 
@@ -174,7 +174,7 @@ class WaypointNavigator(Node):    #class to hold all functions
                 return -(math.pi / 2)
         else:                                # if x and y movement necessary to get to goal
             return math.atan2(y2 - y1, x2 - x1) - math.pi/2
-'''
+
     def reached_waypoint(self, x_goal, y_goal):    # when the robot has moved or rotated, check if rotation or straight movement is needed to reach goal position
         x, y, _ = self.get_current_position()    # get the robot's current position
         distance = self.calculate_distance(x, y, x_goal, y_goal)       
