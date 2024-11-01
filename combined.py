@@ -9,19 +9,19 @@ import time
 import math
 from mpi_control import MegaPiController
 import matplotlib.pyplot as plt
+import threading  # Import threading for concurrent execution
 
 # Initialize global array to hold current position and store path history
 current_position = [0.0, 0.0, 0.0]  # (x, y, theta)
 position_history = []  # To store position history for plotting
 
-
 class WaypointNavigator:
     global current_position, position_history  # Declare as global to track position
 
     def __init__(self, waypoint_file):
-        # Initialize the MegaPiController
-        self.mpi_ctrl = MegaPiController(port='/dev/ttyUSB0', verbose=True)
-        time.sleep(1)  # Allow some time for the connection to establish
+        # Initialize the MegaPiController in a separate thread
+        self.mpi_ctrl_thread = threading.Thread(target=self.initialize_mpi)
+        self.mpi_ctrl_thread.start()
 
         # Load waypoints from a file
         self.waypoints = self.load_waypoints(waypoint_file)
@@ -41,6 +41,11 @@ class WaypointNavigator:
         self.ax.set_xlabel('X Position (m)')
         self.ax.set_ylabel('Y Position (m)')
         self.ax.grid(True)
+
+    def initialize_mpi(self):
+        # This function initializes the MPI controller
+        self.mpi_ctrl = MegaPiController(port='/dev/ttyUSB0', verbose=True)
+        time.sleep(1)  # Allow some time for the connection to establish
 
     def load_waypoints(self, filename):  # Load object waypoints from file
         waypoints = []
@@ -145,7 +150,7 @@ class YoloCameraNode(Node):
         self.CAMERA_CENTER = self.CAMERA_WIDTH / 2  # Calculate the center of the camera's field of view
 
         # Instantiate WaypointNavigator for robot control
-        self.navigator = WaypointNavigator(waypoint_file='object.txt')
+        self.navigator = WaypointNavigator(waypoint_file='waypoints.txt')
 
         # Subscribe to the camera topic
         self.subscription = self.create_subscription(
@@ -200,9 +205,6 @@ class YoloCameraNode(Node):
                         bounding_box = result.boxes.xyxy[i].cpu().numpy()
                         x = int(bounding_box[0])
                         width = int(bounding_box[2] - bounding_box[0])
-
-                        # Set the known width for the current object
-                        self.KNOWN_WIDTH = known_width
 
                         # Estimate the distance to the object
                         distance = self.estimate_distance(width)
