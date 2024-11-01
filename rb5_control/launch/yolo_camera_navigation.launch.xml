@@ -1,6 +1,6 @@
 <launch>
     <!-- Node for YOLO camera in the rb5_vision package -->
-    <node pkg="rb5_vision" exec="yolo_camera_node_script.py" name="yolo_camera_node">
+    <node pkg="rb5_ros2_vision" exec="yolo_camera_node_script.py" name="yolo_camera_node">
         <param name="camera_id" value="0"/>
         <param name="topic_name" value="/camera_0"/>
         <param name="frame_rate" value="30"/>
@@ -8,6 +8,6 @@
 
     <!-- Node for waypoint navigation in the rb5_control package -->
     <node pkg="rb5_control" exec="waypoint_navigator_script.py" name="waypoint_navigator">
-        <param name="waypoint_file" value="/path/to/your/waypoints.txt"/>
+        <param name="waypoint_file" value="/../../object.txt"/>
     </node>
 </launch>
