@@ -16,9 +16,13 @@ from rclpy.parameter import Parameter
 
 # 1
 current_position = [0.0, 0.0, 0.0]        # initialize global array to hold current position
+distance = 0
+angle_to_rotate = 0
 
 class WaypointNavigator:    #class to hold all functions
     global current_position    # declare current_position as global array
+    global distance
+    global angle_to_rotate
     def __init__(self):
 
         # Initialize the MegaPiController
@@ -77,37 +81,30 @@ class WaypointNavigator:    #class to hold all functions
         time.sleep(movement_time)
         self.mpi_ctrl.carStop()
 
-    def navigate_to_waypoint(self, x_goal, y_goal, theta_goal):        #m move robot to x,y,theta goal position
+    def navigate_to_waypoint(self, distance, angle_to_rotate, theta_goal)        #m move robot to x,y,theta goal position
         print('navigate to waypoint')
         while not self.reached_waypoint(x_goal, y_goal):        # while not in position, checked by comparing goal position and current position
             x, y, theta = self.get_current_position()
 
-            # Calculate distance and angle to the goal
-            distance = self.calculate_distance(x, y, x_goal, y_goal)   
-            print('distance: ', distance)
-            angle_to_goal = self.calculate_angle(x, y, x_goal, y_goal) 
-            angle_diff = angle_to_goal - theta
-            print('angle_to_goal: ', angle_to_goal, ' | theta: ', theta)
-            print('angle_diff: ', angle_diff)
+            # print('distance: ', distance)
+            # angle_diff = angle_to_rotate - theta
+            # print('angle_to_goal: ', angle_to_goal, ' | theta: ', theta)
+            # print('angle_diff: ', angle_diff)
 
-            if abs(angle_diff) > 0.1:  # Rotate first if not facing the goal
-                self.rotate_to_angle(angle_diff)
-                self.set_current_position([x, y, angle_to_goal])       
-            else:  # Move straight if facing the goal
-                self.move_straight(distance)
-                # rotate to theta goal position
-                angle_to_goal = self.calculate_angle(x, y, x_goal, y_goal)
-                angle_diff = theta_goal - angle_to_goal
-                self.rotate_to_angle(angle_diff)
-                self.set_current_position([x_goal, y_goal, theta_goal])
+            self.rotate_to_angle(angle_to_rotate)
+            self.set_current_position([x, y, angle_to_rotate + theta])       
 
-    def start_navigation(self):    # start movement of robot to waypoints
-        for waypoint in self.waypoints:    # for each waypoint, set x,y,theta goal and travel to goal position
-            x_goal, y_goal, theta_goal = waypoint
-            print(f"Navigating to waypoint: {x_goal}, {y_goal}, {theta_goal}")
-            if (waypoint != current_position):
-                self.navigate_to_waypoint(x_goal, y_goal, theta_goal)  
-                self.set_current_position(waypoint)
+            self.move_straight(distance)
+            
+            # rotate to theta goal position
+            x, y, theta = self.get_current_position()
+            angle_diff = theta - theta_goal
+            self.rotate_to_angle(-angle_diff)
+            self.set_current_position([x_goal, y_goal, theta_goal])
+
+    def start_navigation(self, theta):    # start movement of robot to waypoints
+        self.navigate_to_waypoint(distance, angle_to_rotate, theta)  
+        self.set_current_position(waypoint)
 
         print("All waypoints reached.")
         self.mpi_ctrl.carStop()
@@ -120,7 +117,9 @@ class WaypointNavigator:    #class to hold all functions
 
 # 2
 class YoloCameraNode(Node):
-    def __init__(self):        
+    global distance
+    global angle_to_rotate
+    def __init__(self, waypoint_name, waypoint_size):        
         # Object Detection
         super().__init__('yolo_camera_node')
         
@@ -138,13 +137,13 @@ class YoloCameraNode(Node):
         self.frame = None  # To store the incoming frame
 
         # Target object
-        self.target_object = "person"
+        self.target_object = waypoint_name
 
         # Load the YOLOv8 model
         self.model = YOLO('yolov8n.pt')  # YOLOv8 nano model
 
         # Focal length and known width
-        self.KNOWN_WIDTH = 8.0  # Width of the object in cm (adjust based on the object)
+        self.KNOWN_WIDTH = waypoint_size  # Width of the object in cm (adjust based on the object)
         self.FOCAL_LENGTH = 902.8  # Focal length of the camera in pixels (example)
 
         # Camera parameters for calculating the center
@@ -227,12 +226,14 @@ class YoloCameraNode(Node):
                     # Calculate the angle to rotate to center the object
                     angle_to_rotate = self.calculate_angle_to_center(bbox_center_x)
 
-                    if abs(angle_to_rotate) > 0.1:  # If the object is not centered
-                        self.temp2(angle_to_rotate)
-                  #      self.rotate_to_angel(angle_to_rotate)
-                    else:
-                        self.get_logger().info(f"Estimated distance to object: {distance} cm")
-                        self.temp(distance - 10)
+                    return angle_to_rotate, distance
+
+                  #   if abs(angle_to_rotate) > 0.1:  # If the object is not centered
+                  #       self.temp2(angle_to_rotate)
+                  # #      self.rotate_to_angel(angle_to_rotate)
+                  #   else:
+                  #       self.get_logger().info(f"Estimated distance to object: {distance} cm")
+                  #       self.temp(distance - 10)
 
     def rotate_and_search(self, degrees):
         # Convert degrees to radians
@@ -260,7 +261,8 @@ def load_waypoints(filename):        # load waypoints from file
     waypoints = []
     with open(filename, 'r') as f:        # open file, read waypoints line-by-line, put into array of arrays
         for line in f.readlines():
-            waypoints.append(line)
+            name, size, theta = map(float, line.strip().split(','))      
+            waypoints.append((name, size, theta))
     print('waypoints: ', waypoints)
     return waypoints
 
@@ -269,18 +271,21 @@ if __name__ == "__main__":
     # Load waypoints from a file
     waypoints = load_waypoints('object.txt')
 
-    #1
-    # Assuming waypoints.txt is the file with the list of waypoints    
-    navigator = WaypointNavigator()       # load list of waypoints into program
-    navigator.start_navigation()                                       # start movement
+    for (waypoint in waypoints):
+        name, size, theta = waypoint
+        # 2
+        rclpy.init(args=args)
+        yolo_camera_node = YoloCameraNode(name, size)
+        rclpy.spin(yolo_camera_node)
+    
+        # Cleanup
+        yolo_camera_node.destroy_node()
+        rclpy.shutdown()
+        #1
+        # Assuming waypoints.txt is the file with the list of waypoints    
+        navigator = WaypointNavigator()       # load list of waypoints into program
+        navigator.start_navigation(theta)                                       # start movement
+    
+        navigator.shutdown()
 
-    navigator.shutdown()
 
-    # 2
-    rclpy.init(args=args)
-    yolo_camera_node = YoloCameraNode()
-    rclpy.spin(yolo_camera_node)
-
-    # Cleanup
-    yolo_camera_node.destroy_node()
-    rclpy.shutdown()
