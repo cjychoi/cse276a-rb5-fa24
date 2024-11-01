@@ -13,7 +13,7 @@ from rclpy.parameter import Parameter
 
 current_position = [0.0, 0.0, 0.0]        # initialize global array to hold current position
 
-class WaypointNavigator:    #class to hold all functions
+class WaypointNavigator(Node):    #class to hold all functions
     global current_position    # declare current_position as global array
     def __init__(self, waypoint_file):
         # Object Detection
