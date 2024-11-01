@@ -147,10 +147,10 @@ class WaypointNavigator(Node):    #class to hold all functions
         self.mpi_ctrl.close()
 
 def main(args=None):
-    rclpy.init(args=args)
     # Initialize the MegaPiController
     self.mpi_ctrl = MegaPiController(port='/dev/ttyUSB0', verbose=True)
     time.sleep(1)  # Allow some time for the connection to establish
+    rclpy.init(args=args)
     navigator = WaypointNavigator(waypoint_file='waypoints.txt')       # load list of waypoints into program
 #    navigator.start_navigation()                                       # start movement
     rclpy.spin(yolo_camera_node)
