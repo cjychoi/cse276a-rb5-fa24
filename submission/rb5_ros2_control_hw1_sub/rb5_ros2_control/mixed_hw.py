@@ -260,8 +260,7 @@ def load_waypoints(filename):        # load waypoints from file
     waypoints = []
     with open(filename, 'r') as f:        # open file, read waypoints line-by-line, put into array of arrays
         for line in f.readlines():
-            x, y, theta = map(float, line.strip().split(','))      
-            waypoints.append((x, y, theta))
+            waypoints.append(line)
     print('waypoints: ', waypoints)
     return waypoints
 
