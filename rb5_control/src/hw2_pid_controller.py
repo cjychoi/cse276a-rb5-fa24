@@ -2,6 +2,9 @@ import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
 import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import time
 
 class PIDcontroller(Node):
     def __init__(self, Kp, Ki, Kd):
@@ -15,6 +18,7 @@ class PIDcontroller(Node):
         self.timestep = 0.1
         self.maximumValue = 0.1
         self.publisher_ = self.create_publisher(Twist, '/twist', 10)
+        self.log_path = '/path/to/position_log.csv'
 
     def setTarget(self, state):
         self.I = np.array([0.0, 0.0, 0.0])
@@ -49,5 +53,26 @@ class PIDcontroller(Node):
         return twist_msg
 
     def log_position(self, position):
-        with open('/path/to/position_log.csv', 'a') as f:
+        with open(self.log_path, 'a') as f:
             f.write(f"{position[0]},{position[1]},{position[2]}\n")
+
+    def plot_path(self):
+        while True:
+            data = pd.read_csv(self.log_path, names=['x', 'y', 'theta'])
+            plt.clf()
+            plt.plot(data['x'], data['y'], marker='o')
+            plt.xlabel("X Position (m)")
+            plt.ylabel("Y Position (m)")
+            plt.title("Robot Path Tracking")
+            plt.pause(1)
+
+def main(args=None):
+    rclpy.init(args=args)
+    pid_controller = PIDcontroller(0.02, 0.005, 0.005)
+    pid_controller.plot_path()
+
+    pid_controller.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
