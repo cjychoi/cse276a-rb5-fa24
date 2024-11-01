@@ -46,10 +46,6 @@ class WaypointNavigator(Node):    #class to hold all functions
         self.CAMERA_WIDTH = 640  # Width of the camera frame in pixels
         self.CAMERA_CENTER = self.CAMERA_WIDTH / 2  # Calculate the center of the camera's field of view
 
-        # Initialize the MegaPiController
-        self.mpi_ctrl = MegaPiController(port='/dev/ttyUSB0', verbose=True)
-        time.sleep(1)  # Allow some time for the connection to establish
-
         # Load waypoints from a file
         self.waypoints = self.load_waypoints(waypoint_file)
         self.current_waypoint_idx = 0
@@ -152,6 +148,9 @@ class WaypointNavigator(Node):    #class to hold all functions
 
 def main(args=None):
     rclpy.init(args=args)
+    # Initialize the MegaPiController
+    self.mpi_ctrl = MegaPiController(port='/dev/ttyUSB0', verbose=True)
+    time.sleep(1)  # Allow some time for the connection to establish
     navigator = WaypointNavigator(waypoint_file='waypoints.txt')       # load list of waypoints into program
 #    navigator.start_navigation()                                       # start movement
     rclpy.spin(yolo_camera_node)
