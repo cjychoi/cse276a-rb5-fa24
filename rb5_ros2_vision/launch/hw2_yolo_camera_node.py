@@ -10,7 +10,7 @@ from rb5_controller.pid_controller import PIDcontroller
 
 class YoloCameraNode(Node):
     def __init__(self):        
-        super().__init__('yolo_camera_node')
+        super().__init__('hw2_yolo_camera_node')
         
         self.declare_parameter('camera_id', '0')
         self.declare_parameter('topic_name', '/camera_0')
