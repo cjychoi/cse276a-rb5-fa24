@@ -1,9 +1,3 @@
-# inspiration from:
-# https://stackoverflow.com/questions/76069484/obtaining-detected-object-names-using-yolov8
-# adsdf on stack overflow
-# and from https://github.com/hamzakhan2018/distance_calculation_Using_YOLO_v8/blob/main/distance_cal.py
-# hamzakhan2018 on github
-
 import cv2
 import numpy as np
 from ultralytics import YOLO
@@ -12,6 +6,8 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 from rclpy.parameter import Parameter
+from control import WaypointNavigator  # Import the navigation class
+import math
 
 class YoloCameraNode(Node):
     def __init__(self):
@@ -38,10 +34,14 @@ class YoloCameraNode(Node):
 
         # Focal length and known width
         self.KNOWN_WIDTH = 8.0  # Width of the object in cm (adjust based on the object)
-        self.FOCAL_LENGTH = 902.8  # Focal length of the camera in pixels (example)+
+        self.FOCAL_LENGTH = 902.8  # Focal length of the camera in pixels (example)
 
-        # Camera horizontal field of view (in radians)
-        self.FOV_HORIZONTAL = 60 * (np.pi / 180)  # Convert 60 degrees to radians
+        # Camera parameters for calculating the center
+        self.CAMERA_WIDTH = 640  # Width of the camera frame in pixels
+        self.CAMERA_CENTER = self.CAMERA_WIDTH / 2  # Calculate the center of the camera's field of view
+
+        # Instantiate WaypointNavigator for robot control
+        self.navigator = WaypointNavigator(waypoint_file='waypoints.txt')
 
         # Subscribe to the camera topic
         self.subscription = self.create_subscription(
@@ -68,22 +68,32 @@ class YoloCameraNode(Node):
         else:
             return None
 
-    def calculate_rotation_angle(self, bbox_center_x, frame_width):
-        frame_center_x = frame_width / 2
-        offset_x = bbox_center_x - frame_center_x  # Offset from center of the frame
-        angle = (offset_x / frame_width) * self.FOV_HORIZONTAL  # Proportional angle in radians
-        return angle
+    def calculate_angle_to_center(self, bbox_center_x):
+        # Calculate the offset of the bounding box center from the camera's center
+        offset = bbox_center_x - self.CAMERA_CENTER
+        
+        # Field of view of the camera in radians (example: 60 degrees -> 1.0472 radians)
+        FOV = 1.0472
+        
+        # Calculate the angle to rotate based on the offset and field of view
+        angle_to_rotate = (offset / self.CAMERA_WIDTH) * FOV
+        return angle_to_rotate
 
     def process_frame(self):
         if self.frame is None:
             self.get_logger().info("No frame received yet...")
             return
-    
+
         # Detect objects using YOLOv8
         results = self.model(self.frame)
-    
-        object_found = False  # Flag to indicate if the target object is found
-    
+        
+        # Check if any objects were detected
+        if len(results) == 0 or results[0].boxes.shape[0] == 0:
+            self.get_logger().info("Object not found. Rotating -45 degrees.")
+            self.rotate_and_search(-45)
+            return
+
+        # If there are detections, process them
         for result in results:
             detection_count = result.boxes.shape[0]
             self.get_logger().info(f'Detection count: {detection_count}')
@@ -93,42 +103,37 @@ class YoloCameraNode(Node):
                 self.get_logger().info(f'name: {name}')
                 if name == self.target_object:
                     self.get_logger().info(f'Object found: {self.target_object}')
-                    object_found = True  # Set flag to true
-    
+
                     bounding_box = result.boxes.xyxy[i].cpu().numpy()
                     x = int(bounding_box[0])
                     y = int(bounding_box[1])
                     width = int(bounding_box[2] - x)
                     height = int(bounding_box[3] - y)
-    
+
                     # Estimate the distance to the object
                     distance = self.estimate_distance(width)
-                    self.get_logger().info(f"Estimated distance: {distance} cm")
-    
-                    # Calculate bounding box center and frame center
-                    bounding_box_center = x + (width / 2)
-                    frame_center = self.frame.shape[1] / 2  # Horizontal center of the frame
-    
-                    # Calculate the rotation angle to center the object in the camera
-                    rotation_angle = self.calculate_rotation_angle(bounding_box_center, frame_center)
-                    print(f"Rotation angle: {rotation_angle} radians")
-    
-                    # If the object is not centered, rotate the robot
-                    if abs(rotation_angle) > 0.1:  # Threshold for rotation
-                        self.temp2(rotation_angle)
-                        rotation_angle = self.calculate_rotation_angle(bounding_box_center, frame_center)
-                        print(f"Rotation angle: {rotation_angle} radians")
-                    else:
-                        self.get_logger().info("Object is centered in the camera view.")
-                        # Stop the robot or continue processing
-                else:
-                    self.get_logger().info(f"Detected {name}, not the target object.")
-    
-        if not object_found:
-            self.get_logger().info("Target object not found in the frame. Turning -45 degrees.")
-            # Turn the robot by -45 degrees (which is -pi/4 radians) and continue searching
-            self.temp2(-np.pi / 4)
 
+                    # Calculate the bounding box center
+                    bbox_center_x = x + width / 2
+                    
+                    # Calculate the angle to rotate to center the object
+                    angle_to_rotate = self.calculate_angle_to_center(bbox_center_x)
+
+                    if abs(angle_to_rotate) > 0.1:  # If the object is not centered
+                        self.temp2(angle_to_rotate)
+                    else:
+                        self.temp(distance)
+
+    def rotate_and_search(self, degrees):
+        # Convert degrees to radians
+        radians_to_rotate = math.radians(degrees)
+        self.get_logger().info(f"Rotating by {degrees} degrees ({radians_to_rotate} radians).")
+        
+        # Rotate the robot
+        self.navigator.rotate_to_angle(radians_to_rotate)
+        
+        # After rotating, try to search for the object again
+        self.get_logger().info("Searching for object again after rotation.")
 
     def temp(self, distance):
         # Move forward distance - 10
@@ -136,11 +141,10 @@ class YoloCameraNode(Node):
         self.get_logger().info("Shutting down node...")
         rclpy.shutdown()
 
-    def temp2(self, distance):
-        # Move forward distance - 10
-        self.get_logger().info(f"Estimated distance to object: {distance} cm")
-        self.get_logger().info("Shutting down node...")
-        rclpy.shutdown()
+    def temp2(self, angle_to_rotate):
+        # Rotate the robot based on the angle
+        self.get_logger().info(f"Rotating robot by {angle_to_rotate} radians to center object.")
+        self.navigator.rotate_to_angle(angle_to_rotate)
 
 def main(args=None):
     rclpy.init(args=args)
