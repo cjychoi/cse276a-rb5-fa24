@@ -80,7 +80,7 @@ class WaypointNavigator(Node):    #class to hold all functions
         return waypoints
 
 
-     def image_callback(self, msg):
+    def image_callback(self, msg):
         try:
             # Convert ROS Image message to OpenCV image
             self.frame = self.bridge.imgmsg_to_cv2(msg, "bgr8")
