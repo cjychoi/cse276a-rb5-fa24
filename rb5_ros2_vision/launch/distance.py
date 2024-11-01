@@ -6,7 +6,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 from rclpy.parameter import Parameter
-from control import WaypointNavigator  # Import the navigation class
+# from control import WaypointNavigator  # Import the navigation class
 import math
 
 class YoloCameraNode(Node):
