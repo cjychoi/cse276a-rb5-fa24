@@ -19,7 +19,7 @@ current_position = [0.0, 0.0, 0.0]        # initialize global array to hold curr
 
 class WaypointNavigator:    #class to hold all functions
     global current_position    # declare current_position as global array
-    def __init__(self, waypoint_file):
+    def __init__(self):
 
         # Initialize the MegaPiController
         self.mpi_ctrl = MegaPiController(port='/dev/ttyUSB0', verbose=True)
@@ -113,7 +113,7 @@ class WaypointNavigator:    #class to hold all functions
         self.mpi_ctrl.carStop()
         self.mpi_ctrl.close()
 
-     def shutdown(self):
+    def shutdown(self):
         self.mpi_ctrl.carStop()
         self.mpi_ctrl.close()
         print("Navigator shut down successfully.")
@@ -272,7 +272,7 @@ if __name__ == "__main__":
 
     #1
     # Assuming waypoints.txt is the file with the list of waypoints    
-    navigator = WaypointNavigator(waypoint_file='waypoints.txt')       # load list of waypoints into program
+    navigator = WaypointNavigator()       # load list of waypoints into program
     navigator.start_navigation()                                       # start movement
 
     navigator.shutdown()
