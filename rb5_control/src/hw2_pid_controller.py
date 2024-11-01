@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import time
+import os
 
 class PIDcontroller(Node):
     def __init__(self, Kp, Ki, Kd):
@@ -18,7 +19,11 @@ class PIDcontroller(Node):
         self.timestep = 0.1
         self.maximumValue = 0.1
         self.publisher_ = self.create_publisher(Twist, '/twist', 10)
+        
+        # Path to log file for positions
         self.log_path = '/../../position_log.csv'
+        # Clear the file at the start of each session
+        open(self.log_path, 'w').close()
 
     def setTarget(self, state):
         self.I = np.array([0.0, 0.0, 0.0])
@@ -57,14 +62,25 @@ class PIDcontroller(Node):
             f.write(f"{position[0]},{position[1]},{position[2]}\n")
 
     def plot_path(self):
-        while True:
-            data = pd.read_csv(self.log_path, names=['x', 'y', 'theta'])
-            plt.clf()
-            plt.plot(data['x'], data['y'], marker='o')
-            plt.xlabel("X Position (m)")
-            plt.ylabel("Y Position (m)")
-            plt.title("Robot Path Tracking")
-            plt.pause(1)
+        plt.ion()  # Turn on interactive mode for real-time plotting
+        fig, ax = plt.subplots()
+        ax.set_xlabel("X Position (m)")
+        ax.set_ylabel("Y Position (m)")
+        ax.set_title("Real-Time Robot Path Tracking")
+
+        while rclpy.ok():  # Keep plotting as long as ROS is running
+            # Read position data
+            if os.path.exists(self.log_path):
+                data = pd.read_csv(self.log_path, names=['x', 'y', 'theta'])
+                ax.clear()  # Clear the plot before each update
+                ax.plot(data['x'], data['y'], marker='o')
+                ax.set_xlabel("X Position (m)")
+                ax.set_ylabel("Y Position (m)")
+                ax.set_title("Real-Time Robot Path Tracking")
+                plt.draw()
+                plt.pause(0.5)  # Refresh rate
+            else:
+                time.sleep(0.5)  # Wait before checking the file again
 
 def main(args=None):
     rclpy.init(args=args)
