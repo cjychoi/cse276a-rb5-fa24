@@ -1,8 +1,8 @@
 <launch>
     <node 
         pkg="rb5_vision" 
-        exec="yolo_camera_node" 
-        name="yolo_camera_node" 
+        exec="hw2_yolo_camera_node" 
+        name="hw2_yolo_camera_node" 
         output="screen">
         <param name="camera_id" value="0" />
         <param name="topic_name" value="/camera_0" />
@@ -11,8 +11,8 @@
 
     <node 
         pkg="rb5_controller" 
-        exec="pid_controller" 
-        name="pid_controller_node" 
+        exec="hw2_pid_controller" 
+        name="hw2_pid_controller_node" 
         output="screen">
         <param name="Kp" value="0.02" />
         <param name="Ki" value="0.005" />
