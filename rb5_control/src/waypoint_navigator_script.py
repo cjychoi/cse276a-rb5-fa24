@@ -25,8 +25,8 @@ class WaypointNavigator:
         waypoints = []
         with open(filename, 'r') as f:
             for line in f.readlines():
-                object_name, size = line.strip().split(',')
-                waypoints.append((object_name, float(size)))
+                x, y, theta = map(float, line.strip().split(','))
+                waypoints.append((x, y, theta))
         return waypoints
 
     def calculate_distance(self, x1, y1, x2, y2):
@@ -64,18 +64,22 @@ class WaypointNavigator:
         time.sleep(movement_time)
         self.mpi_ctrl.carStop()
 
-    def start_navigation(self, yolo_node):
-        for object_name, known_width in self.waypoints:
-            self.get_logger().info(f"Setting target object to {object_name} with known width {known_width}")
-            yolo_node.load_target(object_name, known_width)
-            # Perform navigation with the updated target object
-            # Assume navigation logic here follows the target identified by YoloCameraNode
-            # Update position tracking
-            # (Add rotation and distance calculation code if needed)
-            self.set_current_position(current_position)
-        
-        print("All waypoints processed.")
-        self.plot_path()
+    def navigate_to_waypoint(self, x_goal, y_goal, theta_goal):
+        while not self.reached_waypoint(x_goal, y_goal):
+            x, y, theta = self.get_current_position()
+            distance = self.calculate_distance(x, y, x_goal, y_goal)
+            angle_to_goal = self.calculate_angle(x, y, x_goal, y_goal)
+            angle_diff = angle_to_goal - theta
+
+            if abs(angle_diff) > 0.1:
+                self.rotate_to_angle(angle_diff)
+                self.set_current_position([x, y, angle_to_goal])
+            else:
+                self.move_straight(distance)
+                angle_to_goal = self.calculate_angle(x, y, x_goal, y_goal)
+                angle_diff = theta_goal - angle_to_goal
+                self.rotate_to_angle(angle_diff)
+                self.set_current_position([x_goal, y_goal, theta_goal])
 
     def plot_path(self):
         plt.figure(figsize=(8, 6))
@@ -87,7 +91,15 @@ class WaypointNavigator:
         plt.grid(True)
         plt.show()
 
+    def start_navigation(self):
+        for waypoint in self.waypoints:
+            x_goal, y_goal, theta_goal = waypoint
+            if waypoint != current_position:
+                self.navigate_to_waypoint(x_goal, y_goal, theta_goal)
+                self.set_current_position(waypoint)
+        print("All waypoints reached.")
+        self.plot_path()
+
 if __name__ == "__main__":
-    navigator = WaypointNavigator(waypoint_file='object.txt')
-    yolo_camera_node = YoloCameraNode()
-    navigator.start_navigation(yolo_camera_node)
+    navigator = WaypointNavigator(waypoint_file='waypoints.txt')
+    navigator.start_navigation()
