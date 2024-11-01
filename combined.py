@@ -145,7 +145,7 @@ class YoloCameraNode(Node):
         self.CAMERA_CENTER = self.CAMERA_WIDTH / 2  # Calculate the center of the camera's field of view
 
         # Instantiate WaypointNavigator for robot control
-        self.navigator = WaypointNavigator(waypoint_file='waypoints.txt')
+        self.navigator = WaypointNavigator(waypoint_file='object.txt')
 
         # Subscribe to the camera topic
         self.subscription = self.create_subscription(
