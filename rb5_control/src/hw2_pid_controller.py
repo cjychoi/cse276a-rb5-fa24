@@ -8,7 +8,7 @@ import time
 
 class PIDcontroller(Node):
     def __init__(self, Kp, Ki, Kd):
-        super().__init__('hw_pid_controller_node')
+        super().__init__('hw2_pid_controller_node')
         self.Kp = Kp
         self.Ki = Ki
         self.Kd = Kd
