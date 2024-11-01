@@ -16,6 +16,13 @@ current_position = [0.0, 0.0, 0.0]        # initialize global array to hold curr
 class WaypointNavigator(Node):    #class to hold all functions
     global current_position    # declare current_position as global array
     def __init__(self, waypoint_file):
+        def load_waypoints(self, filename):        # load waypoints from file
+            waypoints = []
+            with open(filename, 'r') as f:        # open file, read waypoints line-by-line, put into array of arrays
+                for line in f.readlines():
+                    waypoints.append(line)
+            print('waypoints: ', waypoints)
+            return waypoints
         # Object Detection
         super().__init__('yolo_camera_node')
         
@@ -59,14 +66,6 @@ class WaypointNavigator(Node):    #class to hold all functions
 
         self.mpi_ctrl = MegaPiController(port='/dev/ttyUSB0', verbose=True)
         time.sleep(1)  # Allow some time for the connection to establish
-
-        def load_waypoints(self, filename):        # load waypoints from file
-            waypoints = []
-            with open(filename, 'r') as f:        # open file, read waypoints line-by-line, put into array of arrays
-                for line in f.readlines():
-                    waypoints.append(line)
-            print('waypoints: ', waypoints)
-            return waypoints
   
     def calculate_distance(self, x1, y1, x2, y2):        # calculate distance of goal from current location of robot
         return (math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2))/2
