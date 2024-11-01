@@ -8,7 +8,7 @@ import time
 
 class PIDcontroller(Node):
     def __init__(self, Kp, Ki, Kd):
-        super().__init__('pid_controller_node')
+        super().__init__('hw_pid_controller_node')
         self.Kp = Kp
         self.Ki = Ki
         self.Kd = Kd
@@ -18,7 +18,7 @@ class PIDcontroller(Node):
         self.timestep = 0.1
         self.maximumValue = 0.1
         self.publisher_ = self.create_publisher(Twist, '/twist', 10)
-        self.log_path = '/path/to/position_log.csv'
+        self.log_path = '/../../position_log.csv'
 
     def setTarget(self, state):
         self.I = np.array([0.0, 0.0, 0.0])
