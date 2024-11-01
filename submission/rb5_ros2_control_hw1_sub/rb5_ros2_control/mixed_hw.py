@@ -25,25 +25,12 @@ class WaypointNavigator:    #class to hold all functions
         self.mpi_ctrl = MegaPiController(port='/dev/ttyUSB0', verbose=True)
         time.sleep(1)  # Allow some time for the connection to establish
 
-        # Load waypoints from a file
-        self.waypoints = self.load_waypoints(waypoint_file)
-        self.current_waypoint_idx = 0
-
         # Control parameters prepared from calibration
         self.k_v = 30  # Speed for straight movement
         self.k_w = 55  # Speed for rotational movement
         self.dist_per_sec = 10 / 1  # 10 cm per 1 second at speed 30 for straight movement   
         self.rad_per_sec = math.pi / 2  # Pi radians per 2 seconds at speed 55 for rotational movement
         self.tolerance = 0.1  # Distance tolerance to waypoint (meters)
-
-    def load_waypoints(self, filename):        # load waypoints from file
-        waypoints = []
-        with open(filename, 'r') as f:        # open file, read waypoints line-by-line, put into array of arrays
-            for line in f.readlines():
-                x, y, theta = map(float, line.strip().split(','))      
-                waypoints.append((x, y, theta))
-        print('waypoints: ', waypoints)
-        return waypoints
 
     def calculate_distance(self, x1, y1, x2, y2):        # calculate distance of goal from current location of robot
         return (math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2))/2
@@ -125,6 +112,11 @@ class WaypointNavigator:    #class to hold all functions
         print("All waypoints reached.")
         self.mpi_ctrl.carStop()
         self.mpi_ctrl.close()
+
+     def shutdown(self):
+        self.mpi_ctrl.carStop()
+        self.mpi_ctrl.close()
+        print("Navigator shut down successfully.")
 
 # 2
 class YoloCameraNode(Node):
@@ -264,11 +256,26 @@ class YoloCameraNode(Node):
 #        self.navigator.rotate_to_angle(angle_to_rotate)
 
 
+def load_waypoints(self, filename):        # load waypoints from file
+    waypoints = []
+    with open(filename, 'r') as f:        # open file, read waypoints line-by-line, put into array of arrays
+        for line in f.readlines():
+            x, y, theta = map(float, line.strip().split(','))      
+            waypoints.append((x, y, theta))
+    print('waypoints: ', waypoints)
+    return waypoints
+
 if __name__ == "__main__":
+
+    # Load waypoints from a file
+    waypoints = load_waypoints(waypoint_file)
+
     #1
     # Assuming waypoints.txt is the file with the list of waypoints    
     navigator = WaypointNavigator(waypoint_file='waypoints.txt')       # load list of waypoints into program
     navigator.start_navigation()                                       # start movement
+
+    navigator.shutdown()
 
     # 2
     rclpy.init(args=args)
