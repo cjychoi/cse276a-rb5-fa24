@@ -6,7 +6,6 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 import math
-from mpi_control import MegaPiController
 
 class YoloCameraNode(Node):
     def __init__(self):
@@ -24,17 +23,17 @@ class YoloCameraNode(Node):
         self.bridge = CvBridge()
         self.frame = None
 
-        # Target object
-        self.target_object = "cell phone"
-
         # Load YOLOv8 model
         self.model = YOLO('yolov8n.pt')
 
-        # Known object dimensions and camera parameters
-        self.KNOWN_WIDTH = 8.0
-        self.FOCAL_LENGTH = 902.8
+        # Camera parameters for calculating the center
         self.CAMERA_WIDTH = 640
         self.CAMERA_CENTER = self.CAMERA_WIDTH / 2
+        self.FOCAL_LENGTH = 902.8
+
+        # Placeholder for target object and known width, updated per waypoint
+        self.target_object = None
+        self.KNOWN_WIDTH = None
 
         # ROS subscription to camera topic
         self.subscription = self.create_subscription(
@@ -96,6 +95,11 @@ class YoloCameraNode(Node):
                         self.get_logger().info(f"Moving forward by {distance - 10} cm.")
                         navigator.move_straight(distance - 10)
                     break
+
+    def load_target(self, object_name, known_width):
+        self.target_object = object_name
+        self.KNOWN_WIDTH = known_width
+        self.get_logger().info(f"Target set to {object_name} with known width {known_width} cm")
 
 def main(args=None):
     rclpy.init(args=args)
