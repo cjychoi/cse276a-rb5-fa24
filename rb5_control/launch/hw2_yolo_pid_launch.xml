@@ -10,7 +10,7 @@
     </node>
 
     <node 
-        pkg="rb5_controller" 
+        pkg="rb5_control" 
         exec="hw2_pid_controller" 
         name="hw2_pid_controller_node" 
         output="screen">
