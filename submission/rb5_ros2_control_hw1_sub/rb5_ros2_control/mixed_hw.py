@@ -256,7 +256,7 @@ class YoloCameraNode(Node):
 #        self.navigator.rotate_to_angle(angle_to_rotate)
 
 
-def load_waypoints(self, filename):        # load waypoints from file
+def load_waypoints(filename):        # load waypoints from file
     waypoints = []
     with open(filename, 'r') as f:        # open file, read waypoints line-by-line, put into array of arrays
         for line in f.readlines():
@@ -268,7 +268,7 @@ def load_waypoints(self, filename):        # load waypoints from file
 if __name__ == "__main__":
 
     # Load waypoints from a file
-    waypoints = self.load_waypoints('object.txt')
+    waypoints = load_waypoints('object.txt')
 
     #1
     # Assuming waypoints.txt is the file with the list of waypoints    
