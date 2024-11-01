@@ -40,8 +40,8 @@ class YoloCameraNode(Node):
         self.CAMERA_WIDTH = 640  # Width of the camera frame in pixels
         self.CAMERA_CENTER = self.CAMERA_WIDTH / 2  # Calculate the center of the camera's field of view
 
-        # Instantiate WaypointNavigator for robot control
-        self.navigator = WaypointNavigator(waypoint_file='waypoints.txt')
+#        # Instantiate WaypointNavigator for robot control
+#        self.navigator = WaypointNavigator(waypoint_file='waypoints.txt')
 
         # Subscribe to the camera topic
         self.subscription = self.create_subscription(
@@ -130,10 +130,10 @@ class YoloCameraNode(Node):
         self.get_logger().info(f"Rotating by {degrees} degrees ({radians_to_rotate} radians).")
         
         # Rotate the robot
-        self.navigator.rotate_to_angle(radians_to_rotate)
+#        self.navigator.rotate_to_angle(radians_to_rotate)
         
         # After rotating, try to search for the object again
-        self.get_logger().info("Searching for object again after rotation.")
+ #       self.get_logger().info("Searching for object again after rotation.")
 
     def temp(self, distance):
         # Move forward distance - 10
@@ -144,7 +144,7 @@ class YoloCameraNode(Node):
     def temp2(self, angle_to_rotate):
         # Rotate the robot based on the angle
         self.get_logger().info(f"Rotating robot by {angle_to_rotate} radians to center object.")
-        self.navigator.rotate_to_angle(angle_to_rotate)
+#        self.navigator.rotate_to_angle(angle_to_rotate)
 
 def main(args=None):
     rclpy.init(args=args)
