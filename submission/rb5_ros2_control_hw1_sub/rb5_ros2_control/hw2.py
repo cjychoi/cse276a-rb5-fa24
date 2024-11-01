@@ -151,6 +151,14 @@ class WaypointNavigator(Node):    #class to hold all functions
         self.mpi_ctrl.close()
 
 if __name__ == "__main__":
+    rclpy.init(args=args)
     # Assuming waypoints.txt is the file with the list of waypoints    
     navigator = WaypointNavigator(waypoint_file='waypoints.txt')       # load list of waypoints into program
 #    navigator.start_navigation()                                       # start movement
+
+    rclpy.spin(yolo_camera_node)
+
+    # Cleanup
+    yolo_camera_node.destroy_node()
+    rclpy.shutdown()
+
