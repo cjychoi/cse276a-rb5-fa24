@@ -5,6 +5,7 @@ from rclpy.node import Node
 from std_msgs.msg import Float32, Bool
 from mpi_control import MegaPiController
 import matplotlib.pyplot as plt
+import cv2
 
 class WaypointNavigator(Node):
     def __init__(self):
@@ -74,6 +75,10 @@ class WaypointNavigator(Node):
         # Save the plot as a JPEG file
         plot_filename = 'robot_trajectory.jpeg'
         self.fig.savefig(plot_filename, format='jpeg')
+        img = cv2.imread(f'{plot_filename}.jpg')
+
+        # Display the image
+        cv2.imshow('Image', img)
         self.get_logger().info(f"Plot saved as {plot_filename}")
 
     def handle_rotation(self, msg):
