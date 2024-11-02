@@ -104,9 +104,9 @@ class WaypointNavigator(Node):
         self.plot_path()
 
 if __name__ == "__main__":
-    rclpy.init(args=args)
+    rclpy.init(args=None)
     
-    navigator = WaypointNavigator(waypoint_file='waypoints.txt')
+    navigator = WaypointNavigator(waypoint_file='object.txt')
 
     navigator.start_navigation()
 
