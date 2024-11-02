@@ -2,7 +2,7 @@ import time
 import math
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Bool
 from mpi_control import MegaPiController
 import matplotlib.pyplot as plt
 
@@ -25,6 +25,7 @@ class WaypointNavigator(Node):
         self.current_x = 0.0
         self.current_y = 0.0
         self.current_theta = 0.0  # Robot's orientation in radians
+        self.is_moving = False  # Flag to indicate if the robot is moving
 
         # Plotting variables
         self.x_history = [self.current_x]
@@ -44,6 +45,9 @@ class WaypointNavigator(Node):
             10
         )
 
+        # Publisher for is_moving flag
+        self.is_moving_pub = self.create_publisher(Bool, '/is_moving', 10)
+
         # Initialize the plot for the robot's movement
         self.fig, self.ax = plt.subplots()
         self.plot_robot_movement()
@@ -62,6 +66,9 @@ class WaypointNavigator(Node):
     def handle_rotation(self, msg):
         angle_diff = msg.data
         rotation_time = abs(angle_diff) / self.rad_per_sec
+        self.is_moving = True  # Set the moving flag to True
+        self.is_moving_pub.publish(Bool(data=True))  # Notify that the robot is moving
+
         self.mpi_ctrl.carRotate(self.k_w if angle_diff > 0 else -self.k_w)
         time.sleep(rotation_time)
         self.mpi_ctrl.carStop()
@@ -71,11 +78,17 @@ class WaypointNavigator(Node):
         self.current_theta %= (2 * math.pi)  # Keep theta in [0, 2*pi] range
 
         self.get_logger().info(f"Rotated by {angle_diff} radians.")
+        
+        self.is_moving = False  # Set the moving flag to False
+        self.is_moving_pub.publish(Bool(data=False))  # Notify that the robot is no longer moving
         self.plot_robot_movement()
 
     def handle_movement(self, msg):
         distance = msg.data
         movement_time = abs(distance) / (self.dist_per_sec / 100)  # Convert cm/s to m/s
+        self.is_moving = True  # Set the moving flag to True
+        self.is_moving_pub.publish(Bool(data=True))  # Notify that the robot is moving
+
         self.mpi_ctrl.carStraight(self.k_v)
         time.sleep(movement_time)
         self.mpi_ctrl.carStop()
@@ -90,6 +103,9 @@ class WaypointNavigator(Node):
         self.y_history.append(self.current_y)
 
         self.get_logger().info(f"Moved forward by {distance} cm.")
+        
+        self.is_moving = False  # Set the moving flag to False
+        self.is_moving_pub.publish(Bool(data=False))  # Notify that the robot is no longer moving
         self.plot_robot_movement()
 
     def main_loop(self):
