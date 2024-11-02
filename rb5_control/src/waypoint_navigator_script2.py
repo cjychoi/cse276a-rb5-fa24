@@ -45,6 +45,12 @@ class WaypointNavigator(Node):
             self.handle_movement,
             10
         )
+        self.save_plot = self.create_subscription(
+            Float32,
+            '/save_plot',
+            self.save_plot,
+            10
+        )
 
         # Publisher for is_moving flag
         self.is_moving_pub = self.create_publisher(Bool, '/is_moving', 10)
@@ -64,7 +70,7 @@ class WaypointNavigator(Node):
         self.ax.set_title(f'Robot Trajectory - Total Distance: {self.total_distance:.2f} cm')
         plt.pause(0.1)  # Update plot every 0.1 seconds
 
-    def save_plot(self):
+    def save_plot(self, msg):
         # Save the plot as a JPEG file
         plot_filename = 'robot_trajectory.jpeg'
         self.fig.savefig(plot_filename, format='jpeg')
