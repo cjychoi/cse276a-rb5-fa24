@@ -85,7 +85,7 @@ class WaypointNavigator(Node):
 
     def handle_movement(self, msg):
         distance = msg.data
-        movement_time = abs(distance) / (self.dist_per_sec / 100)  # Convert cm/s to m/s
+        movement_time = abs(distance) / self.dist_per_sec  # Convert cm/s to m/s
         self.is_moving = True  # Set the moving flag to True
         self.is_moving_pub.publish(Bool(data=True))  # Notify that the robot is moving
 
