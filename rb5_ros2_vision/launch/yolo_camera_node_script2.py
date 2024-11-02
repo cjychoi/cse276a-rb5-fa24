@@ -112,11 +112,7 @@ class YoloCameraNode(Node):
             return
 
         results = self.model(self.frame)
-        if len(results) == 0 or results[0].boxes.shape[0] == 0:
-            # Rotate by -pi/4 radians if the object is not found
-            self.get_logger().info(f"Object '{self.current_object}' not found. Rotating -pi/4 radians.")
-            self.rotate_to_angle(-math.pi / 4)
-            return
+        object_found = False  # Flag to track if the object was found
 
         for result in results:
             for i in range(result.boxes.shape[0]):
@@ -138,7 +134,13 @@ class YoloCameraNode(Node):
                         self.get_logger().info(f"Moving forward by {distance - 10} cm.")
                         self.move_forward(distance - 10)
                     self.load_next_waypoint()  # Load the next waypoint after processing this one
+                    object_found = True  # Set the flag to true since the object was found
                     break
+
+        if not object_found:
+            # If the object was not found, rotate -pi/4 radians
+            self.get_logger().info(f"Object '{self.current_object}' not found. Rotating -pi/4 radians.")
+            self.rotate_to_angle(-math.pi / 4)  # Rotate by -pi/4 radians if the object is not found
 
 def main(args=None):
     rclpy.init(args=args)
