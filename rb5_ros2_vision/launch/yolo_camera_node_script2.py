@@ -7,6 +7,7 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import Float32
 from cv_bridge import CvBridge
 import math
+import time
 
 class YoloCameraNode(Node):
     def __init__(self):
@@ -139,6 +140,13 @@ class YoloCameraNode(Node):
                     if abs(angle_to_rotate) > 0.1:
                         # Rotate towards the object
                         self.rotate_to_angle(angle_to_rotate)
+                        while self.isMoving:
+                            self.get_logger().info("Currently moving. Waiting for movement to complete...")
+                            time.sleep(1)
+                        self.get_logger().info(f"Moving forward by {distance - 10} cm.")
+                        self.move_forward(distance - 10)
+                        # You should call `movement_complete()` after the move is done
+                        self.movement_complete()  # Simulate immediate completion for testing
                     else:
                         # Move forward if facing the object
                         self.get_logger().info(f"Moving forward by {distance - 10} cm.")
