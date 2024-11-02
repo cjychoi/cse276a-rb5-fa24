@@ -1,13 +1,16 @@
 # imports
 import time
 import math
+import rclpy
+from rclpy.node import Node
 from mpi_control import MegaPiController
 
 current_position = [0.0, 0.0, 0.0]        # initialize global array to hold current position
 
-class WaypointNavigator:    #class to hold all functions
+class WaypointNavigator(Node):    #class to hold all functions
     global current_position    # declare current_position as global array
     def __init__(self, waypoint_file):
+        super().__init__('navigator')
 
         # Initialize the MegaPiController
         self.mpi_ctrl = MegaPiController(port='/dev/ttyUSB0', verbose=True)
@@ -115,6 +118,14 @@ class WaypointNavigator:    #class to hold all functions
         self.mpi_ctrl.close()
 
 if __name__ == "__main__":
+    rclpy.init(args=None)
+    
     # Assuming waypoints.txt is the file with the list of waypoints    
     navigator = WaypointNavigator(waypoint_file='waypoints.txt')       # load list of waypoints into program
     navigator.start_navigation()                                       # start movement
+
+    rclpy.spin(navigator)
+
+    navigator.destroy_node()
+    rclpy.shutdown()
+    
