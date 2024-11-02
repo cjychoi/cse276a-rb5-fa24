@@ -2,62 +2,44 @@ import time
 import math
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float32, String
+from std_msgs.msg import Float32
 from mpi_control import MegaPiController
-import matplotlib.pyplot as plt
 
-current_position = [0.0, 0.0, 0.0]  # Initialize global array to hold the current position
-path = []  # To store the robot's path
+current_position = [0.0, 0.0, 0.0]
 
 class WaypointNavigator(Node):
-    def __init__(self, waypoint_file):
+    def __init__(self):
         super().__init__('waypoint_navigator')
-        self.get_logger().info("Starting waypoint navigator...")
 
         # Initialize the MegaPiController
         self.mpi_ctrl = MegaPiController(port='/dev/ttyUSB0', verbose=True)
         time.sleep(1)
 
-        # Load waypoints from file
-        self.waypoints = self.load_waypoints(waypoint_file)
-        self.current_waypoint_idx = 0
-
-        # Control parameters prepared from calibration
+        # Control parameters
         self.k_v = 30
         self.k_w = 55
         self.dist_per_sec = 10 / 1
         self.rad_per_sec = math.pi / 2
         self.tolerance = 0.1
 
-        # Subscriptions to angle and distance from the YOLO node
-        self.angle_sub = self.create_subscription(Float32, 'rotate_angle', self.handle_rotate_angle, 10)
-        self.distance_sub = self.create_subscription(Float32, 'move_distance', self.handle_move_distance, 10)
-        self.rotation_request_sub = self.create_subscription(String, 'rotation_request', self.handle_rotation_request, 10)
+        # Subscribe to rotation and movement commands
+        self.rotation_subscriber = self.create_subscription(Float32, '/rotate_angle', self.handle_rotation, 10)
+        self.distance_subscriber = self.create_subscription(Float32, '/move_distance', self.handle_move_straight, 10)
 
-        self.final_pose = None
+        # Publisher to notify rotation complete
+        self.rotation_complete_publisher = self.create_publisher(Float32, '/rotation_complete', 10)
 
-        # Initialize plot
-        plt.ion()
+    def handle_rotation(self, msg):
+        angle_diff = msg.data
+        self.rotate_to_angle(angle_diff)
+        # Notify that rotation is complete
+        complete_msg = Float32()
+        complete_msg.data = angle_diff
+        self.rotation_complete_publisher.publish(complete_msg)
 
-    def load_waypoints(self, filename):
-        waypoints = []
-        with open(filename, 'r') as f:
-            for line in f.readlines():
-                x, y, theta = map(float, line.strip().split(','))
-                waypoints.append((x, y, theta))
-        self.get_logger().info(f"Waypoints loaded: {waypoints}")
-        return waypoints
-
-    def get_current_position(self):
-        return current_position[0], current_position[1], current_position[2]
-
-    def set_current_position(self, waypoint):
-        current_position[0] = waypoint[0]
-        current_position[1] = waypoint[1]
-        current_position[2] = waypoint[2]
-        path.append((current_position[0], current_position[1]))
-        self.get_logger().info(f"Set current position: {waypoint}")
-        self.plot_path()
+    def handle_move_straight(self, msg):
+        distance = msg.data
+        self.move_straight(distance)
 
     def rotate_to_angle(self, angle_diff):
         rotation_time = abs(angle_diff) / self.rad_per_sec
@@ -71,36 +53,13 @@ class WaypointNavigator(Node):
         time.sleep(movement_time)
         self.mpi_ctrl.carStop()
 
-    def handle_rotate_angle(self, msg):
-        angle_diff = msg.data
-        self.rotate_to_angle(angle_diff)
-
-    def handle_move_distance(self, msg):
-        distance = msg.data
-        self.move_straight(distance)
-        self.set_current_position([current_position[0] + distance, current_position[1], current_position[2]])
-
-    def handle_rotation_request(self, msg):
-        if msg.data == '-pi/4':
-            self.rotate_to_angle(-math.pi / 4)
-
-    def plot_path(self):
-        plt.clf()
-        x_coords, y_coords = zip(*path)
-        plt.plot(x_coords, y_coords, marker='o')
-        plt.title("Robot Path")
-        plt.xlabel("X")
-        plt.ylabel("Y")
-        plt.grid(True)
-        plt.pause(0.01)
-
 def main(args=None):
     rclpy.init(args=args)
-    navigator = WaypointNavigator(waypoint_file='waypoints.txt')
+    navigator = WaypointNavigator()
     rclpy.spin(navigator)
 
     navigator.destroy_node()
     rclpy.shutdown()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
