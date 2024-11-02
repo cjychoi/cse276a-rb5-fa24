@@ -150,7 +150,7 @@ class YoloCameraNode(Node):
 
                     if abs(angle_to_rotate) > 0.1:
                         # Rotate towards the object
-                        self.rotate_to_angle(angle_to_rotate/2)
+                        self.rotate_to_angle(angle_to_rotate - math.pi/8)
                         while self.is_moving:
                             self.get_logger().info("Currently moving. Waiting for movement to complete...")
                             time.sleep(1)
