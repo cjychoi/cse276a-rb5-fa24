@@ -1,4 +1,4 @@
-import time
+import time 
 import math
 import rclpy
 from rclpy.node import Node
@@ -26,6 +26,7 @@ class WaypointNavigator(Node):
         self.current_y = 0.0
         self.current_theta = 0.0  # Robot's orientation in radians
         self.is_moving = False  # Flag to indicate if the robot is moving
+        self.total_distance = 0.0  # Variable to track total distance traveled
 
         # Plotting variables
         self.x_history = [self.current_x]
@@ -60,8 +61,14 @@ class WaypointNavigator(Node):
         self.ax.set_ylim(-10, 10)
         self.ax.set_xlabel('X Position (m)')
         self.ax.set_ylabel('Y Position (m)')
-        self.ax.set_title('Robot Trajectory')
+        self.ax.set_title(f'Robot Trajectory - Total Distance: {self.total_distance:.2f} cm')
         plt.pause(0.1)  # Update plot every 0.1 seconds
+
+    def save_plot(self):
+        # Save the plot as a JPEG file
+        plot_filename = 'robot_trajectory.jpeg'
+        self.fig.savefig(plot_filename, format='jpeg')
+        self.get_logger().info(f"Plot saved as {plot_filename}")
 
     def handle_rotation(self, msg):
         angle_diff = msg.data
@@ -102,6 +109,9 @@ class WaypointNavigator(Node):
         self.x_history.append(self.current_x)
         self.y_history.append(self.current_y)
 
+        # Update total distance traveled
+        self.total_distance += distance
+
         self.get_logger().info(f"Moved forward by {distance} cm.")
         
         self.is_moving = False  # Set the moving flag to False
@@ -113,6 +123,8 @@ class WaypointNavigator(Node):
         while rclpy.ok():
             rclpy.spin_once(self)
             self.plot_robot_movement()
+            # Call save_plot at some point if needed, for example after all movements
+            # self.save_plot()  # Uncomment this line to save the plot after each iteration if desired
 
 def main(args=None):
     rclpy.init(args=args)
@@ -120,9 +132,12 @@ def main(args=None):
 
     try:
         navigator.main_loop()
+        # Uncomment to save the plot when shutting down
+        # navigator.save_plot()  # Save the plot when shutting down
     except KeyboardInterrupt:
         navigator.get_logger().info("Shutting down...")
 
+    navigator.save_plot()  # Save the plot on shutdown
     navigator.destroy_node()
     rclpy.shutdown()
 
