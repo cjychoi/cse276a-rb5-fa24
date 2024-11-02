@@ -1,11 +1,13 @@
 import time
 import math
+import rclpy
+from rclpy.node import Node
 from mpi_control import MegaPiController
 import matplotlib.pyplot as plt
 
 current_position = [0.0, 0.0, 0.0]
 
-class WaypointNavigator:
+class WaypointNavigator(Node):
     global current_position
 
     def __init__(self, waypoint_file):
@@ -101,5 +103,13 @@ class WaypointNavigator:
         self.plot_path()
 
 if __name__ == "__main__":
+    rclpy.init(args=args)
+    
     navigator = WaypointNavigator(waypoint_file='waypoints.txt')
+
     navigator.start_navigation()
+
+    rclpy.spin(navigator)
+
+    navigator.destroy_node()
+    rclpy.shutdown()
