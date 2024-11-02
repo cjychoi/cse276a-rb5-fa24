@@ -142,6 +142,7 @@ class YoloCameraNode(Node):
 
                     self.get_logger().info(f"distance: {distance}")
                     self.get_logger().info(f"angle: {angle_to_rotate}")
+                    self.rotate_to_angle(math.pi / 4)
                     time.sleep(3)
 
                     if abs(angle_to_rotate) > 0.1:
@@ -150,8 +151,8 @@ class YoloCameraNode(Node):
                         while self.is_moving:
                             self.get_logger().info("Currently moving. Waiting for movement to complete...")
                             time.sleep(1)
-                        self.get_logger().info(f"Moving forward by {distance - 10} cm.")
-                        self.move_forward(distance - 10)
+                        self.get_logger().info(f"Moving forward by {distance} cm.")
+                        self.move_forward(distance)
                         # You should call `movement_complete()` after the move is done
                         self.movement_complete()  # Simulate immediate completion for testing
                     else:
