@@ -88,29 +88,44 @@ class YoloCameraNode(Node):
 
     def process_frame(self):
         if self.frame is not None and not self.is_moving:
+            if self.frame is None:
+                self.get_logger().info("No frame received yet...")
+                return
+            if self.is_moving:
+                self.get_logger().info("Currently moving. Waiting for movement to complete...")
+                return  # Skip processing if currently moving
+                
             # Process the frame using YOLO
             results = self.model(self.frame)
 
+            object_found = False  # Flag to track if the object was found
             for result in results:
-                boxes = result.boxes.xyxy  # get the bounding boxes
-                for box in boxes:
-                    x1, y1, x2, y2, conf, cls = box  # unpack the box
-                    object_name = self.model.names[int(cls)]
-                    if object_name == self.current_object:
-                        # Calculate distance to the object
-                        distance = self.calculate_distance(self.KNOWN_WIDTH, (x2 - x1))  # Width of the bounding box
-                        angle = self.calculate_angle(x1)  # Calculate angle to the object
-                        self.get_logger().info(f"Detected {object_name} at distance {distance:.2f} cm, angle {angle:.2f} degrees.")
+                for i in range(result.boxes.shape[0]):
+                    cls = int(result.boxes.cls[i].item())
+                    name = result.names[cls]
+                    if name == self.current_object:
+                        # Object detected, calculate distance and angle to rotate
+                        bbox = result.boxes.xyxy[i].cpu().numpy()
+                        x, width = int(bbox[0]), int(bbox[2] - bbox[0])
+                        distance = self.estimate_distance(width)
+                        bbox_center_x = x + width / 2
+                        angle_to_rotate = self.calculate_angle_to_center(bbox_center_x)
+                        if abs(angle_to_rotate) > 0.1:
+                            # Rotate towards the object
+                            self.rotate_to_angle(angle_to_rotate)
+                        else:
+                            # Move forward if facing the object
+                            self.get_logger().info(f"Moving forward by {distance - 10} cm.")
+                            self.move_forward(distance - 10)
+                            # Here, you would typically set up a mechanism to call `movement_complete()` after the move is done
+                        self.load_next_waypoint()  # Load the next waypoint after processing this one
+                        object_found = True  # Set the flag to true since the object was found
+                        break
 
-                        # Publish the rotation angle and movement distance
-                        self.rotation_pub.publish(Float32(data=math.radians(angle)))  # Publish angle in radians
-                        self.distance_pub.publish(Float32(data=distance))  # Publish distance in cm
-                        break  # Stop after processing the first detected object
-
-            # Check if the current object was found
-            if self.current_object and self.current_waypoint_idx >= len(self.waypoints):
-                self.get_logger().info("All objects processed. Stopping navigation.")
-                self.destroy_node()  # Stop the node after processing all waypoints
+            if not object_found:
+                # If the object was not found, rotate -pi/4 radians
+                self.get_logger().info(f"Object '{self.current_object}' not found. Rotating -pi/4 radians.")
+                self.rotate_to_angle(-math.pi / 4)  # Rotate by -pi/4 radians if the object is not found
 
     def calculate_distance(self, known_width, pixel_width):
         return (self.FOCAL_LENGTH * known_width) / pixel_width
