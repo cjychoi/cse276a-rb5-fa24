@@ -157,8 +157,8 @@ class YoloCameraNode(Node):
                         self.movement_complete()  # Simulate immediate completion for testing
                     else:
                         # Move forward if facing the object
-                        self.get_logger().info(f"Moving forward by {distance - 10} cm.")
-                        self.move_forward(distance - 10)
+                        self.get_logger().info(f"Moving forward by {distance} cm.")
+                        self.move_forward(distance)
                         # You should call `movement_complete()` after the move is done
                         self.movement_complete()  # Simulate immediate completion for testing
 
