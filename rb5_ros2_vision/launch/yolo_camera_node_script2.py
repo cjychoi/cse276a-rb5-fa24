@@ -73,6 +73,8 @@ class YoloCameraNode(Node):
             self.get_logger().info(f"Looking for object: {self.current_object} with known width: {self.KNOWN_WIDTH} cm")
         else:
             self.get_logger().info("All waypoints processed.")
+            msg = Float32()
+            msg.data = 1
             self.distance_pub.publish()
             rclpy.shutdown()
 
