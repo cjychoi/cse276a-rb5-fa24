@@ -139,7 +139,7 @@ class YoloCameraNode(Node):
                     x, width = int(bbox[0]), int(bbox[2] - bbox[0])
                     distance = self.estimate_distance(width)
                     bbox_center_x = x + width / 2
-                    angle_to_rotate = self.calculate_angle_to_center(bbox_center_x)
+                    angle_to_rotate = 0-self.calculate_angle_to_center(bbox_center_x)
 
                     bounding_box = result.boxes.xyxy[i].cpu().numpy()
 
