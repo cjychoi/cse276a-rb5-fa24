@@ -174,7 +174,7 @@ def main(args=None):
     rclpy.init(args=args)
 
     # Start the waypoint navigator with landmarks
-    navigator = WaypointNavigator(landmark_file='landmarks.txt')
+    navigator = WaypointNavigator(landmark_file='object.txt')
     navigator.start_navigation()
 
     rclpy.spin(navigator)
