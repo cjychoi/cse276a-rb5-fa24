@@ -11,6 +11,7 @@ class WaypointNavigator(Node):
     global current_position
 
     def __init__(self, waypoint_file):
+        super().__init__('navigator')
         self.mpi_ctrl = MegaPiController(port='/dev/ttyUSB0', verbose=True)
         time.sleep(1)
         self.waypoints = self.load_waypoints(waypoint_file)
