@@ -139,7 +139,7 @@ class YoloCameraNode(Node):
                     x, width = int(bbox[0]), int(bbox[2] - bbox[0])
                     distance = self.estimate_distance(width)
                     bbox_center_x = x + width / 2
-                    angle_to_rotate = 0 - self.calculate_angle_to_center(bbox_center_x)
+                    angle_to_rotate = math.pi/4 - self.calculate_angle_to_center(bbox_center_x)
 
                     bounding_box = result.boxes.xyxy[i].cpu().numpy()
 
@@ -150,7 +150,7 @@ class YoloCameraNode(Node):
 
                     if abs(angle_to_rotate) > 0.1:
                         # Rotate towards the object
-                        self.rotate_to_angle(angle_to_rotate - math.pi/8)
+                        self.rotate_to_angle(angle_to_rotate)
                         while self.is_moving:
                             self.get_logger().info("Currently moving. Waiting for movement to complete...")
                             time.sleep(1)
