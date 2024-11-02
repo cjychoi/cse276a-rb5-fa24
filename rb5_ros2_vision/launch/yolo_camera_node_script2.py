@@ -4,9 +4,9 @@ from ultralytics import YOLO
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
-from std_msgs.msg import Float32, String
 from cv_bridge import CvBridge
 import math
+from std_msgs.msg import Float32
 
 class YoloCameraNode(Node):
     def __init__(self):
@@ -16,7 +16,7 @@ class YoloCameraNode(Node):
         self.declare_parameter('camera_id', '0')
         self.declare_parameter('topic_name', '/camera_0')
         self.declare_parameter('frame_rate', 30)
-        self.declare_parameter('object_file', 'objects.txt')
+        self.declare_parameter('object_file', 'object.txt')
 
         # Retrieve parameters
         self.camera_id = self.get_parameter('camera_id').value
@@ -39,6 +39,10 @@ class YoloCameraNode(Node):
         self.CAMERA_WIDTH = 640
         self.CAMERA_CENTER = self.CAMERA_WIDTH / 2
 
+        # Publisher to send angle and distance to waypoint navigator
+        self.angle_pub = self.create_publisher(Float32, 'rotate_angle', 10)
+        self.distance_pub = self.create_publisher(Float32, 'move_distance', 10)
+
         # Subscribe to the camera topic
         self.subscription = self.create_subscription(
             Image,
@@ -46,11 +50,6 @@ class YoloCameraNode(Node):
             self.image_callback,
             10
         )
-
-        # Publishers to communicate with the waypoint navigator
-        self.angle_publisher = self.create_publisher(Float32, 'rotate_angle', 10)
-        self.distance_publisher = self.create_publisher(Float32, 'move_distance', 10)
-        self.search_publisher = self.create_publisher(String, 'search_status', 10)
 
         # Timer for frame processing
         self.timer = self.create_timer(1 / self.frame_rate, self.process_frame)
@@ -64,9 +63,8 @@ class YoloCameraNode(Node):
 
     def load_next_waypoint(self):
         if self.current_waypoint_idx < len(self.waypoints):
-            self.current_object, self.KNOWN_WIDTH, self.final_pose = self.waypoints[self.current_waypoint_idx]
+            self.current_object, self.KNOWN_WIDTH = self.waypoints[self.current_waypoint_idx]
             self.KNOWN_WIDTH = float(self.KNOWN_WIDTH)
-            self.final_pose = float(self.final_pose)
             self.current_waypoint_idx += 1
             self.get_logger().info(f"Looking for object: {self.current_object} with known width: {self.KNOWN_WIDTH} cm")
         else:
@@ -89,6 +87,10 @@ class YoloCameraNode(Node):
         FOV = 1.0472  # 60 degrees in radians
         return (offset / self.CAMERA_WIDTH) * FOV
 
+    def rotate_to_angle(self, radians_to_rotate):
+        self.get_logger().info(f"Publishing rotate angle: {radians_to_rotate} radians.")
+        self.angle_pub.publish(Float32(data=radians_to_rotate))
+
     def process_frame(self):
         if self.frame is None:
             self.get_logger().info("No frame received yet...")
@@ -96,8 +98,8 @@ class YoloCameraNode(Node):
 
         results = self.model(self.frame)
         if len(results) == 0 or results[0].boxes.shape[0] == 0:
-            # Object not found, request a search rotation
-            self.search_publisher.publish(String(data="not_found"))
+            self.get_logger().info(f"Object '{self.current_object}' not found. Rotating -45 degrees.")
+            self.rotate_to_angle(math.radians(-45))
             return
 
         for result in results:
@@ -111,7 +113,21 @@ class YoloCameraNode(Node):
                     bbox_center_x = x + width / 2
                     angle_to_rotate = self.calculate_angle_to_center(bbox_center_x)
 
-                    # Publish the rotation angle and move distance
-                    self.angle_publisher.publish(Float32(data=angle_to_rotate))
-                    self.distance_publisher.publish(Float32(data=distance - 10))
-                    return
+                    if abs(angle_to_rotate) > 0.1:
+                        self.rotate_to_angle(angle_to_rotate)
+                    else:
+                        self.get_logger().info(f"Publishing move distance: {distance - 10} cm.")
+                        self.distance_pub.publish(Float32(data=distance - 10))
+                    self.load_next_waypoint()
+                    break
+
+def main(args=None):
+    rclpy.init(args=args)
+    yolo_camera_node = YoloCameraNode()
+    rclpy.spin(yolo_camera_node)
+
+    yolo_camera_node.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
