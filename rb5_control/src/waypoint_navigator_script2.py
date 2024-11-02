@@ -2,20 +2,19 @@ import time
 import math
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float32, String
 from mpi_control import MegaPiController
+from std_msgs.msg import Float32
 import matplotlib.pyplot as plt
 
 current_position = [0.0, 0.0, 0.0]
 
 class WaypointNavigator(Node):
-    global current_position
-
-    def __init__(self):
-        super().__init__('waypoint_navigator')
+    def __init__(self, waypoint_file):
+        super().__init__('navigator')
         self.mpi_ctrl = MegaPiController(port='/dev/ttyUSB0', verbose=True)
         time.sleep(1)
-
+        self.waypoints = self.load_waypoints(waypoint_file)
+        self.current_waypoint_idx = 0
         self.k_v = 30
         self.k_w = 55
         self.dist_per_sec = 10 / 1
@@ -24,21 +23,40 @@ class WaypointNavigator(Node):
         self.path_x = []
         self.path_y = []
 
-        # Subscriptions to receive instructions from the YOLO node
-        self.angle_subscriber = self.create_subscription(Float32, 'rotate_angle', self.handle_rotation, 10)
-        self.distance_subscriber = self.create_subscription(Float32, 'move_distance', self.handle_movement, 10)
-        self.search_subscriber = self.create_subscription(String, 'search_status', self.handle_search, 10)
+        # Subscribers for angle and distance
+        self.create_subscription(Float32, 'rotate_angle', self.rotate_callback, 10)
+        self.create_subscription(Float32, 'move_distance', self.move_callback, 10)
 
-    def handle_rotation(self, msg):
-        self.rotate_to_angle(msg.data)
+    def load_waypoints(self, filename):
+        waypoints = []
+        with open(filename, 'r') as f:
+            for line in f.readlines():
+                x, y, theta = map(float, line.strip().split(', '))
+                waypoints.append((x, y, theta))
+        return waypoints
 
-    def handle_movement(self, msg):
-        self.move_straight(msg.data)
+    def calculate_distance(self, x1, y1, x2, y2):
+        return (math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)) / 2
 
-    def handle_search(self, msg):
-        if msg.data == "not_found":
-            # Rotate by -π/4 if the object is not found
-            self.rotate_to_angle(-math.pi / 4)
+    def calculate_angle(self, x1, y1, x2, y2):
+        if (x1 == x2) and (y1 != y2):
+            return 0 if (y2 > y1) else math.pi
+        elif (y1 == y2) and (x1 != x2):
+            return math.pi / 2 if (x1 > x2) else -(math.pi / 2)
+        return math.atan2(y2 - y1, x2 - x1) - math.pi/2
+
+    def reached_waypoint(self, x_goal, y_goal):
+        x, y, _ = self.get_current_position()
+        distance = self.calculate_distance(x, y, x_goal, y_goal)
+        return distance < self.tolerance
+
+    def get_current_position(self):
+        return current_position[0], current_position[1], current_position[2]
+
+    def set_current_position(self, waypoint):
+        current_position[0], current_position[1], current_position[2] = waypoint
+        self.path_x.append(waypoint[0])
+        self.path_y.append(waypoint[1])
 
     def rotate_to_angle(self, angle_diff):
         rotation_time = abs(angle_diff) / self.rad_per_sec
@@ -52,22 +70,45 @@ class WaypointNavigator(Node):
         time.sleep(movement_time)
         self.mpi_ctrl.carStop()
 
-    def plot_path(self):
-        plt.figure(figsize=(8, 6))
-        plt.plot(self.path_x, self.path_y, marker='o', label="Robot Path")
-        plt.xlabel("X Position")
-        plt.ylabel("Y Position")
-        plt.title("Robot Movement Path")
-        plt.legend()
-        plt.grid(True)
-        plt.show()
+    def navigate_to_waypoint(self, x_goal, y_goal, theta_goal):
+        while not self.reached_waypoint(x_goal, y_goal):
+            x, y, theta = self.get_current_position()
+            distance = self.calculate_distance(x, y, x_goal, y_goal)
+            angle_to_goal = self.calculate_angle(x, y, x_goal, y_goal)
+            angle_diff = angle_to_goal - theta
 
-if __name__ == "__main__":
-    rclpy.init(args=None)
-    
-    navigator = WaypointNavigator()
+            if abs(angle_diff) > 0.1:
+                self.rotate_to_angle(angle_diff)
+                self.set_current_position([x, y, theta + angle_diff])
+            else:
+                self.move_straight(distance)
+                self.set_current_position([x_goal, y_goal, theta_goal])
 
-    rclpy.spin(navigator)
+        self.get_logger().info(f"Reached waypoint: {x_goal}, {y_goal}, {theta_goal}")
 
-    navigator.destroy_node()
+    def rotate_callback(self, msg):
+        angle_diff = msg.data
+        self.get_logger().info(f"Rotating by: {angle_diff} radians")
+        self.rotate_to_angle(angle_diff)
+
+    def move_callback(self, msg):
+        distance = msg.data
+        self.get_logger().info(f"Moving forward: {distance} cm")
+        self.move_straight(distance)
+
+    def start_navigation(self):
+        for waypoint in self.waypoints:
+            x_goal, y_goal, theta_goal = waypoint
+            self.navigate_to_waypoint(x_goal, y_goal, theta_goal)
+
+def main(args=None):
+    rclpy.init(args=args)
+    waypoint_navigator = WaypointNavigator('objects.txt')
+    waypoint_navigator.start_navigation()
+    rclpy.spin(waypoint_navigator)
+
+    waypoint_navigator.destroy_node()
     rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
