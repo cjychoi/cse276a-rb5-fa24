@@ -55,6 +55,7 @@ class YoloCameraNode(Node):
         # Publisher for sending rotation and distance to the waypoint navigator
         self.rotation_pub = self.create_publisher(Float32, '/rotation_angle', 10)
         self.distance_pub = self.create_publisher(Float32, '/move_distance', 10)
+        self.plot_pub = self.create_publisher(Float32, '/save_plot', 10)
 
     def load_waypoints(self):
         # Load the waypoints from the object file
@@ -72,6 +73,9 @@ class YoloCameraNode(Node):
             self.get_logger().info(f"Looking for object: {self.current_object} with known width: {self.KNOWN_WIDTH} cm")
         else:
             self.get_logger().info("All waypoints processed.")
+            msg = Float32()
+            msg.data = distance
+            self.distance_pub.publish(msg)
             rclpy.shutdown()
 
     def image_callback(self, msg):
