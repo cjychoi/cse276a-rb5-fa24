@@ -1,3 +1,5 @@
+# Working version of yolo_camera_node_script2.py 
+
 import cv2
 import numpy as np
 from ultralytics import YOLO
