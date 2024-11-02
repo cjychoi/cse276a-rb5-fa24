@@ -140,6 +140,7 @@ class YoloCameraNode(Node):
 
                     bounding_box = result.boxes.xyxy[i].cpu().numpy()
 
+                    self.rotate_to_angle(math.pi / 4)
                     time.sleep(3)
                     self.get_logger().info(f"distance: {distance}")
                     self.get_logger().info(f"angle: {angle_to_rotate}")
