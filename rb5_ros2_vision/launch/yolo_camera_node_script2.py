@@ -173,6 +173,10 @@ class YoloCameraNode(Node):
             time.sleep(3)
 
 def main(args=None):
+    var = None
+    while var == None:
+        var = input('press any key to start')
+        
     rclpy.init(args=args)
     yolo_camera_node = YoloCameraNode()
     rclpy.spin(yolo_camera_node)
