@@ -143,7 +143,9 @@ class YoloCameraNode(Node):
                         # Move forward if facing the object
                         self.get_logger().info(f"Moving forward by {distance - 10} cm.")
                         self.move_forward(distance - 10)
-                        # Here, you would typically set up a mechanism to call `movement_complete()` after the move is done
+                        # You should call `movement_complete()` after the move is done
+                        self.movement_complete()  # Simulate immediate completion for testing
+
                     self.load_next_waypoint()  # Load the next waypoint after processing this one
                     object_found = True  # Set the flag to true since the object was found
                     break
