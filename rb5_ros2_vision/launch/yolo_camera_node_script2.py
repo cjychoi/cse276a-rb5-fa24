@@ -50,17 +50,9 @@ class YoloCameraNode(Node):
         # Timer for frame processing
         self.timer = self.create_timer(1 / self.frame_rate, self.process_frame)
 
-        # Publishers for rotation and distance to waypoint navigator
-        self.rotation_publisher = self.create_publisher(Float32, '/rotate_angle', 10)
-        self.distance_publisher = self.create_publisher(Float32, '/move_distance', 10)
-
-        # Subscriber to listen for rotation completion from navigator
-        self.rotation_complete_subscriber = self.create_subscription(
-            Float32,
-            '/rotation_complete',
-            self.on_rotation_complete,
-            10
-        )
+        # Publisher for sending rotation and distance to the waypoint navigator
+        self.rotation_pub = self.create_publisher(Float32, '/rotation_angle', 10)
+        self.distance_pub = self.create_publisher(Float32, '/move_distance', 10)
 
     def load_waypoints(self):
         # Load the waypoints from the object file
@@ -71,9 +63,8 @@ class YoloCameraNode(Node):
 
     def load_next_waypoint(self):
         if self.current_waypoint_idx < len(self.waypoints):
-            self.current_object, self.KNOWN_WIDTH, self.final_pose = self.waypoints[self.current_waypoint_idx]
+            self.current_object, self.KNOWN_WIDTH, _ = self.waypoints[self.current_waypoint_idx]
             self.KNOWN_WIDTH = float(self.KNOWN_WIDTH)
-            self.final_pose = float(self.final_pose)
             self.current_waypoint_idx += 1
             self.get_logger().info(f"Looking for object: {self.current_object} with known width: {self.KNOWN_WIDTH} cm")
         else:
@@ -97,20 +88,16 @@ class YoloCameraNode(Node):
         return (offset / self.CAMERA_WIDTH) * FOV
 
     def rotate_to_angle(self, radians_to_rotate):
-        self.get_logger().info(f"Rotating by {radians_to_rotate} radians.")
         msg = Float32()
         msg.data = radians_to_rotate
-        self.rotation_publisher.publish(msg)
+        self.rotation_pub.publish(msg)
+        self.get_logger().info(f"Sent rotation command: {radians_to_rotate} radians.")
 
-    def move_to_distance(self, distance):
-        self.get_logger().info(f"Moving forward by {distance} cm.")
+    def move_forward(self, distance):
         msg = Float32()
         msg.data = distance
-        self.distance_publisher.publish(msg)
-
-    def on_rotation_complete(self, msg):
-        # Recheck if the object is found after rotation is complete
-        self.process_frame()
+        self.distance_pub.publish(msg)
+        self.get_logger().info(f"Sent move command: {distance} cm.")
 
     def process_frame(self):
         if self.frame is None:
@@ -119,8 +106,8 @@ class YoloCameraNode(Node):
 
         results = self.model(self.frame)
         if len(results) == 0 or results[0].boxes.shape[0] == 0:
-            self.get_logger().info(f"Object '{self.current_object}' not found. Rotating -45 degrees.")
-            self.rotate_to_angle(math.radians(-45))
+            self.get_logger().info(f"Object '{self.current_object}' not found. Rotating -pi/4 radians.")
+            self.rotate_to_angle(-math.pi / 4)  # Rotate by -pi/4 radians if the object is not found
             return
 
         for result in results:
@@ -137,7 +124,8 @@ class YoloCameraNode(Node):
                     if abs(angle_to_rotate) > 0.1:
                         self.rotate_to_angle(angle_to_rotate)
                     else:
-                        self.move_to_distance(distance - 10)
+                        self.get_logger().info(f"Moving forward by {distance - 10} cm.")
+                        self.move_forward(distance - 10)
                     self.load_next_waypoint()
                     break
 
