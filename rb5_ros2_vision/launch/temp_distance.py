@@ -1,3 +1,5 @@
+# Working version of distance.py
+
 import cv2
 import numpy as np
 from ultralytics import YOLO
@@ -58,7 +60,7 @@ class YoloCameraNode(Node):
         else:
             return None
     
-       def process_frame(self):
+    def process_frame(self):
         if self.frame is None:
             self.get_logger().info("No frame received yet...")
             return
