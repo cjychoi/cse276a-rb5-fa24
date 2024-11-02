@@ -142,8 +142,7 @@ class YoloCameraNode(Node):
 
                     self.get_logger().info(f"distance: {distance}")
                     self.get_logger().info(f"angle: {angle_to_rotate}")
-                    time.sleep(5)
-                    self.rotate_to_angle(-math.pi / 2)
+                    time.sleep(3)
 
                     if abs(angle_to_rotate) > 0.1:
                         # Rotate towards the object
@@ -170,6 +169,7 @@ class YoloCameraNode(Node):
             # If the object was not found, rotate -pi/4 radians
             self.get_logger().info(f"Object '{self.current_object}' not found. Rotating pi/4 radians.")
             self.rotate_to_angle(math.pi / 4)  # Rotate by pi/4 radians if the object is not found
+            time.sleep(3)
 
 def main(args=None):
     rclpy.init(args=args)
