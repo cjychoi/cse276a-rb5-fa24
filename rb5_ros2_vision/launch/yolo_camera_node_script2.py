@@ -143,6 +143,7 @@ class YoloCameraNode(Node):
                     self.get_logger().info(f"distance: {distance}")
                     self.get_logger().info(f"angle: {angle_to_rotate}")
                     time.sleep(5)
+                    self.rotate_to_angle(-math.pi / 2)
 
                     if abs(angle_to_rotate) > 0.1:
                         # Rotate towards the object
