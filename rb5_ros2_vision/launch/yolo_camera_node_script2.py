@@ -29,6 +29,7 @@ class YoloCameraNode(Node):
         self.frame = None
         self.current_object = None
         self.KNOWN_WIDTH = None
+        self.is_moving = False  # Flag to track if the robot is moving
         self.load_waypoints()
 
         # Load the YOLO model
@@ -104,12 +105,21 @@ class YoloCameraNode(Node):
         msg.data = distance
         self.distance_pub.publish(msg)
         self.get_logger().info(f"Sent move command: {distance} cm.")
+        self.is_moving = True  # Set the moving flag to True
+
+    def movement_complete(self):
+        # Called when the movement is complete
+        self.is_moving = False  # Set the moving flag to False
 
     def process_frame(self):
         # Process each frame to find the object and compute commands
         if self.frame is None:
             self.get_logger().info("No frame received yet...")
             return
+
+        if self.is_moving:
+            self.get_logger().info("Currently moving. Waiting for movement to complete...")
+            return  # Skip processing if currently moving
 
         results = self.model(self.frame)
         object_found = False  # Flag to track if the object was found
@@ -133,6 +143,7 @@ class YoloCameraNode(Node):
                         # Move forward if facing the object
                         self.get_logger().info(f"Moving forward by {distance - 10} cm.")
                         self.move_forward(distance - 10)
+                        # Here, you would typically set up a mechanism to call `movement_complete()` after the move is done
                     self.load_next_waypoint()  # Load the next waypoint after processing this one
                     object_found = True  # Set the flag to true since the object was found
                     break
