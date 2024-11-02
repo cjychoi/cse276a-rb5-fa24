@@ -62,6 +62,7 @@ class YoloCameraNode(Node):
         self.load_next_waypoint()
 
     def load_next_waypoint(self):
+        # Load the next object from the object file
         if self.current_waypoint_idx < len(self.waypoints):
             self.current_object, self.KNOWN_WIDTH, _ = self.waypoints[self.current_waypoint_idx]
             self.KNOWN_WIDTH = float(self.KNOWN_WIDTH)
@@ -72,42 +73,49 @@ class YoloCameraNode(Node):
             rclpy.shutdown()
 
     def image_callback(self, msg):
+        # Convert the ROS Image message to an OpenCV image
         try:
             self.frame = self.bridge.imgmsg_to_cv2(msg, "bgr8")
         except Exception as e:
             self.get_logger().error(f"Error converting ROS Image to OpenCV: {e}")
 
     def estimate_distance(self, bbox_width):
+        # Estimate the distance to the object based on the bounding box width
         if bbox_width > 0:
             return (self.KNOWN_WIDTH * self.FOCAL_LENGTH) / bbox_width
         return None
 
     def calculate_angle_to_center(self, bbox_center_x):
+        # Calculate the angle to rotate towards the object
         offset = bbox_center_x - self.CAMERA_CENTER
         FOV = 1.0472  # 60 degrees in radians
         return (offset / self.CAMERA_WIDTH) * FOV
 
     def rotate_to_angle(self, radians_to_rotate):
+        # Publish the rotation command
         msg = Float32()
         msg.data = radians_to_rotate
         self.rotation_pub.publish(msg)
         self.get_logger().info(f"Sent rotation command: {radians_to_rotate} radians.")
 
     def move_forward(self, distance):
+        # Publish the movement command
         msg = Float32()
         msg.data = distance
         self.distance_pub.publish(msg)
         self.get_logger().info(f"Sent move command: {distance} cm.")
 
     def process_frame(self):
+        # Process each frame to find the object and compute commands
         if self.frame is None:
             self.get_logger().info("No frame received yet...")
             return
 
         results = self.model(self.frame)
         if len(results) == 0 or results[0].boxes.shape[0] == 0:
+            # Rotate by -pi/4 radians if the object is not found
             self.get_logger().info(f"Object '{self.current_object}' not found. Rotating -pi/4 radians.")
-            self.rotate_to_angle(-math.pi / 4)  # Rotate by -pi/4 radians if the object is not found
+            self.rotate_to_angle(-math.pi / 4)
             return
 
         for result in results:
@@ -115,6 +123,7 @@ class YoloCameraNode(Node):
                 cls = int(result.boxes.cls[i].item())
                 name = result.names[cls]
                 if name == self.current_object:
+                    # Object detected, calculate distance and angle to rotate
                     bbox = result.boxes.xyxy[i].cpu().numpy()
                     x, width = int(bbox[0]), int(bbox[2] - bbox[0])
                     distance = self.estimate_distance(width)
@@ -122,11 +131,13 @@ class YoloCameraNode(Node):
                     angle_to_rotate = self.calculate_angle_to_center(bbox_center_x)
 
                     if abs(angle_to_rotate) > 0.1:
+                        # Rotate towards the object
                         self.rotate_to_angle(angle_to_rotate)
                     else:
+                        # Move forward if facing the object
                         self.get_logger().info(f"Moving forward by {distance - 10} cm.")
                         self.move_forward(distance - 10)
-                    self.load_next_waypoint()
+                    self.load_next_waypoint()  # Load the next waypoint after processing this one
                     break
 
 def main(args=None):
