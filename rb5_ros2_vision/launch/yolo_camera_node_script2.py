@@ -1,132 +1,105 @@
-import cv2
-import numpy as np
-from ultralytics import YOLO
+import time
+import math
 import rclpy
 from rclpy.node import Node
-from sensor_msgs.msg import Image
-from cv_bridge import CvBridge
-import math
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, String
+from mpi_control import MegaPiController
+import matplotlib.pyplot as plt
 
-class YoloCameraNode(Node):
-    def __init__(self):
-        super().__init__('yolo_camera_node')
+current_position = [0.0, 0.0, 0.0]  # Initialize global array to hold the current position
+path = []  # To store the robot's path
 
-        # Initialize parameters
-        self.declare_parameter('camera_id', '0')
-        self.declare_parameter('topic_name', '/camera_0')
-        self.declare_parameter('frame_rate', 30)
-        self.declare_parameter('object_file', 'object.txt')
+class WaypointNavigator(Node):
+    def __init__(self, waypoint_file):
+        super().__init__('waypoint_navigator')
+        self.get_logger().info("Starting waypoint navigator...")
 
-        # Retrieve parameters
-        self.camera_id = self.get_parameter('camera_id').value
-        self.topic_name = self.get_parameter('topic_name').value
-        self.frame_rate = self.get_parameter('frame_rate').value
-        self.object_file = self.get_parameter('object_file').value
+        # Initialize the MegaPiController
+        self.mpi_ctrl = MegaPiController(port='/dev/ttyUSB0', verbose=True)
+        time.sleep(1)
 
-        # Initialize variables
-        self.bridge = CvBridge()
-        self.frame = None
-        self.current_object = None
-        self.KNOWN_WIDTH = None
-        self.load_waypoints()
-
-        # Load the YOLO model
-        self.model = YOLO('yolov8n.pt')
-
-        # Camera parameters
-        self.FOCAL_LENGTH = 902.8
-        self.CAMERA_WIDTH = 640
-        self.CAMERA_CENTER = self.CAMERA_WIDTH / 2
-
-        # Publisher to send angle and distance to waypoint navigator
-        self.angle_pub = self.create_publisher(Float32, 'rotate_angle', 10)
-        self.distance_pub = self.create_publisher(Float32, 'move_distance', 10)
-
-        # Subscribe to the camera topic
-        self.subscription = self.create_subscription(
-            Image,
-            self.topic_name,
-            self.image_callback,
-            10
-        )
-
-        # Timer for frame processing
-        self.timer = self.create_timer(1 / self.frame_rate, self.process_frame)
-
-    def load_waypoints(self):
-        # Load the waypoints from the object file
-        with open(self.object_file, 'r') as f:
-            self.waypoints = [line.strip().split(', ') for line in f]
+        # Load waypoints from file
+        self.waypoints = self.load_waypoints(waypoint_file)
         self.current_waypoint_idx = 0
-        self.load_next_waypoint()
 
-    def load_next_waypoint(self):
-        if self.current_waypoint_idx < len(self.waypoints):
-            self.current_object, self.KNOWN_WIDTH = self.waypoints[self.current_waypoint_idx]
-            self.KNOWN_WIDTH = float(self.KNOWN_WIDTH)
-            self.current_waypoint_idx += 1
-            self.get_logger().info(f"Looking for object: {self.current_object} with known width: {self.KNOWN_WIDTH} cm")
-        else:
-            self.get_logger().info("All waypoints processed.")
-            rclpy.shutdown()
+        # Control parameters prepared from calibration
+        self.k_v = 30
+        self.k_w = 55
+        self.dist_per_sec = 10 / 1
+        self.rad_per_sec = math.pi / 2
+        self.tolerance = 0.1
 
-    def image_callback(self, msg):
-        try:
-            self.frame = self.bridge.imgmsg_to_cv2(msg, "bgr8")
-        except Exception as e:
-            self.get_logger().error(f"Error converting ROS Image to OpenCV: {e}")
+        # Subscriptions to angle and distance from the YOLO node
+        self.angle_sub = self.create_subscription(Float32, 'rotate_angle', self.handle_rotate_angle, 10)
+        self.distance_sub = self.create_subscription(Float32, 'move_distance', self.handle_move_distance, 10)
+        self.rotation_request_sub = self.create_subscription(String, 'rotation_request', self.handle_rotation_request, 10)
 
-    def estimate_distance(self, bbox_width):
-        if bbox_width > 0:
-            return (self.KNOWN_WIDTH * self.FOCAL_LENGTH) / bbox_width
-        return None
+        self.final_pose = None
 
-    def calculate_angle_to_center(self, bbox_center_x):
-        offset = bbox_center_x - self.CAMERA_CENTER
-        FOV = 1.0472  # 60 degrees in radians
-        return (offset / self.CAMERA_WIDTH) * FOV
+        # Initialize plot
+        plt.ion()
 
-    def rotate_to_angle(self, radians_to_rotate):
-        self.get_logger().info(f"Publishing rotate angle: {radians_to_rotate} radians.")
-        self.angle_pub.publish(Float32(data=radians_to_rotate))
+    def load_waypoints(self, filename):
+        waypoints = []
+        with open(filename, 'r') as f:
+            for line in f.readlines():
+                x, y, theta = map(float, line.strip().split(','))
+                waypoints.append((x, y, theta))
+        self.get_logger().info(f"Waypoints loaded: {waypoints}")
+        return waypoints
 
-    def process_frame(self):
-        if self.frame is None:
-            self.get_logger().info("No frame received yet...")
-            return
+    def get_current_position(self):
+        return current_position[0], current_position[1], current_position[2]
 
-        results = self.model(self.frame)
-        if len(results) == 0 or results[0].boxes.shape[0] == 0:
-            self.get_logger().info(f"Object '{self.current_object}' not found. Rotating -45 degrees.")
-            self.rotate_to_angle(math.radians(-45))
-            return
+    def set_current_position(self, waypoint):
+        current_position[0] = waypoint[0]
+        current_position[1] = waypoint[1]
+        current_position[2] = waypoint[2]
+        path.append((current_position[0], current_position[1]))
+        self.get_logger().info(f"Set current position: {waypoint}")
+        self.plot_path()
 
-        for result in results:
-            for i in range(result.boxes.shape[0]):
-                cls = int(result.boxes.cls[i].item())
-                name = result.names[cls]
-                if name == self.current_object:
-                    bbox = result.boxes.xyxy[i].cpu().numpy()
-                    x, width = int(bbox[0]), int(bbox[2] - bbox[0])
-                    distance = self.estimate_distance(width)
-                    bbox_center_x = x + width / 2
-                    angle_to_rotate = self.calculate_angle_to_center(bbox_center_x)
+    def rotate_to_angle(self, angle_diff):
+        rotation_time = abs(angle_diff) / self.rad_per_sec
+        self.mpi_ctrl.carRotate(self.k_w if angle_diff > 0 else -self.k_w)
+        time.sleep(rotation_time)
+        self.mpi_ctrl.carStop()
 
-                    if abs(angle_to_rotate) > 0.1:
-                        self.rotate_to_angle(angle_to_rotate)
-                    else:
-                        self.get_logger().info(f"Publishing move distance: {distance - 10} cm.")
-                        self.distance_pub.publish(Float32(data=distance - 10))
-                    self.load_next_waypoint()
-                    break
+    def move_straight(self, distance):
+        movement_time = abs(distance) / (self.dist_per_sec / 100)
+        self.mpi_ctrl.carStraight(self.k_v)
+        time.sleep(movement_time)
+        self.mpi_ctrl.carStop()
+
+    def handle_rotate_angle(self, msg):
+        angle_diff = msg.data
+        self.rotate_to_angle(angle_diff)
+
+    def handle_move_distance(self, msg):
+        distance = msg.data
+        self.move_straight(distance)
+        self.set_current_position([current_position[0] + distance, current_position[1], current_position[2]])
+
+    def handle_rotation_request(self, msg):
+        if msg.data == '-pi/4':
+            self.rotate_to_angle(-math.pi / 4)
+
+    def plot_path(self):
+        plt.clf()
+        x_coords, y_coords = zip(*path)
+        plt.plot(x_coords, y_coords, marker='o')
+        plt.title("Robot Path")
+        plt.xlabel("X")
+        plt.ylabel("Y")
+        plt.grid(True)
+        plt.pause(0.01)
 
 def main(args=None):
     rclpy.init(args=args)
-    yolo_camera_node = YoloCameraNode()
-    rclpy.spin(yolo_camera_node)
+    navigator = WaypointNavigator(waypoint_file='waypoints.txt')
+    rclpy.spin(navigator)
 
-    yolo_camera_node.destroy_node()
+    navigator.destroy_node()
     rclpy.shutdown()
 
 if __name__ == '__main__':
