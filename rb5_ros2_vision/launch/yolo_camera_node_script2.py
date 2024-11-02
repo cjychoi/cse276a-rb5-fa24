@@ -130,6 +130,9 @@ class YoloCameraNode(Node):
                 cls = int(result.boxes.cls[i].item())
                 name = result.names[cls]
                 if name == self.current_object:
+                    var = None
+                    while var == None:
+                        var = input('press any key to start')
                     self.get_logger().info("Object found")
                     # Object detected, calculate distance and angle to rotate
                     bbox = result.boxes.xyxy[i].cpu().numpy()
@@ -140,7 +143,6 @@ class YoloCameraNode(Node):
 
                     bounding_box = result.boxes.xyxy[i].cpu().numpy()
 
-                    self.rotate_to_angle(math.pi / 4)
                     time.sleep(3)
                     self.get_logger().info(f"distance: {distance}")
                     self.get_logger().info(f"angle: {angle_to_rotate}")
@@ -173,11 +175,7 @@ class YoloCameraNode(Node):
             self.rotate_to_angle(math.pi / 4)  # Rotate by pi/4 radians if the object is not found
             time.sleep(3)
 
-def main(args=None):
-    var = None
-    while var == None:
-        var = input('press any key to start')
-        
+def main(args=None):       
     rclpy.init(args=args)
     yolo_camera_node = YoloCameraNode()
     rclpy.spin(yolo_camera_node)
