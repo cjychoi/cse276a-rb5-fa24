@@ -1,0 +1,117 @@
+import cv2
+import numpy as np
+from ultralytics import YOLO
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Image
+from std_msgs.msg import Float32, String
+from cv_bridge import CvBridge
+import math
+
+class YoloCameraNode(Node):
+    def __init__(self):
+        super().__init__('yolo_camera_node')
+
+        # Initialize parameters
+        self.declare_parameter('camera_id', '0')
+        self.declare_parameter('topic_name', '/camera_0')
+        self.declare_parameter('frame_rate', 30)
+        self.declare_parameter('object_file', 'objects.txt')
+
+        # Retrieve parameters
+        self.camera_id = self.get_parameter('camera_id').value
+        self.topic_name = self.get_parameter('topic_name').value
+        self.frame_rate = self.get_parameter('frame_rate').value
+        self.object_file = self.get_parameter('object_file').value
+
+        # Initialize variables
+        self.bridge = CvBridge()
+        self.frame = None
+        self.current_object = None
+        self.KNOWN_WIDTH = None
+        self.load_waypoints()
+
+        # Load the YOLO model
+        self.model = YOLO('yolov8n.pt')
+
+        # Camera parameters
+        self.FOCAL_LENGTH = 902.8
+        self.CAMERA_WIDTH = 640
+        self.CAMERA_CENTER = self.CAMERA_WIDTH / 2
+
+        # Subscribe to the camera topic
+        self.subscription = self.create_subscription(
+            Image,
+            self.topic_name,
+            self.image_callback,
+            10
+        )
+
+        # Publishers to communicate with the waypoint navigator
+        self.angle_publisher = self.create_publisher(Float32, 'rotate_angle', 10)
+        self.distance_publisher = self.create_publisher(Float32, 'move_distance', 10)
+        self.search_publisher = self.create_publisher(String, 'search_status', 10)
+
+        # Timer for frame processing
+        self.timer = self.create_timer(1 / self.frame_rate, self.process_frame)
+
+    def load_waypoints(self):
+        # Load the waypoints from the object file
+        with open(self.object_file, 'r') as f:
+            self.waypoints = [line.strip().split(', ') for line in f]
+        self.current_waypoint_idx = 0
+        self.load_next_waypoint()
+
+    def load_next_waypoint(self):
+        if self.current_waypoint_idx < len(self.waypoints):
+            self.current_object, self.KNOWN_WIDTH, self.final_pose = self.waypoints[self.current_waypoint_idx]
+            self.KNOWN_WIDTH = float(self.KNOWN_WIDTH)
+            self.final_pose = float(self.final_pose)
+            self.current_waypoint_idx += 1
+            self.get_logger().info(f"Looking for object: {self.current_object} with known width: {self.KNOWN_WIDTH} cm")
+        else:
+            self.get_logger().info("All waypoints processed.")
+            rclpy.shutdown()
+
+    def image_callback(self, msg):
+        try:
+            self.frame = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+        except Exception as e:
+            self.get_logger().error(f"Error converting ROS Image to OpenCV: {e}")
+
+    def estimate_distance(self, bbox_width):
+        if bbox_width > 0:
+            return (self.KNOWN_WIDTH * self.FOCAL_LENGTH) / bbox_width
+        return None
+
+    def calculate_angle_to_center(self, bbox_center_x):
+        offset = bbox_center_x - self.CAMERA_CENTER
+        FOV = 1.0472  # 60 degrees in radians
+        return (offset / self.CAMERA_WIDTH) * FOV
+
+    def process_frame(self):
+        if self.frame is None:
+            self.get_logger().info("No frame received yet...")
+            return
+
+        results = self.model(self.frame)
+        if len(results) == 0 or results[0].boxes.shape[0] == 0:
+            # Object not found, request a search rotation
+            self.search_publisher.publish(String(data="not_found"))
+            return
+
+        for result in results:
+            for i in range(result.boxes.shape[0]):
+                cls = int(result.boxes.cls[i].item())
+                name = result.names[cls]
+                if name == self.current_object:
+                    bbox = result.boxes.xyxy[i].cpu().numpy()
+                    x, width = int(bbox[0]), int(bbox[2] - bbox[0])
+                    distance = self.estimate_distance(width)
+                    bbox_center_x = x + width / 2
+                    angle_to_rotate = self.calculate_angle_to_center(bbox_center_x)
+
+                    # Publish the rotation angle and move distance
+                    self.angle_publisher.publish(Float32(data=angle_to_rotate))
+                    self.distance_publisher.publish(Float32(data=distance - 10))
+                    return
