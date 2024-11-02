@@ -140,7 +140,7 @@ class YoloCameraNode(Node):
                     if abs(angle_to_rotate) > 0.1:
                         # Rotate towards the object
                         self.rotate_to_angle(angle_to_rotate)
-                        while self.isMoving:
+                        while self.is_moving:
                             self.get_logger().info("Currently moving. Waiting for movement to complete...")
                             time.sleep(1)
                         self.get_logger().info(f"Moving forward by {distance - 10} cm.")
