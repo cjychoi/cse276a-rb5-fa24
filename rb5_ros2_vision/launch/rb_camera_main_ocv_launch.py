@@ -17,7 +17,7 @@ def generate_launch_description():
     use_rb_cam = DeclareLaunchArgument(
         "use_rb_cam", default_value=TextSubstitution(text="true")
     )
-    camera_id = DeclareLaunchArgument(
+= DeclareLaunchArgument(
         "camera_id", default_value=TextSubstitution(text="0")
     )
     frame_rate = DeclareLaunchArgument(
