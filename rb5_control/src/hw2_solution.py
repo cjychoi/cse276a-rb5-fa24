@@ -401,6 +401,7 @@ def main(args=None):
             if (
                 found_state
             ):  # if the tag is detected, we can use it to update current state.
+                print('\n\n\n\n---------------tag found--------------\n\n\n\n')
                 current_state = estimated_state
     # stop the car and exit
     pid.publisher_.publish(genTwistMsg(np.array([0.0, 0.0, 0.0])))
