@@ -44,7 +44,7 @@ class MegaPiControllerNode(Node):
         # send command to each wheel
         print(result)
         self.mpi_ctrl.setFourMotors(
-            result[0][0], result[1][0], result[2][0], result[3][0]
+            int(result[0][0]), int(result[1][0]), int(result[2][0]), int(result[3][0])
         )
 
 
