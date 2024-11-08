@@ -64,7 +64,7 @@ class YoloCameraNode(Node):
         width = box.xmax - box.xmin
 
         # Estimate distance based on object size or known dimensions
-        focal_length = 300  # Approximate focal length for a camera
+        focal_length = 902.8  # Approximate focal length for a camera
         known_width = 0.2  # Assume all objects have a known width of 20 cm
         distance = (known_width * focal_length) / width
         
