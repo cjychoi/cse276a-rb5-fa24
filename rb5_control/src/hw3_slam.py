@@ -13,10 +13,6 @@ import matplotlib.animation as animation
 import matplotlib
 matplotlib.use('Agg')
 
-# Plotting setup for visualizing detected objects and robot
-plt.plot([1, 2, 3], [4, 5, 6])
-plt.savefig("plot.png")
-
 # EKF SLAM Class
 class EKFSLAM:
     def __init__(self, objects_to_detect, focal_length, known_width):
@@ -72,7 +68,7 @@ class YoloCameraNode(Node):
             'teddy bear': 0.2,
             'backpack': 0.2
         }
-        self.current_object_index = 0
+        self.detected_objects = set()  # Track detected objects
         self.detection_timeout = 10
         self.detection_start_time = time.time()
 
@@ -112,22 +108,22 @@ class YoloCameraNode(Node):
         for box in detected_objects:
             cls = int(box.cls.item())
             object_name = self.model.names[cls]
-            if object_name == list(self.objects_to_detect.keys())[self.current_object_index]:
-                # Object found
-                print("\n<<Object Found!>>\n")
+            if object_name in self.objects_to_detect and object_name not in self.detected_objects:
+                # Object found, and it hasn't been detected before
+                print(f"\n<<{object_name} Found!>>\n")
                 rotate_twist = Twist()
                 rotate_twist.angular.x = 0.0  # Rotate speed
                 rotate_twist.angular.y = 0.0
                 rotate_twist.angular.z = 0.0
                 self.publisher_.publish(rotate_twist)
                 time.sleep(5)
-                self.handle_detected_object(cv_image, box)
+                self.handle_detected_object(cv_image, box, object_name)
                 return
 
         if time.time() - self.detection_start_time > self.detection_timeout:
             self.rotate_to_search()
 
-    def handle_detected_object(self, cv_image, box):
+    def handle_detected_object(self, cv_image, box, object_name):
         # Extract object details
         x_min, y_min, x_max, y_max = box.xyxy[0]
         x_center = (x_min + x_max) / 2
@@ -136,7 +132,7 @@ class YoloCameraNode(Node):
 
         # Calculate distance using EKF
         distance = (self.ekf_slam.known_width * self.ekf_slam.focal_length) / width
-        self.get_logger().info(f'Detected {list(self.objects_to_detect.keys())[self.current_object_index]} at {distance:.2f}m')
+        self.get_logger().info(f'Detected {object_name} at {distance:.2f}m')
 
         # Create and publish movement command based on detection
         move_twist = Twist()
@@ -145,15 +141,17 @@ class YoloCameraNode(Node):
         self.publisher_.publish(move_twist)
 
         # Update EKF with the detected object's position
-        self.ekf_slam.update(np.array([distance, x_center]), self.current_object_index)
+        obj_index = list(self.objects_to_detect.keys()).index(object_name)
+        self.ekf_slam.update(np.array([distance, x_center]), obj_index)
 
         # Save the updated plot after each object detection
         self.save_plot()
 
-        # Move to the next object once current is found
-        if distance < 0.2:
-            self.current_object_index += 1
-            self.detection_start_time = time.time()
+        # Mark the object as detected so it won't be processed again
+        self.detected_objects.add(object_name)
+
+        # Reset detection start time to look for the next object
+        self.detection_start_time = time.time()
 
     def rotate_to_search(self):
         rotate_twist = Twist()
@@ -170,11 +168,12 @@ class YoloCameraNode(Node):
         self.robot_line.set_data(self.robot_data[0], self.robot_data[1])
 
         for i, obj_name in enumerate(self.objects_to_detect.keys()):
-            obj_x = state[3 + 2 * i, 0]
-            obj_y = state[3 + 2 * i + 1, 0]
-            self.object_data[obj_name].append([obj_x, obj_y])  # Store positions over time
-            obj_positions = np.array(self.object_data[obj_name])
-            self.object_lines[i].set_data(obj_positions[:, 0], obj_positions[:, 1])
+            if obj_name in self.detected_objects:  # Only plot detected objects
+                obj_x = state[3 + 2 * i, 0]
+                obj_y = state[3 + 2 * i + 1, 0]
+                self.object_data[obj_name].append([obj_x, obj_y])  # Store positions over time
+                obj_positions = np.array(self.object_data[obj_name])
+                self.object_lines[i].set_data(obj_positions[:, 0], obj_positions[:, 1])
 
         # Save the plot to a file after every update
         plt.savefig(f"slam_plot_all_objects.png")  # Save the plot with all object positions
@@ -188,11 +187,12 @@ class YoloCameraNode(Node):
         self.robot_line.set_data(self.robot_data[0], self.robot_data[1])
 
         for i, obj_name in enumerate(self.objects_to_detect.keys()):
-            obj_x = state[3 + 2 * i, 0]
-            obj_y = state[3 + 2 * i + 1, 0]
-            self.object_data[obj_name].append([obj_x, obj_y])  # Store positions over time
-            obj_positions = np.array(self.object_data[obj_name])
-            self.object_lines[i].set_data(obj_positions[:, 0], obj_positions[:, 1])
+            if obj_name in self.detected_objects:  # Only plot detected objects
+                obj_x = state[3 + 2 * i, 0]
+                obj_y = state[3 + 2 * i + 1, 0]
+                self.object_data[obj_name].append([obj_x, obj_y])  # Store positions over time
+                obj_positions = np.array(self.object_data[obj_name])
+                self.object_lines[i].set_data(obj_positions[:, 0], obj_positions[:, 1])
 
         return [self.robot_line] + self.object_lines
 
