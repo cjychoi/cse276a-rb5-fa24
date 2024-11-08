@@ -177,7 +177,7 @@ class YoloCameraNode(Node):
         self.robot_data = np.array([robot_x, robot_y])
 
         # Plot robot position
-        self.robot_line.set_data(self.robot_data[0], self.robot_data[1])
+        self.robot_line.set_data([self.robot_data[0]], [self.robot_data[1]])
 
         # Plot each detected object in its assigned color
         for i, obj_name in enumerate(self.objects_to_detect.keys()):
