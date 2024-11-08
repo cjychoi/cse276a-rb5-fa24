@@ -65,13 +65,13 @@ class YoloCameraNode(Node):
 
         self.objects_to_detect = {
             'teddy bear': 0.2,
-            'backpack': 0.2,
+            'backpack': 0.3,
             'umbrella': 0.6,
             'bottle': 0.1
         }
         self.detected_objects = set()  # Track detected objects
         self.detection_timeout = 10
-        self.rotation_complete = False  # To track if 360-degree rotation is complete
+        self.starting_angle = None
 
         self.model = YOLO('yolov8n.pt')
 
@@ -93,19 +93,12 @@ class YoloCameraNode(Node):
         self.ax.set_xlim(-5, 5)  # Adjust limits based on environment size
         self.ax.set_ylim(-5, 5)
         self.robot_line, = self.ax.plot([], [], 'bo', label="Robot")
-        
-        # Assign each object a unique color
-        self.colors = plt.cm.get_cmap('tab10', len(self.objects_to_detect))
-        self.object_lines = {
-            obj_name: self.ax.plot([], [], 'o', color=self.colors(i), label=obj_name)[0]
-            for i, obj_name in enumerate(self.objects_to_detect.keys())
-        }
-
+        self.object_lines = [self.ax.plot([], [], 'ro', label=obj)[0] for obj in self.objects_to_detect.keys()]
         self.robot_data = np.array([0, 0])
         self.object_data = {obj: [] for obj in self.objects_to_detect.keys()}  # Store positions of detected objects
 
         # Start spinning and detection
-        self.start_rotation()
+        self.spin_and_track()
 
     def image_callback(self, msg):
         cv_image = self.br.imgmsg_to_cv2(msg, 'bgr8')
@@ -113,19 +106,12 @@ class YoloCameraNode(Node):
         results = self.model(cv_image)
         detected_objects = results[0].boxes
 
-        found_objects = False
         for box in detected_objects:
             cls = int(box.cls.item())
             object_name = self.model.names[cls]
             if object_name in self.objects_to_detect and object_name not in self.detected_objects:
                 self.get_logger().info(f'\n<<{object_name} Found!>>\n')
                 self.handle_detected_object(cv_image, box, object_name)
-                found_objects = True
-
-        # If an object was detected, stop the robot, plot, then continue
-        if found_objects:
-            self.stop_robot()
-            self.plot_visible_objects()
 
     def handle_detected_object(self, cv_image, box, object_name):
         # Extract object details
@@ -144,59 +130,60 @@ class YoloCameraNode(Node):
         obj_index = list(self.objects_to_detect.keys()).index(object_name)
         self.ekf_slam.update(np.array([distance, angle_offset]), obj_index)
 
+        # Save the updated plot after each object detection
+        self.save_plot()
+
         # Mark the object as detected so it won't be processed again
         self.detected_objects.add(object_name)
 
-    def start_rotation(self):
+    def spin_and_track(self):
         # Rotate the robot 360 degrees to track objects
         rotate_twist = Twist()
-        rotate_twist.angular.z = 8.0  # Set a slow rotation speed
-        self.rotation_start_time = time.time()
-        self.rotation_duration = 2 * np.pi / 0.5  # Total time to spin 360 degrees at given angular speed
+        rotate_twist.angular.z = 5.0  # Set a slow rotation speed
+        start_time = time.time()
+        rotation_duration = 2 * np.pi / 0.5  # Total time to spin 360 degrees at given angular speed
 
-        while not self.rotation_complete:
+        while time.time() - start_time < rotation_duration:
             self.publisher_.publish(rotate_twist)
             rclpy.spin_once(self)
 
-            # Check if 360 degrees rotation is completed
-            if time.time() - self.rotation_start_time >= self.rotation_duration:
-                self.stop_robot()
-                self.rotation_complete = True
+        # After completing the spin, stop the robot and return to initial orientation
+        rotate_twist.angular.z = 0.0
+        self.publisher_.publish(rotate_twist)
+        self.return_to_start()
 
-    def stop_robot(self):
-        # Stop the robot from spinning
+    def return_to_start(self):
+        # Rotate back to initial orientation
         rotate_twist = Twist()
+        rotate_twist.angular.z = -0.5  # Rotate back to starting angle
+        start_time = time.time()
+        rotation_duration = 2 * np.pi / 0.5  # Same duration to return
+
+        while time.time() - start_time < rotation_duration:
+            self.publisher_.publish(rotate_twist)
+            rclpy.spin_once(self)
+
         rotate_twist.angular.z = 0.0
         self.publisher_.publish(rotate_twist)
 
-    def plot_visible_objects(self):
-        """Plots all visible objects that haven't been plotted before, then resumes spinning."""
-        # Save the updated plot after each object detection
+    def save_plot(self):
+        """Saves the plot after every object is detected and processed."""
         state = self.ekf_slam.get_state()
         robot_x, robot_y, _ = state[0, 0], state[1, 0], state[2, 0]
         self.robot_data = np.array([robot_x, robot_y])
 
-        # Plot robot position
-        self.robot_line.set_data([self.robot_data[0]], [self.robot_data[1]])
+        self.robot_line.set_data(self.robot_data[0], self.robot_data[1])
 
-        # Plot each detected object in its assigned color
         for i, obj_name in enumerate(self.objects_to_detect.keys()):
             if obj_name in self.detected_objects:  # Only plot detected objects
                 obj_x = state[3 + 2 * i, 0]
                 obj_y = state[3 + 2 * i + 1, 0]
                 self.object_data[obj_name].append([obj_x, obj_y])  # Store positions over time
                 obj_positions = np.array(self.object_data[obj_name])
-                self.object_lines[obj_name].set_data(obj_positions[:, 0], obj_positions[:, 1])
-
-        # Add a legend to the plot to label object names and colors
-        self.ax.legend(loc="upper right")
+                self.object_lines[i].set_data(obj_positions[:, 0], obj_positions[:, 1])
 
         # Save the plot to an image file
-        plt.savefig('slam_plot_with_legend.png')
-
-        # After plotting, resume rotation if not complete
-        if not self.rotation_complete:
-            self.start_rotation()
+        plt.savefig('slam_plot.png')
 
 def main(args=None):
     rclpy.init(args=args)
