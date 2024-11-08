@@ -65,9 +65,7 @@ class YoloCameraNode(Node):
 
         self.objects_to_detect = {
             'teddy bear': 0.2,
-            'backpack': 0.3,
-            'umbrella': 0.6,
-            'bottle': 0.1
+            'backpack': 0.2
         }
         self.detected_objects = set()  # Track detected objects
         self.detection_timeout = 10
@@ -93,7 +91,14 @@ class YoloCameraNode(Node):
         self.ax.set_xlim(-5, 5)  # Adjust limits based on environment size
         self.ax.set_ylim(-5, 5)
         self.robot_line, = self.ax.plot([], [], 'bo', label="Robot")
-        self.object_lines = [self.ax.plot([], [], 'ro', label=obj)[0] for obj in self.objects_to_detect.keys()]
+        
+        # Assign each object a unique color
+        self.colors = plt.cm.get_cmap('tab10', len(self.objects_to_detect))
+        self.object_lines = {
+            obj_name: self.ax.plot([], [], 'o', color=self.colors(i), label=obj_name)[0]
+            for i, obj_name in enumerate(self.objects_to_detect.keys())
+        }
+
         self.robot_data = np.array([0, 0])
         self.object_data = {obj: [] for obj in self.objects_to_detect.keys()}  # Store positions of detected objects
 
@@ -172,18 +177,23 @@ class YoloCameraNode(Node):
         robot_x, robot_y, _ = state[0, 0], state[1, 0], state[2, 0]
         self.robot_data = np.array([robot_x, robot_y])
 
+        # Plot robot position
         self.robot_line.set_data(self.robot_data[0], self.robot_data[1])
 
+        # Plot each detected object in its assigned color
         for i, obj_name in enumerate(self.objects_to_detect.keys()):
             if obj_name in self.detected_objects:  # Only plot detected objects
                 obj_x = state[3 + 2 * i, 0]
                 obj_y = state[3 + 2 * i + 1, 0]
                 self.object_data[obj_name].append([obj_x, obj_y])  # Store positions over time
                 obj_positions = np.array(self.object_data[obj_name])
-                self.object_lines[i].set_data(obj_positions[:, 0], obj_positions[:, 1])
+                self.object_lines[obj_name].set_data(obj_positions[:, 0], obj_positions[:, 1])
+
+        # Add a legend to the plot to label object names and colors
+        self.ax.legend(loc="upper right")
 
         # Save the plot to an image file
-        plt.savefig('slam_plot.png')
+        plt.savefig('slam_plot_with_legend.png')
 
 def main(args=None):
     rclpy.init(args=args)
