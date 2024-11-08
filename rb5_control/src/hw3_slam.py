@@ -10,6 +10,11 @@ from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import matplotlib
+matplotlib.use('Agg')
+
+plt.plot([1,2,3], [4,5,6])
+plt.savefig("plot.png")
 
 # EKF SLAM Class
 class EKFSLAM:
@@ -65,7 +70,7 @@ class YoloCameraNode(Node):
 
         self.objects_to_detect = {
             'teddy bear': 0.2,
-            'bottle': 0.2
+            'backpack': 0.2
         }
         self.current_object_index = 0
         self.detection_timeout = 10
@@ -109,8 +114,14 @@ class YoloCameraNode(Node):
             cls = int(box.cls.item())
             object_name = self.model.names[cls]
             if object_name == list(self.objects_to_detect.keys())[self.current_object_index]:
-                # Object found
+                # Object 
                 print("\n<<Object Found!>>\n")
+                rotate_twist = Twist()
+                rotate_twist.angular.x = 0.0  # Rotate speed
+                rotate_twist.angular.y = 0.0
+                rotate_twist.angular.z = 0.0
+                self.publisher_.publish(rotate_twist)
+                time.sleep(5)
                 self.handle_detected_object(cv_image, box)
                 return
 
@@ -130,7 +141,7 @@ class YoloCameraNode(Node):
         self.get_logger().info(f'Detected {list(self.objects_to_detect.keys())[self.current_object_index]} at {distance:.2f}m')
 
         move_twist = Twist()
-        move_twist.linear.x = float(min(distance - 0.1, 0.1))  
+        move_twist.linear.x = float(min(distance - 0.25, 10))  # Distance to object(m) / Move speed
         move_twist.angular.z = float(-(x_center - (cv_image.shape[1] / 2)) / 500)
         self.publisher_.publish(move_twist)
 
@@ -142,7 +153,7 @@ class YoloCameraNode(Node):
 
     def rotate_to_search(self):
         rotate_twist = Twist()
-        rotate_twist.angular.z = 0.1  
+        rotate_twist.angular.z = 10.0  # Rotate speed
         self.publisher_.publish(rotate_twist)
         self.detection_start_time = time.time()
 
@@ -166,8 +177,9 @@ def main(args=None):
     
     yolo_node = YoloCameraNode()
 
-    plt.show()
     rclpy.spin(yolo_node)
+
+    plt.savefig('slam_final_plot.png')
 
     yolo_node.destroy_node()
     rclpy.shutdown()
