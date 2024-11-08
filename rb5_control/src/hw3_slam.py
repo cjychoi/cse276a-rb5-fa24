@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import time
 import rclpy
 from rclpy.node import Node
@@ -35,17 +34,14 @@ class EKFSLAM:
         H[0, 3 + 2 * landmark_index] = 1
         H[1, 3 + 2 * landmark_index + 1] = 1
         R = np.eye(2) * 1e-3  
-        
-        # Ensure `z` is a column vector and calculate innovation
+
         z = z.reshape(2, 1)
         state_slice = self.state[3 + 2 * landmark_index: 3 + 2 * (landmark_index + 1)]
         innovation = z - state_slice
 
-        # Calculate Kalman gain
         S = H @ self.P @ H.T + R
         K = self.P @ H.T @ np.linalg.inv(S)
 
-        # Update the state by broadcasting correctly
         self.state += (K @ innovation).reshape(self.state.shape)
         self.P = (np.eye(len(self.state)) - K @ H) @ self.P
 
@@ -96,6 +92,7 @@ class YoloCameraNode(Node):
         self.object_lines = [self.ax.plot([], [], 'ro', label=obj)[0] for obj in self.objects_to_detect.keys()]
         self.robot_data = np.array([0, 0])
         self.object_data = {obj: [] for obj in self.objects_to_detect.keys()}  # Store positions of detected objects
+        self.robot_positions = []  # Store the robot's position history
 
         # Start spinning and detection
         self.spin_and_track()
@@ -130,60 +127,69 @@ class YoloCameraNode(Node):
         obj_index = list(self.objects_to_detect.keys()).index(object_name)
         self.ekf_slam.update(np.array([distance, angle_offset]), obj_index)
 
-        # Save the updated plot after each object detection
-        self.save_plot()
-
         # Mark the object as detected so it won't be processed again
         self.detected_objects.add(object_name)
 
     def spin_and_track(self):
         # Rotate the robot 360 degrees to track objects
         rotate_twist = Twist()
-        rotate_twist.angular.z = 8.0  # Set a slow rotation speed
+        rotate_twist.angular.z = 0.0  # Initially no rotation
+        self.publisher_.publish(rotate_twist)
         start_time = time.time()
         rotation_duration = 2 * np.pi / 0.5  # Total time to spin 360 degrees at given angular speed
 
-        while time.time() - start_time < rotation_duration:
-            self.publisher_.publish(rotate_twist)
-            rclpy.spin_once(self)
+        # Move the robot in a square path
+        for i in range(4):  # For a square
+            self.move_forward(0.5)  # Move 0.5 meters
+            self.turn_90_degrees()  # Turn 90 degrees
 
-        # After completing the spin, stop the robot and return to initial orientation
-        rotate_twist.angular.z = 0.0
-        self.publisher_.publish(rotate_twist)
-        self.return_to_start()
+        # After completing the square, stop the robot and plot its path
+        self.plot_robot_positions()
 
-    def return_to_start(self):
-        # Rotate back to initial orientation
-        rotate_twist = Twist()
-        rotate_twist.angular.z = -0.5  # Rotate back to starting angle
-        start_time = time.time()
-        rotation_duration = 2 * np.pi / 0.5  # Same duration to return
+        # Save the plot
+        self.save_plot()
 
-        while time.time() - start_time < rotation_duration:
-            self.publisher_.publish(rotate_twist)
-            rclpy.spin_once(self)
+    def move_forward(self, distance):
+        # Move the robot forward by a specified distance (in meters)
+        move_twist = Twist()
+        move_twist.linear.x = 0.2  # Set a constant forward speed
+        self.publisher_.publish(move_twist)
+        time.sleep(distance / 0.2)  # Move for the time required based on speed
+        move_twist.linear.x = 0.0  # Stop the robot
+        self.publisher_.publish(move_twist)
 
-        rotate_twist.angular.z = 0.0
-        self.publisher_.publish(rotate_twist)
+    def turn_90_degrees(self):
+        # Rotate the robot 90 degrees (assuming constant speed)
+        turn_twist = Twist()
+        turn_twist.angular.z = 0.5  # Set a rotation speed
+        self.publisher_.publish(turn_twist)
+        time.sleep(2)  # Assume it takes 2 seconds to turn 90 degrees
+        turn_twist.angular.z = 0.0  # Stop rotating
+        self.publisher_.publish(turn_twist)
 
-    def save_plot(self):
-        """Saves the plot after every object is detected and processed."""
+    def plot_robot_positions(self):
+        # Update the robot's position and plot it
         state = self.ekf_slam.get_state()
         robot_x, robot_y, _ = state[0, 0], state[1, 0], state[2, 0]
-        self.robot_data = np.array([robot_x, robot_y])
+        self.robot_positions.append([robot_x, robot_y])  # Add the robot's new position to the list
 
-        self.robot_line.set_data(self.robot_data[0], self.robot_data[1])
+        # Plot all robot positions together in blue
+        robot_positions_array = np.array(self.robot_positions)
+        self.robot_line.set_data(robot_positions_array[:, 0], robot_positions_array[:, 1])
 
+        # Plot object positions
         for i, obj_name in enumerate(self.objects_to_detect.keys()):
             if obj_name in self.detected_objects:  # Only plot detected objects
                 obj_x = state[3 + 2 * i, 0]
                 obj_y = state[3 + 2 * i + 1, 0]
-                self.object_data[obj_name].append([obj_x, obj_y])  # Store positions over time
-                obj_positions = np.array(self.object_data[obj_name])
-                self.object_lines[i].set_data(obj_positions[:, 0], obj_positions[:, 1])
+                self.object_data[obj_name].append([obj_x, obj_y])
 
-        # Save the plot to an image file
-        plt.savefig('slam_plot.png')
+        for i, obj_name in enumerate(self.objects_to_detect.keys()):
+            object_positions_array = np.array(self.object_data[obj_name])
+            self.object_lines[i].set_data(object_positions_array[:, 0], object_positions_array[:, 1])
+
+    def save_plot(self):
+        self.fig.savefig('slam_plot.png')  # Save the plot as an image file
 
 def main(args=None):
     rclpy.init(args=args)
