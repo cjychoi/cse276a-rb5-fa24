@@ -144,6 +144,7 @@ class YoloCameraNode(Node):
 
     def move_forward(self, distance):
         # Move the robot forward by a specified distance (in meters)
+        print("\n<<Move Forward>>\n")
         move_twist = Twist()
         move_twist.linear.x = 1.0  # Set a faster forward speed (1.0 m/s)
         self.publisher_.publish(move_twist)
@@ -153,6 +154,7 @@ class YoloCameraNode(Node):
 
     def turn_90_degrees(self):
         # Rotate the robot 90 degrees (assuming constant speed)
+        print("\n<<Turn 90 degrees>>\n")
         turn_twist = Twist()
         turn_twist.angular.z = 1.0  # Set a faster rotation speed (1.0 rad/s)
         self.publisher_.publish(turn_twist)
@@ -173,12 +175,13 @@ class YoloCameraNode(Node):
         # Plot object positions as red dots
         for i, object_name in enumerate(self.objects_to_detect.keys()):
             object_positions = np.array(self.object_data[object_name])
-            self.object_lines[i].set_data(object_positions[:, 0], object_positions[:, 1])
+            if object_positions.size > 0:  # Check if array is non-empty
+                self.object_lines[i].set_data(object_positions[:, 0], object_positions[:, 1])
 
     def save_plot(self):
         # Save the plot of the robot's trajectory and object positions
         plt.legend(loc="upper right")
-        plt.savefig('/path_to_save_plot/slam_result.png')
+        plt.savefig('slam_result.png')
 
 def main(args=None):
     rclpy.init(args=args)
