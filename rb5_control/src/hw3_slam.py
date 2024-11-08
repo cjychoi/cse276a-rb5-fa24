@@ -68,9 +68,6 @@ class YoloCameraNode(Node):
             'backpack': 0.2,
             'umbrella': 0.6,
             'bottle': 0.1
-            'backpack': 0.2,
-            'umbrella': 0.6,
-            'bottle': 0.1
         }
         self.detected_objects = set()  # Track detected objects
         self.detection_timeout = 10
