@@ -34,9 +34,18 @@ class EKFSLAM:
         H[0, 3 + 2 * landmark_index] = 1
         H[1, 3 + 2 * landmark_index + 1] = 1
         R = np.eye(2) * 1e-3  
-        innovation = z - self.state[3 + 2 * landmark_index: 3 + 2 * (landmark_index + 1)]
+        
+        # Ensure `z` and `self.state` slice are compatible
+        state_slice = self.state[3 + 2 * landmark_index: 3 + 2 * (landmark_index + 1)]
+        if state_slice.shape == (2, 1):
+            innovation = (z.reshape(2, 1) - state_slice)
+        else:
+            raise ValueError(f"Unexpected state slice shape: {state_slice.shape}")
+
         S = H @ self.P @ H.T + R
         K = self.P @ H.T @ np.linalg.inv(S)
+        
+        # Update state with calculated innovation
         self.state += K @ innovation
         self.P = (np.eye(len(self.state)) - K @ H) @ self.P
 
@@ -90,6 +99,7 @@ class YoloCameraNode(Node):
         self.ani = animation.FuncAnimation(self.fig, self.update_plot, interval=200, blit=True)
 
     def image_callback(self, msg):
+        print("\n<<image_callback>>\n")
         cv_image = self.br.imgmsg_to_cv2(msg, 'bgr8')
         
         results = self.model(cv_image)
@@ -99,13 +109,18 @@ class YoloCameraNode(Node):
             cls = int(box.cls.item())
             object_name = self.model.names[cls]
             if object_name == list(self.objects_to_detect.keys())[self.current_object_index]:
+                # Object found
+                print("\n<<Object Found!>>\n")
                 self.handle_detected_object(cv_image, box)
                 return
 
         if time.time() - self.detection_start_time > self.detection_timeout:
+            # Object not found
+            print("\n<<Object Not Found - rotate_to_search>>\n")
             self.rotate_to_search()
 
     def handle_detected_object(self, cv_image, box):
+        print("\n<<handle_detected_object>>\n")
         x_min, y_min, x_max, y_max = box.xyxy[0]
         x_center = (x_min + x_max) / 2
         y_center = (y_min + y_max) / 2
