@@ -131,14 +131,7 @@ class YoloCameraNode(Node):
         self.detected_objects.add(object_name)
 
     def spin_and_track(self):
-        # Rotate the robot 360 degrees to track objects
-        rotate_twist = Twist()
-        rotate_twist.angular.z = 0.0  # Initially no rotation
-        self.publisher_.publish(rotate_twist)
-        start_time = time.time()
-        rotation_duration = 2 * np.pi / 0.5  # Total time to spin 360 degrees at given angular speed
-
-        # Move the robot in a square path
+        # Move the robot in a 0.5m x 0.5m square
         for i in range(4):  # For a square
             self.move_forward(0.5)  # Move 0.5 meters
             self.turn_90_degrees()  # Turn 90 degrees
@@ -152,18 +145,18 @@ class YoloCameraNode(Node):
     def move_forward(self, distance):
         # Move the robot forward by a specified distance (in meters)
         move_twist = Twist()
-        move_twist.linear.x = 0.2  # Set a constant forward speed
+        move_twist.linear.x = 1.0  # Set a faster forward speed (1.0 m/s)
         self.publisher_.publish(move_twist)
-        time.sleep(distance / 0.2)  # Move for the time required based on speed
+        time.sleep(distance / 1.0)  # Move for the time required based on speed
         move_twist.linear.x = 0.0  # Stop the robot
         self.publisher_.publish(move_twist)
 
     def turn_90_degrees(self):
         # Rotate the robot 90 degrees (assuming constant speed)
         turn_twist = Twist()
-        turn_twist.angular.z = 0.5  # Set a rotation speed
+        turn_twist.angular.z = 1.0  # Set a faster rotation speed (1.0 rad/s)
         self.publisher_.publish(turn_twist)
-        time.sleep(2)  # Assume it takes 2 seconds to turn 90 degrees
+        time.sleep(1.57)  # 90 degrees = 1.57 radians, so it takes 1.57 seconds at 1.0 rad/s
         turn_twist.angular.z = 0.0  # Stop rotating
         self.publisher_.publish(turn_twist)
 
