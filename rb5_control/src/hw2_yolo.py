@@ -47,7 +47,8 @@ class YoloCameraNode(Node):
 
         # Find and track the desired object in sequence
         for box in detected_objects:
-            object_name = box.label
+            cls = int(box.boxes.cls[i].item())
+            object_name = box.names[cls]
             if object_name == self.objects_to_detect[self.current_object_index]:
                 self.handle_detected_object(cv_image, box)
                 return
