@@ -139,7 +139,7 @@ class YoloCameraNode(Node):
     def spin_and_track(self):
         # Rotate the robot 360 degrees to track objects
         rotate_twist = Twist()
-        rotate_twist.angular.z = 0.5  # Set a slow rotation speed
+        rotate_twist.angular.z = 5.0  # Set a slow rotation speed
         start_time = time.time()
         rotation_duration = 2 * np.pi / 0.5  # Total time to spin 360 degrees at given angular speed
 
