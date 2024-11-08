@@ -65,7 +65,9 @@ class YoloCameraNode(Node):
 
         self.objects_to_detect = {
             'teddy bear': 0.2,
-            'backpack': 0.2
+            'backpack': 0.2,
+            'umbrella': 0.6,
+            'bottle': 0.1
         }
         self.detected_objects = set()  # Track detected objects
         self.detection_timeout = 10
@@ -144,7 +146,7 @@ class YoloCameraNode(Node):
     def spin_and_track(self):
         # Rotate the robot 360 degrees to track objects
         rotate_twist = Twist()
-        rotate_twist.angular.z = 5.0  # Set a slow rotation speed
+        rotate_twist.angular.z = 8.0  # Set a slow rotation speed
         start_time = time.time()
         rotation_duration = 2 * np.pi / 0.5  # Total time to spin 360 degrees at given angular speed
 
