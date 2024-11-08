@@ -146,7 +146,7 @@ class YoloCameraNode(Node):
         # Move the robot forward by a specified distance (in meters)
         print("\n<<Move Forward>>\n")
         move_twist = Twist()
-        move_twist.linear.x = 1.0  # Set a forward speed (1.0 m/s)
+        move_twist.linear.x = 2.0  # Set a forward speed (1.0 m/s)
         self.publisher_.publish(move_twist)
         time.sleep(distance / 1.0)  # Move for the time required based on speed
         move_twist.linear.x = 0.0  # Stop the robot
@@ -157,7 +157,7 @@ class YoloCameraNode(Node):
         # Rotate the robot 90 degrees (assuming constant speed)
         print("\n<<Turn 90 degrees>>\n")
         turn_twist = Twist()
-        turn_twist.angular.z = 3.0  # Set a faster rotation speed (1.0 rad/s)
+        turn_twist.angular.z = 8.5  # Set a faster rotation speed (1.0 rad/s)
         self.publisher_.publish(turn_twist)
         time.sleep(1.57)  # 90 degrees = 1.57 radians, so it takes 1.57 seconds at 1.0 rad/s
         turn_twist.angular.z = 0.0  # Stop rotating
