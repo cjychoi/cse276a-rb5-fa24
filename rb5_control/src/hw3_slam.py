@@ -13,7 +13,8 @@ import matplotlib.animation as animation
 import matplotlib
 matplotlib.use('Agg')
 
-plt.plot([1,2,3], [4,5,6])
+# Plotting setup for visualizing detected objects and robot
+plt.plot([1, 2, 3], [4, 5, 6])
 plt.savefig("plot.png")
 
 # EKF SLAM Class
@@ -97,7 +98,7 @@ class YoloCameraNode(Node):
         self.robot_line, = self.ax.plot([], [], 'bo', label="Robot")
         self.object_lines = [self.ax.plot([], [], 'ro', label=obj)[0] for obj in self.objects_to_detect.keys()]
         self.robot_data = np.array([0, 0])
-        self.object_data = {obj: np.array([0, 0]) for obj in self.objects_to_detect.keys()}
+        self.object_data = {obj: [] for obj in self.objects_to_detect.keys()}  # Store all positions of objects
 
         # Animation update function
         self.ani = animation.FuncAnimation(self.fig, self.update_plot, interval=200, blit=True)
@@ -112,7 +113,7 @@ class YoloCameraNode(Node):
             cls = int(box.cls.item())
             object_name = self.model.names[cls]
             if object_name == list(self.objects_to_detect.keys())[self.current_object_index]:
-                # Object 
+                # Object found
                 print("\n<<Object Found!>>\n")
                 rotate_twist = Twist()
                 rotate_twist.angular.x = 0.0  # Rotate speed
@@ -171,11 +172,12 @@ class YoloCameraNode(Node):
         for i, obj_name in enumerate(self.objects_to_detect.keys()):
             obj_x = state[3 + 2 * i, 0]
             obj_y = state[3 + 2 * i + 1, 0]
-            self.object_data[obj_name] = np.array([obj_x, obj_y])
-            self.object_lines[i].set_data(self.object_data[obj_name][0], self.object_data[obj_name][1])
+            self.object_data[obj_name].append([obj_x, obj_y])  # Store positions over time
+            obj_positions = np.array(self.object_data[obj_name])
+            self.object_lines[i].set_data(obj_positions[:, 0], obj_positions[:, 1])
 
         # Save the plot to a file after every update
-        plt.savefig(f"slam_plot_object_{self.current_object_index}.png")  # Save the plot with object index in the filename
+        plt.savefig(f"slam_plot_all_objects.png")  # Save the plot with all object positions
 
     def update_plot(self, frame):
         """Updates the plot for each frame."""
@@ -188,23 +190,18 @@ class YoloCameraNode(Node):
         for i, obj_name in enumerate(self.objects_to_detect.keys()):
             obj_x = state[3 + 2 * i, 0]
             obj_y = state[3 + 2 * i + 1, 0]
-            self.object_data[obj_name] = np.array([obj_x, obj_y])
-            self.object_lines[i].set_data(self.object_data[obj_name][0], self.object_data[obj_name][1])
+            self.object_data[obj_name].append([obj_x, obj_y])  # Store positions over time
+            obj_positions = np.array(self.object_data[obj_name])
+            self.object_lines[i].set_data(obj_positions[:, 0], obj_positions[:, 1])
 
         return [self.robot_line] + self.object_lines
 
 def main(args=None):
     rclpy.init(args=args)
-    
-    yolo_node = YoloCameraNode()
-
-    rclpy.spin(yolo_node)
-
-    plt.savefig('slam_final_plot.png')
-
-    # Clean up
-    yolo_node.destroy_node()
+    yolo_camera_node = YoloCameraNode()
+    rclpy.spin(yolo_camera_node)
+    yolo_camera_node.destroy_node()
     rclpy.shutdown()
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
