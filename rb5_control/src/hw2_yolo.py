@@ -21,7 +21,7 @@ class YoloCameraNode(Node):
         self.br = CvBridge()
 
         # Object list to detect in the specified order
-        self.objects_to_detect = ['teddy bear', 'water bottle', 'laptop']
+        self.objects_to_detect = ['teddy bear', 'bottle']
         self.current_object_index = 0
         self.detection_timeout = 10  # Timeout after 10 seconds of searching
         self.detection_start_time = time.time()
