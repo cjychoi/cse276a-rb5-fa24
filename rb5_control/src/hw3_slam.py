@@ -1,13 +1,14 @@
+import torch
+from ultralytics import YOLO
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Twist
 from cv_bridge import CvBridge
-from ultralytics import YOLO
-import threading
-import time
 import numpy as np
 import matplotlib.pyplot as plt
+import threading
+import time
 
 # Placeholder for EKF SLAM class
 class EKFSLAM:
@@ -165,13 +166,9 @@ class YoloCameraNode(Node):
         # Plot object positions
         for i, obj_name in enumerate(self.objects_to_detect.keys()):
             if obj_name in self.detected_objects:  # Only plot detected objects
-                obj_x = state[3 + 2 * i, 0]
-                obj_y = state[3 + 2 * i + 1, 0]
-                self.object_data[obj_name].append([obj_x, obj_y])
-
-        for i, obj_name in enumerate(self.objects_to_detect.keys()):
-            object_positions_array = np.array(self.object_data[obj_name])
-            self.object_lines[i].set_data(object_positions_array[:, 0], object_positions_array[:, 1])
+                object_positions_array = np.array(self.object_data[obj_name])
+                if object_positions_array.size > 0:  # Ensure array is non-empty
+                    self.object_lines[i].set_data(object_positions_array[:, 0], object_positions_array[:, 1])
 
     def save_plot(self):
         self.fig.savefig('slam_plot.png')  # Save the plot as an image file
