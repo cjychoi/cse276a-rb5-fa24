@@ -39,23 +39,27 @@ class YoloCameraNode(Node):
 
     def image_callback(self, msg):
         """Callback function for processing the camera feed."""
+        print("\n<<image_callback>>\n")
         cv_image = self.br.imgmsg_to_cv2(msg, 'bgr8')
         
-        # Use YOLO model to detect objects
+        # Use YOLO model to detect objects 
         results = self.model(cv_image)
         detected_objects = results[0].boxes
 
         # Find and track the desired object in sequence
         for box in detected_objects:
-            cls = int(box.boxes.cls[i].item())
-            object_name = box.names[cls]
+            cls = int(box.cls.item())  # Get the class index
+            object_name = self.model.names[cls]  # Map class index to object name
             if object_name == self.objects_to_detect[self.current_object_index]:
+                print("\n<<Object Found!>>\n")
                 self.handle_detected_object(cv_image, box)
                 return
 
         # Timeout mechanism: if object is not found within a given time, rotate to search again
         if time.time() - self.detection_start_time > self.detection_timeout:
+            print("\n<<Object Not Found - rotate_to_search>>\n")
             self.rotate_to_search()
+
 
     def handle_detected_object(self, cv_image, box):
         """Handle the detected object, calculate distance, and publish twist commands."""
@@ -127,6 +131,7 @@ class PIDcontroller(Node):
         """
         Calculate the update value on the state based on the error between current state and target state with PID.
         """
+        print("\n<<Update>>\n")
         e = self.getError(currentState, self.target)
         P = self.Kp * e
         self.I += self.Ki * e * self.timestep
