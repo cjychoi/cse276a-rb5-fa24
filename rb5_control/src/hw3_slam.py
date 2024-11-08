@@ -39,10 +39,18 @@ class EKFSLAM:
         H[0, 3 + 2 * landmark_index] = 1
         H[1, 3 + 2 * landmark_index + 1] = 1
         R = np.eye(2) * 1e-3  
-        innovation = z - self.state[3 + 2 * landmark_index: 3 + 2 * (landmark_index + 1)]
+        
+        # Ensure `z` is a column vector and calculate innovation
+        z = z.reshape(2, 1)
+        state_slice = self.state[3 + 2 * landmark_index: 3 + 2 * (landmark_index + 1)]
+        innovation = z - state_slice
+
+        # Calculate Kalman gain
         S = H @ self.P @ H.T + R
         K = self.P @ H.T @ np.linalg.inv(S)
-        self.state += K @ innovation
+
+        # Update the state by broadcasting correctly
+        self.state += (K @ innovation).reshape(self.state.shape)
         self.P = (np.eye(len(self.state)) - K @ H) @ self.P
 
     def get_state(self):
@@ -191,8 +199,6 @@ def main(args=None):
     yolo_node = YoloCameraNode()
 
     rclpy.spin(yolo_node)
-
-    plt.savefig('slam_final_plot.png')
 
     plt.savefig('slam_final_plot.png')
 
