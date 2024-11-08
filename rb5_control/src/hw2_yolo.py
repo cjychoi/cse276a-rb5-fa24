@@ -63,10 +63,13 @@ class YoloCameraNode(Node):
 
     def handle_detected_object(self, cv_image, box):
         """Handle the detected object, calculate distance, and publish twist commands."""
+        print("\n<<handle_detected_object>>\n")
+
         # Extract bounding box center
-        x_center = (box.xmin + box.xmax) / 2
-        y_center = (box.ymin + box.ymax) / 2
-        width = box.xmax - box.xmin
+        x_min, y_min, x_max, y_max = box.xyxy[0]  # Access the bounding box coordinates
+        x_center = (x_min + x_max) / 2
+        y_center = (y_min + y_max) / 2
+        width = x_max - x_min
 
         # Estimate distance based on object size or known dimensions
         focal_length = 902.8  # Approximate focal length for a camera
@@ -78,8 +81,8 @@ class YoloCameraNode(Node):
 
         # Move towards the object: Adjust the robot's velocity based on distance and object position
         move_twist = Twist()
-        move_twist.linear.x = min(distance - 0.1, 0.5)  # Move forward, stop 10 cm before the object
-        move_twist.angular.z = -(x_center - (cv_image.shape[1] / 2)) / 500  # Adjust heading
+        move_twist.linear.x = float(min(distance - 0.1, 0.1))  # Move forward, stop 10 cm before the object
+        move_twist.angular.z = float(-(x_center - (cv_image.shape[1] / 2)) / 500)  # Adjust heading
 
         self.publisher_.publish(move_twist)
 
@@ -92,7 +95,7 @@ class YoloCameraNode(Node):
         """Rotate the robot to search for objects."""
         self.get_logger().info('Rotating to search for the next object...')
         rotate_twist = Twist()
-        rotate_twist.angular.z = 0.5  # Rotate at a fixed speed
+        rotate_twist.angular.z = 0.1  # Rotate at a fixed speed
         self.publisher_.publish(rotate_twist)
 
         # Reset detection start time after rotation
