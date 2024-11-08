@@ -34,18 +34,9 @@ class EKFSLAM:
         H[0, 3 + 2 * landmark_index] = 1
         H[1, 3 + 2 * landmark_index + 1] = 1
         R = np.eye(2) * 1e-3  
-        
-        # Ensure `z` and `self.state` slice are compatible
-        state_slice = self.state[3 + 2 * landmark_index: 3 + 2 * (landmark_index + 1)]
-        if state_slice.shape == (2, 1):
-            innovation = (z.reshape(2, 1) - state_slice)
-        else:
-            raise ValueError(f"Unexpected state slice shape: {state_slice.shape}")
-
+        innovation = z - self.state[3 + 2 * landmark_index: 3 + 2 * (landmark_index + 1)]
         S = H @ self.P @ H.T + R
         K = self.P @ H.T @ np.linalg.inv(S)
-        
-        # Update state with calculated innovation
         self.state += K @ innovation
         self.P = (np.eye(len(self.state)) - K @ H) @ self.P
 
@@ -99,7 +90,6 @@ class YoloCameraNode(Node):
         self.ani = animation.FuncAnimation(self.fig, self.update_plot, interval=200, blit=True)
 
     def image_callback(self, msg):
-        print("\n<<image_callback>>\n")
         cv_image = self.br.imgmsg_to_cv2(msg, 'bgr8')
         
         results = self.model(cv_image)
@@ -109,44 +99,65 @@ class YoloCameraNode(Node):
             cls = int(box.cls.item())
             object_name = self.model.names[cls]
             if object_name == list(self.objects_to_detect.keys())[self.current_object_index]:
-                # Object found
-                print("\n<<Object Found!>>\n")
                 self.handle_detected_object(cv_image, box)
                 return
 
         if time.time() - self.detection_start_time > self.detection_timeout:
-            # Object not found
-            print("\n<<Object Not Found - rotate_to_search>>\n")
             self.rotate_to_search()
 
     def handle_detected_object(self, cv_image, box):
-        print("\n<<handle_detected_object>>\n")
+        # Extract object details
         x_min, y_min, x_max, y_max = box.xyxy[0]
         x_center = (x_min + x_max) / 2
         y_center = (y_min + y_max) / 2
         width = x_max - x_min
 
+        # Calculate distance using EKF
         distance = (self.ekf_slam.known_width * self.ekf_slam.focal_length) / width
         self.get_logger().info(f'Detected {list(self.objects_to_detect.keys())[self.current_object_index]} at {distance:.2f}m')
 
+        # Create and publish movement command based on detection
         move_twist = Twist()
-        move_twist.linear.x = float(min(distance - 0.1, 0.1))  
+        move_twist.linear.x = float(min(distance - 0.1, 0.1))  # Limit max speed
         move_twist.angular.z = float(-(x_center - (cv_image.shape[1] / 2)) / 500)
         self.publisher_.publish(move_twist)
 
+        # Update EKF with the detected object's position
         self.ekf_slam.update(np.array([distance, x_center]), self.current_object_index)
 
+        # Save the updated plot after each object detection
+        self.save_plot()
+
+        # Move to the next object once current is found
         if distance < 0.2:
             self.current_object_index += 1
             self.detection_start_time = time.time()
 
     def rotate_to_search(self):
         rotate_twist = Twist()
-        rotate_twist.angular.z = 0.1  
+        rotate_twist.angular.z = 0.1  # Rotate at a slower speed to search
         self.publisher_.publish(rotate_twist)
         self.detection_start_time = time.time()
 
+    def save_plot(self):
+        """Saves the plot after every object is detected and processed."""
+        state = self.ekf_slam.get_state()
+        robot_x, robot_y, _ = state[0, 0], state[1, 0], state[2, 0]
+        self.robot_data = np.array([robot_x, robot_y])
+
+        self.robot_line.set_data(self.robot_data[0], self.robot_data[1])
+
+        for i, obj_name in enumerate(self.objects_to_detect.keys()):
+            obj_x = state[3 + 2 * i, 0]
+            obj_y = state[3 + 2 * i + 1, 0]
+            self.object_data[obj_name] = np.array([obj_x, obj_y])
+            self.object_lines[i].set_data(self.object_data[obj_name][0], self.object_data[obj_name][1])
+
+        # Save the plot to a file after every update
+        plt.savefig(f"slam_plot_object_{self.current_object_index}.png")  # Save the plot with object index in the filename
+
     def update_plot(self, frame):
+        """Updates the plot for each frame."""
         state = self.ekf_slam.get_state()
         robot_x, robot_y, _ = state[0, 0], state[1, 0], state[2, 0]
         self.robot_data = np.array([robot_x, robot_y])
@@ -166,9 +177,9 @@ def main(args=None):
     
     yolo_node = YoloCameraNode()
 
-    plt.show()
     rclpy.spin(yolo_node)
 
+    # Clean up
     yolo_node.destroy_node()
     rclpy.shutdown()
 
