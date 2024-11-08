@@ -51,19 +51,19 @@ class MegaPiController:
     def carStraight(self, speed):
         if self.verbose:
             print("CAR STRAIGHT:")
-        self.setFourMotors(-speed, speed, -speed, speed)
+        self.setFourMotors(speed, speed, speed, speed)
 
 
     def carRotate(self, speed):
         if self.verbose:
             print("CAR ROTATE:")
-        self.setFourMotors(speed, speed, speed, speed)
+        self.setFourMotors(-speed, speed, -speed, speed)
 
 
     def carSlide(self, speed):
         if self.verbose:
             print("CAR SLIDE:")
-        self.setFourMotors(speed, speed, -speed, -speed)
+        self.setFourMotors(speed, -speed, -speed, speed)
 
     
     def carMixed(self, v_straight, v_rotate, v_slide):
@@ -85,12 +85,12 @@ if __name__ == "__main__":
     import time
     mpi_ctrl = MegaPiController(port='/dev/ttyUSB0', verbose=True)
     time.sleep(1)
-    # mpi_ctrl.carStraight(30)
-    mpi_ctrl.setFourMotors(0,0,30,0)
+    mpi_ctrl.carStraight(50)
+    # mpi_ctrl.setFourMotors(0,0,30,0)
     time.sleep(4)
-    # mpi_ctrl.carSlide(30)
-    # time.sleep(1)
-    # mpi_ctrl.carRotate(30)
-    # time.sleep(1)
+    mpi_ctrl.carSlide(50)
+    time.sleep(4)
+    mpi_ctrl.carRotate(50)
+    time.sleep(4)
     mpi_ctrl.carStop()
     # print("If your program cannot be closed properly, check updated instructions in google doc.")
