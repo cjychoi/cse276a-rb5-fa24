@@ -131,9 +131,9 @@ class YoloCameraNode(Node):
         self.detected_objects.add(object_name)
 
     def spin_and_track(self):
-        # Move the robot in a 0.5m x 0.5m square
+        # Move the robot in a 2m x 2m square
         for i in range(4):  # For a square
-            self.move_forward(0.5)  # Move 0.5 meters
+            self.move_forward(2.0)  # Move 2.0 meters
             self.turn_90_degrees()  # Turn 90 degrees
 
         # After completing the square, stop the robot and plot its path
@@ -146,17 +146,18 @@ class YoloCameraNode(Node):
         # Move the robot forward by a specified distance (in meters)
         print("\n<<Move Forward>>\n")
         move_twist = Twist()
-        move_twist.linear.x = 1.0  # Set a faster forward speed (1.0 m/s)
+        move_twist.linear.x = 1.0  # Set a forward speed (1.0 m/s)
         self.publisher_.publish(move_twist)
         time.sleep(distance / 1.0)  # Move for the time required based on speed
         move_twist.linear.x = 0.0  # Stop the robot
         self.publisher_.publish(move_twist)
 
+
     def turn_90_degrees(self):
         # Rotate the robot 90 degrees (assuming constant speed)
         print("\n<<Turn 90 degrees>>\n")
         turn_twist = Twist()
-        turn_twist.angular.z = 1.0  # Set a faster rotation speed (1.0 rad/s)
+        turn_twist.angular.z = 3.0  # Set a faster rotation speed (1.0 rad/s)
         self.publisher_.publish(turn_twist)
         time.sleep(1.57)  # 90 degrees = 1.57 radians, so it takes 1.57 seconds at 1.0 rad/s
         turn_twist.angular.z = 0.0  # Stop rotating
