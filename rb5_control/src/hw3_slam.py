@@ -66,7 +66,9 @@ class YoloCameraNode(Node):
 
         self.objects_to_detect = {
             'teddy bear': 0.2,
-            'backpack': 0.2
+            'backpack': 0.3,
+            'umbrella': 0.6,
+            'bottle': 0.1
         }
         self.detected_objects = set()  # Track detected objects
         self.detection_timeout = 10
