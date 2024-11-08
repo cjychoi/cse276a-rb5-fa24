@@ -1,49 +1,25 @@
-import time
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import Twist
-import numpy as np
-import cv2
-from ultralytics import YOLO
-from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
+from geometry_msgs.msg import Twist
+from cv_bridge import CvBridge
+from ultralytics import YOLO
+import threading
+import time
+import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib
-matplotlib.use('Agg')  # Use non-interactive backend for plotting
 
-# EKF SLAM Class
+# Placeholder for EKF SLAM class
 class EKFSLAM:
-    def __init__(self, objects_to_detect, focal_length, known_width):
-        self.state = np.zeros((3 + 2 * len(objects_to_detect), 1))  # [x, y, theta, x1, y1, x2, y2, ...]
-        self.P = np.eye(3 + 2 * len(objects_to_detect)) * 1e-3  # Initial covariance
-        self.objects_to_detect = objects_to_detect
-        self.focal_length = focal_length
+    def __init__(self, object_list, focal_length, known_width):
         self.known_width = known_width
+        self.focal_length = focal_length
+        # Initialize SLAM state (robot pose and landmarks)
+        self.state = np.zeros((3 + 2 * len(object_list), 1))
 
-    def predict(self, u):
-        theta = self.state[2, 0]
-        G = np.eye(len(self.state))  
-        G[0, 2] = -u[0] * np.sin(theta)
-        G[1, 2] = u[0] * np.cos(theta)
-        Q = np.eye(len(self.state)) * 1e-3  
-        self.state[:3] += u  
-        self.P = G @ self.P @ G.T + Q
-
-    def update(self, z, landmark_index):
-        H = np.zeros((2, len(self.state))) 
-        H[0, 3 + 2 * landmark_index] = 1
-        H[1, 3 + 2 * landmark_index + 1] = 1
-        R = np.eye(2) * 1e-3  
-
-        z = z.reshape(2, 1)
-        state_slice = self.state[3 + 2 * landmark_index: 3 + 2 * (landmark_index + 1)]
-        innovation = z - state_slice
-
-        S = H @ self.P @ H.T + R
-        K = self.P @ H.T @ np.linalg.inv(S)
-
-        self.state += (K @ innovation).reshape(self.state.shape)
-        self.P = (np.eye(len(self.state)) - K @ H) @ self.P
+    def update(self, measurement, obj_index):
+        # Placeholder for EKF update
+        pass
 
     def get_state(self):
         return self.state
@@ -59,6 +35,7 @@ class YoloCameraNode(Node):
         self.topic_name = self.get_parameter('topic_name').value
         self.br = CvBridge()
 
+        # Objects to detect and their known widths (in meters)
         self.objects_to_detect = {
             'teddy bear': 0.2,
             'backpack': 0.3,
@@ -66,22 +43,24 @@ class YoloCameraNode(Node):
             'bottle': 0.1
         }
         self.detected_objects = set()  # Track detected objects
-        self.detection_timeout = 10
-        self.starting_angle = None
+        self.detection_timeout = 10  # Timeout for stopping detection of already detected objects
 
+        # Load YOLOv8 model
         self.model = YOLO('yolov8n.pt')
 
+        # Subscription for camera feed
         self.subscription = self.create_subscription(
             Image, self.topic_name, self.image_callback, 10
         )
-        
+
+        # Publisher for robot motion (Twist)
         self.publisher_ = self.create_publisher(Twist, '/twist', 10)
 
         # Initialize EKF
         self.ekf_slam = EKFSLAM(
             list(self.objects_to_detect.keys()),
-            focal_length=902.8,
-            known_width=0.2
+            focal_length=902.8,  # Example focal length value (in pixels)
+            known_width=0.2  # Example known width (in meters)
         )
 
         # Initialize plot for real-time visualization
@@ -94,12 +73,25 @@ class YoloCameraNode(Node):
         self.object_data = {obj: [] for obj in self.objects_to_detect.keys()}  # Store positions of detected objects
         self.robot_positions = []  # Store the robot's position history
 
-        # Start spinning and detection
+        # Start YOLO detection in a separate thread
+        self.start_detection()
+
+        # Start the movement after YOLO detection starts
         self.spin_and_track()
+
+    def start_detection(self):
+        # Start object detection in a separate thread
+        detection_thread = threading.Thread(target=self.spin_yolo_detection)
+        detection_thread.start()
+
+    def spin_yolo_detection(self):
+        # YOLO object detection loop
+        rclpy.spin(self)
 
     def image_callback(self, msg):
         cv_image = self.br.imgmsg_to_cv2(msg, 'bgr8')
         
+        # Perform YOLO object detection on the image
         results = self.model(cv_image)
         detected_objects = results[0].boxes
 
@@ -131,65 +123,34 @@ class YoloCameraNode(Node):
         self.detected_objects.add(object_name)
 
     def spin_and_track(self):
-        # Move the robot in a 2m x 2m square with YOLO detection happening while it moves
+        # Move the robot in a 2m x 2m square
         for i in range(4):  # For a square
-            self.move_forward(2.0)  # Move 2.0 meters with continuous detection
-            self.turn_90_degrees()  # Turn 90 degrees with continuous detection
+            self.move_forward(2.0)  # Move 2.0 meters
+            self.turn_90_degrees()  # Turn 90 degrees
 
-        # After completing the square, stop the robot and ensure final plot
+        # After completing the square, stop the robot and plot its path
+        self.plot_robot_positions()
+
+        # Save the plot
         self.save_plot()
 
     def move_forward(self, distance):
         # Move the robot forward by a specified distance (in meters)
         move_twist = Twist()
-        move_twist.linear.x = 2.0  # Set a forward speed (1.0 m/s)
+        move_twist.linear.x = 2.0  # Set a faster forward speed (1.0 m/s)
         self.publisher_.publish(move_twist)
-
-        # Continuously move forward while updating position and checking for object detection
-        start_time = time.time()
-        while time.time() - start_time < distance / 1.0:
-            # YOLO detection happens during movement
-            self.run_yolo_detection()
-
-            # Update the robot's position and plot it
-            self.plot_robot_positions()
-
-            # Allow short sleep for smoother operation
-            time.sleep(0.1)
-
+        time.sleep(distance / 1.0)  # Move for the time required based on speed
         move_twist.linear.x = 0.0  # Stop the robot
         self.publisher_.publish(move_twist)
 
     def turn_90_degrees(self):
         # Rotate the robot 90 degrees (assuming constant speed)
         turn_twist = Twist()
-        turn_twist.angular.z = 8.5  # Set a rotation speed (1.0 rad/s)
+        turn_twist.angular.z = 8.5  # Set a faster rotation speed (1.0 rad/s)
         self.publisher_.publish(turn_twist)
-
-        # Continuously turn while checking for object detection
-        start_time = time.time()
-        while time.time() - start_time < 1.57:  # 1.57 seconds for 90 degrees
-            # YOLO detection happens during the turn
-            self.run_yolo_detection()
-
-            # Update the robot's position and plot it
-            self.plot_robot_positions()
-
-            # Allow short sleep for smoother operation
-            time.sleep(0.1)
-
+        time.sleep(1.57)  # 90 degrees = 1.57 radians, so it takes 1.57 seconds at 1.0 rad/s
         turn_twist.angular.z = 0.0  # Stop rotating
         self.publisher_.publish(turn_twist)
-
-    def run_yolo_detection(self):
-        # YOLO detection method is called continuously during movement or rotation
-        # This method checks the camera input and detects objects using YOLO
-        self.get_logger().info('Running YOLO detection...')
-        
-        # Add code to capture the camera frame and detect objects
-        # The image_callback will be automatically called when Image messages are received
-
-        # Detected objects are updated in self.handle_detected_object
 
     def plot_robot_positions(self):
         # Update the robot's position and plot it
@@ -203,30 +164,29 @@ class YoloCameraNode(Node):
 
         # Plot object positions
         for i, obj_name in enumerate(self.objects_to_detect.keys()):
-            if obj_name in self.detected_objects:
-                x, y = state[3 + 2 * i], state[3 + 2 * i + 1]
-                self.object_lines[i].set_data(x, y)
-        
-        # Save the updated plot to file for later analysis
-        self.fig.savefig('robot_movement.png')
+            if obj_name in self.detected_objects:  # Only plot detected objects
+                obj_x = state[3 + 2 * i, 0]
+                obj_y = state[3 + 2 * i + 1, 0]
+                self.object_data[obj_name].append([obj_x, obj_y])
+
+        for i, obj_name in enumerate(self.objects_to_detect.keys()):
+            object_positions_array = np.array(self.object_data[obj_name])
+            self.object_lines[i].set_data(object_positions_array[:, 0], object_positions_array[:, 1])
 
     def save_plot(self):
-        # Save the final plot of robot movement and detected objects
-        self.fig.savefig('final_robot_movement.png')
-        self.get_logger().info('Plot saved as final_robot_movement.png')
+        self.fig.savefig('slam_plot.png')  # Save the plot as an image file
 
 def main(args=None):
     rclpy.init(args=args)
-    node = YoloCameraNode()
+    yolo_camera_node = YoloCameraNode()
+
     try:
-        rclpy.spin(node)
+        rclpy.spin(yolo_camera_node)
     except KeyboardInterrupt:
-        node.get_logger().info('Node stopped cleanly')
-    except BaseException:
-        node.get_logger().error('Exception in node:', exc_info=True)
-    finally:
-        node.destroy_node()
-        rclpy.shutdown()
+        pass
+
+    yolo_camera_node.destroy_node()
+    rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
