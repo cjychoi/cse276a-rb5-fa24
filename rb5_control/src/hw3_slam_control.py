@@ -73,25 +73,26 @@ class SlamControlNode(Node):
         delta_x = self.velocity[0] * 0.5 * np.cos(self.robot_orientation)
         delta_y = self.velocity[0] * 0.5 * np.sin(self.robot_orientation)
         self.robot_position += np.array([delta_x, delta_y])
-
+    
         # Update robot's orientation
         self.robot_orientation += self.velocity[1] * 0.5
-
-        # Plot the new position
+    
+        # Save current position to array
         self.robot_positions.append(self.robot_position.copy())
-        self.plot_robot_positions()
+
 
     def spin_and_track(self):
         # Move the robot in a 2m x 2m square
         for i in range(4):  # For a square
             self.move_forward(2.0)  # Move 2.0 meters
             self.turn_90_degrees()  # Turn 90 degrees
-
-        # After completing the square, stop the robot and plot its path
+    
+        # After completing the movement, plot all saved positions
         self.plot_robot_positions()
-
-        # Save the plot
+    
+        # Save the plot after plotting
         self.save_plot()
+
 
     def move_forward(self, distance):
         # Move the robot forward by a specified distance (in meters)
@@ -114,15 +115,16 @@ class SlamControlNode(Node):
         self.publisher_.publish(turn_twist)
 
     def plot_robot_positions(self):
-        # Update the robot's position and plot it
-        if len(self.robot_positions) > 0:
-            robot_positions_array = np.array(self.robot_positions)
-            if robot_positions_array.ndim == 2 and robot_positions_array.shape[1] == 2:  # Check for correct shape
-                self.robot_line.set_data(robot_positions_array[:, 0], robot_positions_array[:, 1])
-
+        # Convert saved positions to a numpy array
+        robot_positions_array = np.array(self.robot_positions)
+    
+        # Plot each saved position as a point
+        self.ax.plot(robot_positions_array[:, 0], robot_positions_array[:, 1], 'bo')
+    
         # Re-draw the plot
         self.ax.legend(loc='upper right')
-        plt.pause(0.01)  # Pause to allow plot update
+        plt.show()
+
 
     def save_plot(self):
         print("\n\n<<Saving Plot>>\n\n")
