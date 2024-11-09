@@ -22,9 +22,7 @@ class YoloDetectionNode(Node):
             'teddy bear': 0.2,
             'backpack': 0.3,
             'umbrella': 0.6,
-            'bottle': 0.1,
-            'stop sign': 0.2,
-            'car': 0.2
+            'bottle': 0.1
         }
 
         # Load YOLOv8 model
@@ -61,10 +59,10 @@ class YoloDetectionNode(Node):
         # Calculate distance to object
         focal_length = 902.8  # Example focal length value (in pixels)
         known_width = self.objects_to_detect[object_name]
-        distance = float((known_width * focal_length) / width)
+        distance = (known_width * focal_length) / width
 
         # Calculate angle based on current rotation and image center offset
-        angle_offset = float(-(x_center - (cv_image.shape[1] / 2)) / 500)
+        angle_offset = -(x_center - (cv_image.shape[1] / 2)) / 500
 
         # Publish object info (distance and angle)
         msg = Float32MultiArray()
