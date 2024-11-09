@@ -41,10 +41,12 @@ class MegaPiControllerNode(Node):
         delta_y = twist_cmd.linear.x * delta_time * np.sin(self.theta)
         delta_theta = twist_cmd.angular.z * delta_time
 
+        self.theta += delta_theta
+        self.theta = self.theta % (2 * np.pi)
+
         # Update robot pose
         self.x += delta_x
         self.y += delta_y
-        self.theta += delta_theta
 
         desired_twist = self.calibration * np.array(
             [[twist_cmd.linear.x], [twist_cmd.linear.y], [twist_cmd.angular.z]]
