@@ -1,23 +1,3 @@
-# slam_control_node.py
-import rclpy
-from rclpy.node import Node
-from std_msgs.msg import Float32MultiArray
-from geometry_msgs.msg import Twist
-import numpy as np
-import matplotlib.pyplot as plt
-
-class EKFSLAM:
-    def __init__(self, object_list):
-        # Initialize SLAM state (robot pose and landmarks)
-        self.state = np.zeros((3 + 2 * len(object_list), 1))
-
-    def update(self, measurement, obj_index):
-        # Placeholder for EKF update
-        pass
-
-    def get_state(self):
-        return self.state
-
 class SlamControlNode(Node):
     def __init__(self):
         super().__init__('slam_control_node')
@@ -91,15 +71,7 @@ class SlamControlNode(Node):
 
     def spin_and_track(self):
         # Move the robot in a 2m x 2m square
-        for i in range(4):  # For a square
-            self.move_forward(2.0)  # Move 2.0 meters
-            self.turn_90_degrees()  # Turn 90 degrees
-    
-        # After completing the movement, plot all saved positions
-        self.plot_robot_positions()
-    
-        # Save the plot after plotting
-        self.save_plot()
+        self.move_forward(2.0)  # Start by moving 2.0 meters
 
     def move_forward(self, distance):
         # Move the robot forward by a specified distance (in meters)
@@ -126,6 +98,9 @@ class SlamControlNode(Node):
         self.is_moving = False
         self.movement_timer.cancel()
 
+        # Now start rotating
+        self.turn_90_degrees()
+
     def turn_90_degrees(self):
         print("\n\n<<Turn 90 degrees>>\n\n")
         turn_twist = Twist()
@@ -150,16 +125,23 @@ class SlamControlNode(Node):
         self.is_rotating = False
         self.movement_timer.cancel()
 
+        # Check if another movement is required (continue square movement)
+        if len(self.robot_positions) < 8:  # For a 2x2 square (4 moves, 4 turns)
+            self.move_forward(2.0)
+        else:
+            # After completing the movement, plot all saved positions
+            self.plot_robot_positions()
+
+            # Save the plot after plotting
+            self.save_plot()
+
     def plot_robot_positions(self):
         # Convert saved positions to a numpy array
-        if len(self.robot_positions) > 0:
-            robot_positions_array = np.array(self.robot_positions)
-            
-            # Check that robot_positions_array has the correct shape
-            if robot_positions_array.ndim == 2 and robot_positions_array.shape[1] == 2:
-                # Plot each saved position as a point
-                self.ax.plot(robot_positions_array[:, 0], robot_positions_array[:, 1], 'bo')
-        
+        robot_positions_array = np.array(self.robot_positions)
+    
+        # Plot each saved position as a point
+        self.ax.plot(robot_positions_array[:, 0], robot_positions_array[:, 1], 'bo')
+    
         # Re-draw the plot
         self.ax.legend(loc='upper right')
         plt.show()
@@ -167,18 +149,3 @@ class SlamControlNode(Node):
     def save_plot(self):
         print("\n\n<<Saving Plot>>\n\n")
         self.fig.savefig('slam_plot.png')  # Save the plot as an image file
-
-def main(args=None):
-    rclpy.init(args=args)
-    slam_node = SlamControlNode()
-
-    try:
-        rclpy.spin(slam_node)
-    except KeyboardInterrupt:
-        pass
-
-    slam_node.destroy_node()
-    rclpy.shutdown()
-
-if __name__ == '__main__':
-    main()
