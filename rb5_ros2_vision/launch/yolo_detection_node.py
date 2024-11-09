@@ -1,4 +1,4 @@
-# yolo_detection_node.py
+# yolo_detection_node.py - Modified
 import torch
 from ultralytics import YOLO
 import rclpy
@@ -33,7 +33,7 @@ class YoloDetectionNode(Node):
             Image, self.topic_name, self.image_callback, 10
         )
 
-        # Publisher for object detection results
+        # Publisher for object detection results (distance and angle)
         self.publisher_ = self.create_publisher(Float32MultiArray, '/detected_object_info', 10)
 
     def image_callback(self, msg):
@@ -47,7 +47,7 @@ class YoloDetectionNode(Node):
             cls = int(box.cls.item())
             object_name = self.model.names[cls]
             if object_name in self.objects_to_detect:
-                self.get_logger().info(f'\n<<{object_name} Detected!>>\n')
+                self.get_logger().info(f'<<{object_name} Detected!>>')
                 self.handle_detected_object(cv_image, box, object_name)
 
     def handle_detected_object(self, cv_image, box, object_name):
@@ -59,16 +59,15 @@ class YoloDetectionNode(Node):
         # Calculate distance to object
         focal_length = 902.8  # Example focal length value (in pixels)
         known_width = self.objects_to_detect[object_name]
-        distance = (known_width * focal_length) / width
+        distance = float((known_width * focal_length) / width)
 
         # Calculate angle based on current rotation and image center offset
-        angle_offset = -(x_center - (cv_image.shape[1] / 2)) / 500
+        angle_offset = float(-(x_center - (cv_image.shape[1] / 2)) / 500)
 
-        # Publish object info (distance and angle)
+        # Publish object info (distance and angle relative to the robot's pose)
         msg = Float32MultiArray()
         msg.data = [distance, angle_offset]
         self.publisher_.publish(msg)
-
 
 def main(args=None):
     rclpy.init(args=args)
