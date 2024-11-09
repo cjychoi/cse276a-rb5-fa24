@@ -80,6 +80,8 @@ class SlamControlNode(Node):
         # Save current position to array
         self.robot_positions.append(self.robot_position.copy())
 
+        print(self.robot_position)
+
 
     def spin_and_track(self):
         # Move the robot in a 2m x 2m square
@@ -100,7 +102,7 @@ class SlamControlNode(Node):
         move_twist = Twist()
         move_twist.linear.x = 2.0  # Set forward speed
         self.publisher_.publish(move_twist)
-        time.sleep(distance / 1.0 * 4)  # Move for the time required based on speed
+        time.sleep(distance / 1.0 * 3)  # Move for the time required based on speed
         move_twist.linear.x = 0.0  # Stop the robot
         self.publisher_.publish(move_twist)
 
@@ -116,11 +118,14 @@ class SlamControlNode(Node):
 
     def plot_robot_positions(self):
         # Convert saved positions to a numpy array
-        robot_positions_array = np.array(self.robot_positions)
-    
-        # Plot each saved position as a point
-        self.ax.plot(robot_positions_array[:, 0], robot_positions_array[:, 1], 'bo')
-    
+        if len(self.robot_positions) > 0:
+            robot_positions_array = np.array(self.robot_positions)
+            
+            # Check that robot_positions_array has the correct shape
+            if robot_positions_array.ndim == 2 and robot_positions_array.shape[1] == 2:
+                # Plot each saved position as a point
+                self.ax.plot(robot_positions_array[:, 0], robot_positions_array[:, 1], 'bo')
+        
         # Re-draw the plot
         self.ax.legend(loc='upper right')
         plt.show()
