@@ -147,7 +147,7 @@ class YoloCameraNode(Node):
     def turn_90_degrees(self):
         # Rotate the robot 90 degrees (assuming constant speed)
         turn_twist = Twist()
-        turn_twist.angular.z = 8.5  # Set a faster rotation speed (1.0 rad/s)
+        turn_twist.angular.z = 9.0  # Set a faster rotation speed (1.0 rad/s)
         self.publisher_.publish(turn_twist)
         time.sleep(1.57)  # 90 degrees = 1.57 radians, so it takes 1.57 seconds at 1.0 rad/s
         turn_twist.angular.z = 0.0  # Stop rotating
