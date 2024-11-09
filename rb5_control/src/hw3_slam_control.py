@@ -99,7 +99,7 @@ class SlamControlNode(Node):
         move_twist = Twist()
         move_twist.linear.x = 2.0  # Set forward speed
         self.publisher_.publish(move_twist)
-        time.sleep(distance / 2.0)  # Move for the time required based on speed
+        time.sleep(distance / 1.0 * 4)  # Move for the time required based on speed
         move_twist.linear.x = 0.0  # Stop the robot
         self.publisher_.publish(move_twist)
 
@@ -107,16 +107,18 @@ class SlamControlNode(Node):
         # Rotate the robot 90 degrees
         print("\n\n<<Turn 90 degrees>>\n\n")
         turn_twist = Twist()
-        turn_twist.angular.z = 1.57  # Set angular speed to 90 degrees
+        turn_twist.angular.z = 9.0  # Set angular speed to 90 degrees
         self.publisher_.publish(turn_twist)
-        time.sleep(1.0)  # 90 degrees = 1.57 radians
+        time.sleep(1.57)  # 90 degrees = 1.57 radians
         turn_twist.angular.z = 0.0  # Stop rotating
         self.publisher_.publish(turn_twist)
 
     def plot_robot_positions(self):
         # Update the robot's position and plot it
-        robot_positions_array = np.array(self.robot_positions)
-        self.robot_line.set_data(robot_positions_array[:, 0], robot_positions_array[:, 1])
+        if len(self.robot_positions) > 0:
+            robot_positions_array = np.array(self.robot_positions)
+            if robot_positions_array.ndim == 2 and robot_positions_array.shape[1] == 2:  # Check for correct shape
+                self.robot_line.set_data(robot_positions_array[:, 0], robot_positions_array[:, 1])
 
         # Re-draw the plot
         self.ax.legend(loc='upper right')
