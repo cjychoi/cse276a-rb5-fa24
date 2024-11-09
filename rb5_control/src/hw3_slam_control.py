@@ -5,7 +5,6 @@ from std_msgs.msg import Float32MultiArray
 from geometry_msgs.msg import Twist
 import numpy as np
 import matplotlib.pyplot as plt
-import time
 
 class EKFSLAM:
     def __init__(self, object_list):
@@ -35,6 +34,13 @@ class SlamControlNode(Node):
         self.robot_position = np.array([0.0, 0.0])  # Initial position (x, y)
         self.robot_orientation = 0.0  # Initial orientation (theta in radians)
         self.velocity = np.array([0.0, 0.0])  # Velocity (linear.x, angular.z)
+
+        # Movement control
+        self.is_moving = False
+        self.is_rotating = False
+        self.move_duration = 0.0
+        self.turn_duration = 0.0
+        self.movement_timer = None
 
         # Initialize EKF SLAM
         self.objects_to_detect = ['teddy bear', 'backpack', 'umbrella', 'bottle']
@@ -69,6 +75,9 @@ class SlamControlNode(Node):
         self.velocity = np.array([msg.linear.x, msg.angular.z])
 
     def update_position(self):
+        if not self.is_moving and not self.is_rotating:
+            return
+
         # Integrate to find the robot's new position
         delta_x = self.velocity[0] * 0.5 * np.cos(self.robot_orientation)
         delta_y = self.velocity[0] * 0.5 * np.sin(self.robot_orientation)
@@ -80,61 +89,86 @@ class SlamControlNode(Node):
         # Save current position to array
         self.robot_positions.append(self.robot_position.copy())
 
-        print(self.robot_position)
-
-
     def spin_and_track(self):
         # Move the robot in a 2m x 2m square
-        for i in range(4):  # For a square
-            self.move_forward(2.0)  # Move 2.0 meters
-            self.turn_90_degrees()  # Turn 90 degrees
-    
-        # After completing the movement, plot all saved positions
-        self.plot_robot_positions()
-    
-        # Save the plot after plotting
-        self.save_plot()
-
+        self.move_forward(2.0)  # Start by moving 2.0 meters
 
     def move_forward(self, distance):
         # Move the robot forward by a specified distance (in meters)
         print("\n\n<<Move Forward>>\n\n")
         move_twist = Twist()
         move_twist.linear.x = 2.0  # Set forward speed
+
+        # Calculate the time to move the distance based on speed
+        self.move_duration = distance / 2.0 * 3  # Time needed to move 2m at 2m/s
+        self.is_moving = True
+
+        # Publish the movement command
         self.publisher_.publish(move_twist)
-        time.sleep(distance / 1.0 * 3)  # Move for the time required based on speed
+
+        # Start a timer to stop after moving
+        self.movement_timer = self.create_timer(self.move_duration, self.stop_moving)
+
+    def stop_moving(self):
+        # Stop the robot after moving the specified distance
+        move_twist = Twist()
         move_twist.linear.x = 0.0  # Stop the robot
         self.publisher_.publish(move_twist)
 
+        self.is_moving = False
+        self.movement_timer.cancel()
+
+        # Now start rotating
+        self.turn_90_degrees()
+
     def turn_90_degrees(self):
-        # Rotate the robot 90 degrees
         print("\n\n<<Turn 90 degrees>>\n\n")
         turn_twist = Twist()
-        turn_twist.angular.z = 9.0  # Set angular speed to 90 degrees
+        turn_twist.angular.z = 9.0  # Set angular speed to rotate 90 degrees
+
+        # Time to rotate 90 degrees
+        self.turn_duration = 1.57  # 1.57 radians / speed = time
+        self.is_rotating = True
+
+        # Publish the rotation command
         self.publisher_.publish(turn_twist)
-        time.sleep(1.57)  # 90 degrees = 1.57 radians
+
+        # Start a timer to stop rotating after 90 degrees
+        self.movement_timer = self.create_timer(self.turn_duration, self.stop_rotating)
+
+    def stop_rotating(self):
+        # Stop the robot after rotating
+        turn_twist = Twist()
         turn_twist.angular.z = 0.0  # Stop rotating
         self.publisher_.publish(turn_twist)
 
+        self.is_rotating = False
+        self.movement_timer.cancel()
+
+        # Check if another movement is required (continue square movement)
+        if len(self.robot_positions) < 8:  # For a 2x2 square (4 moves, 4 turns)
+            self.move_forward(2.0)
+        else:
+            # After completing the movement, plot all saved positions
+            self.plot_robot_positions()
+
+            # Save the plot after plotting
+            self.save_plot()
+
     def plot_robot_positions(self):
         # Convert saved positions to a numpy array
-        if len(self.robot_positions) > 0:
-            robot_positions_array = np.array(self.robot_positions)
-            
-            # Check that robot_positions_array has the correct shape
-            if robot_positions_array.ndim == 2 and robot_positions_array.shape[1] == 2:
-                # Plot each saved position as a point
-                self.ax.plot(robot_positions_array[:, 0], robot_positions_array[:, 1], 'bo')
-        
+        robot_positions_array = np.array(self.robot_positions)
+    
+        # Plot each saved position as a point
+        self.ax.plot(robot_positions_array[:, 0], robot_positions_array[:, 1], 'bo')
+    
         # Re-draw the plot
         self.ax.legend(loc='upper right')
         plt.show()
 
-
     def save_plot(self):
         print("\n\n<<Saving Plot>>\n\n")
         self.fig.savefig('slam_plot.png')  # Save the plot as an image file
-
 
 def main(args=None):
     rclpy.init(args=args)
