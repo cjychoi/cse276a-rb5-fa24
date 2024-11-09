@@ -62,6 +62,7 @@ class SlamControlNode(Node):
         self.timer = self.create_timer(0.5, self.update_position)
 
         # Start the movement after subscribing
+        self.square = 0
         self.spin_and_track()
 
     def object_callback(self, msg):
@@ -111,6 +112,7 @@ class SlamControlNode(Node):
 
     def stop_moving(self):
         # Stop the robot after moving the specified distance
+        self.square += .5
         move_twist = Twist()
         move_twist.linear.x = 0.0  # Stop the robot
         self.publisher_.publish(move_twist)
@@ -138,6 +140,7 @@ class SlamControlNode(Node):
 
     def stop_rotating(self):
         # Stop the robot after rotating
+        self.square += .5
         turn_twist = Twist()
         turn_twist.angular.z = 0.0  # Stop rotating
         self.publisher_.publish(turn_twist)
@@ -146,7 +149,7 @@ class SlamControlNode(Node):
         self.movement_timer.cancel()
 
         # Check if another movement is required (continue square movement)
-        if len(self.robot_positions) < 8:  # For a 2x2 square (4 moves, 4 turns)
+        if self.square < 4:  # For a 2x2 square (4 moves, 4 turns)
             self.move_forward(2.0)
         else:
             # After completing the movement, plot all saved positions
