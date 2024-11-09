@@ -140,7 +140,7 @@ class YoloCameraNode(Node):
         move_twist = Twist()
         move_twist.linear.x = 2.0  # Set a faster forward speed (1.0 m/s)
         self.publisher_.publish(move_twist)
-        time.sleep(distance / 1.0)  # Move for the time required based on speed
+        time.sleep(distance / 1.0 * 4)  # Move for the time required based on speed
         move_twist.linear.x = 0.0  # Stop the robot
         self.publisher_.publish(move_twist)
 
