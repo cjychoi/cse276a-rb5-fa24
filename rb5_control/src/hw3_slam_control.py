@@ -100,7 +100,7 @@ class SlamControlNode(Node):
         move_twist.linear.x = 2.0  # Set forward speed
 
         # Calculate the time to move the distance based on speed
-        self.move_duration = distance / 2.0  # Time needed to move 2m at 2m/s
+        self.move_duration = distance * 4.0  # Time needed to move 2m at 2m/s
         self.is_moving = True
 
         # Publish the movement command
@@ -127,7 +127,7 @@ class SlamControlNode(Node):
         turn_twist.angular.z = 9.0  # Set angular speed to rotate 90 degrees
 
         # Time to rotate 90 degrees
-        self.turn_duration = 1.57 / 9.0  # 1.57 radians / speed = time
+        self.turn_duration = 1.57  # 1.57 radians / speed = time
         self.is_rotating = True
 
         # Publish the rotation command
