@@ -47,6 +47,7 @@ class SlamControlNode(Node):
         self.spin_and_track()
 
     def object_callback(self, msg):
+        print("\n\n<<Object Callback>>\n\n")
         distance, angle = msg.data
         obj_index = 0  # Placeholder for the detected object's index
         self.ekf_slam.update(np.array([distance, angle]), obj_index)
@@ -65,6 +66,7 @@ class SlamControlNode(Node):
 
     def move_forward(self, distance):
         # Move the robot forward by a specified distance (in meters)
+        print("\n\n<<Move Forward>>\n\n")
         move_twist = Twist()
         move_twist.linear.x = 2.0  # Set a faster forward speed
         self.publisher_.publish(move_twist)
@@ -74,6 +76,7 @@ class SlamControlNode(Node):
 
     def turn_90_degrees(self):
         # Rotate the robot 90 degrees
+        print("\n\n<<Turn 90 degrees>>\n\n")
         turn_twist = Twist()
         turn_twist.angular.z = 9.0  # Set a faster rotation speed
         self.publisher_.publish(turn_twist)
@@ -92,6 +95,7 @@ class SlamControlNode(Node):
         self.robot_line.set_data(robot_positions_array[:, 0], robot_positions_array[:, 1])
 
     def save_plot(self):
+        print("\n\n<<Saving Plot>>\n\n")
         self.fig.savefig('slam_plot.png')  # Save the plot as an image file
 
 
