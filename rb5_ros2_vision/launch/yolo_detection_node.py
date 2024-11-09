@@ -1,4 +1,4 @@
-# yolo_detection_node.py - Modified
+# yolo_detection_node.py - Modified to publish distance and angle to detected objects
 import torch
 from ultralytics import YOLO
 import rclpy
@@ -19,10 +19,12 @@ class YoloDetectionNode(Node):
 
         # Objects to detect and their known widths (in meters)
         self.objects_to_detect = {
+            'stop sign': 0.6,
+            'car': 1.8,
             'teddy bear': 0.2,
+            'bottle': 0.1,
             'backpack': 0.3,
-            'umbrella': 0.6,
-            'bottle': 0.1
+            'umbrella': 0.6
         }
 
         # Load YOLOv8 model
@@ -47,7 +49,7 @@ class YoloDetectionNode(Node):
             cls = int(box.cls.item())
             object_name = self.model.names[cls]
             if object_name in self.objects_to_detect:
-                self.get_logger().info(f'<<{object_name} Detected!>>')
+                self.get_logger().info(f'\n<<{object_name} Detected!>>\n')
                 self.handle_detected_object(cv_image, box, object_name)
 
     def handle_detected_object(self, cv_image, box, object_name):
@@ -66,10 +68,12 @@ class YoloDetectionNode(Node):
 
         # Publish object info (distance and angle relative to the robot's pose)
         msg = Float32MultiArray()
-        msg.data = [distance, angle_offset]
+        msg.data = [distance, angle_offset, float(list(self.objects_to_detect.keys()).index(object_name))]
         self.publisher_.publish(msg)
 
 def main(args=None):
+    print("@\n@\n@\n@\n STARTING NEW DETECTION \n@\n@\n@\n")
+    
     rclpy.init(args=args)
     yolo_node = YoloDetectionNode()
 
