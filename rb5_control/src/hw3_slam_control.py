@@ -157,11 +157,14 @@ class SlamControlNode(Node):
 
     def plot_robot_positions(self):
         # Convert saved positions to a numpy array
-        robot_positions_array = np.array(self.robot_positions)
-    
-        # Plot each saved position as a point
-        self.ax.plot(robot_positions_array[:, 0], robot_positions_array[:, 1], 'bo')
-    
+        if len(self.robot_positions) > 0:
+            robot_positions_array = np.array(self.robot_positions)
+            
+            # Check that robot_positions_array has the correct shape
+            if robot_positions_array.ndim == 2 and robot_positions_array.shape[1] == 2:
+                # Plot each saved position as a point
+                self.ax.plot(robot_positions_array[:, 0], robot_positions_array[:, 1], 'bo')
+        
         # Re-draw the plot
         self.ax.legend(loc='upper right')
         plt.show()
