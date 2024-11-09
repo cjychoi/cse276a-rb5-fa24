@@ -75,7 +75,7 @@ class SlamControlNode(Node):
         # Store the current velocities from the Twist message
         self.velocity = np.array([msg.linear.x, msg.angular.z])
 
-    def update_position(self):
+        def update_position(self):
         if not self.is_moving and not self.is_rotating:
             return
 
@@ -89,6 +89,10 @@ class SlamControlNode(Node):
     
         # Save current position to array
         self.robot_positions.append(self.robot_position.copy())
+
+        # Print the robot's pose (x, y, theta)
+        print(f"Robot pose: x = {self.robot_position[0]:.2f}, y = {self.robot_position[1]:.2f}, theta = {self.robot_orientation:.2f} radians")
+
 
     def spin_and_track(self):
         # Move the robot in a 2m x 2m square
