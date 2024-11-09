@@ -1,3 +1,23 @@
+# slam_control_node.py
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import Float32MultiArray
+from geometry_msgs.msg import Twist
+import numpy as np
+import matplotlib.pyplot as plt
+
+class EKFSLAM:
+    def __init__(self, object_list):
+        # Initialize SLAM state (robot pose and landmarks)
+        self.state = np.zeros((3 + 2 * len(object_list), 1))
+
+    def update(self, measurement, obj_index):
+        # Placeholder for EKF update
+        pass
+
+    def get_state(self):
+        return self.state
+
 class SlamControlNode(Node):
     def __init__(self):
         super().__init__('slam_control_node')
@@ -149,3 +169,18 @@ class SlamControlNode(Node):
     def save_plot(self):
         print("\n\n<<Saving Plot>>\n\n")
         self.fig.savefig('slam_plot.png')  # Save the plot as an image file
+
+def main(args=None):
+    rclpy.init(args=args)
+    slam_node = SlamControlNode()
+
+    try:
+        rclpy.spin(slam_node)
+    except KeyboardInterrupt:
+        pass
+
+    slam_node.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
