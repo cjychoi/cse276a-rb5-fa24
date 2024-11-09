@@ -42,7 +42,6 @@ class MegaPiControllerNode(Node):
         delta_theta = twist_cmd.angular.z * delta_time
 
         self.theta += delta_theta
-        self.theta = self.theta % (2 * np.pi)
 
         # Update robot pose
         self.x += delta_x
