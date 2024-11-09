@@ -91,7 +91,15 @@ class SlamControlNode(Node):
 
     def spin_and_track(self):
         # Move the robot in a 2m x 2m square
-        self.move_forward(2.0)  # Start by moving 2.0 meters
+        for i in range(4):  # For a square
+            self.move_forward(2.0)  # Move 2.0 meters
+            self.turn_90_degrees()  # Turn 90 degrees
+    
+        # After completing the movement, plot all saved positions
+        self.plot_robot_positions()
+    
+        # Save the plot after plotting
+        self.save_plot()
 
     def move_forward(self, distance):
         # Move the robot forward by a specified distance (in meters)
@@ -100,7 +108,7 @@ class SlamControlNode(Node):
         move_twist.linear.x = 2.0  # Set forward speed
 
         # Calculate the time to move the distance based on speed
-        self.move_duration = distance / 2.0 * 3  # Time needed to move 2m at 2m/s
+        self.move_duration = distance / 2.0  # Time needed to move 2m at 2m/s
         self.is_moving = True
 
         # Publish the movement command
@@ -118,16 +126,13 @@ class SlamControlNode(Node):
         self.is_moving = False
         self.movement_timer.cancel()
 
-        # Now start rotating
-        self.turn_90_degrees()
-
     def turn_90_degrees(self):
         print("\n\n<<Turn 90 degrees>>\n\n")
         turn_twist = Twist()
         turn_twist.angular.z = 9.0  # Set angular speed to rotate 90 degrees
 
         # Time to rotate 90 degrees
-        self.turn_duration = 1.57  # 1.57 radians / speed = time
+        self.turn_duration = 1.57 / 9.0  # 1.57 radians / speed = time
         self.is_rotating = True
 
         # Publish the rotation command
@@ -144,16 +149,6 @@ class SlamControlNode(Node):
 
         self.is_rotating = False
         self.movement_timer.cancel()
-
-        # Check if another movement is required (continue square movement)
-        if len(self.robot_positions) < 8:  # For a 2x2 square (4 moves, 4 turns)
-            self.move_forward(2.0)
-        else:
-            # After completing the movement, plot all saved positions
-            self.plot_robot_positions()
-
-            # Save the plot after plotting
-            self.save_plot()
 
     def plot_robot_positions(self):
         # Convert saved positions to a numpy array
