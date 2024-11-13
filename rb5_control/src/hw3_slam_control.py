@@ -1,4 +1,4 @@
-# hw3_slam_control.py - Updated to display only final predicted locations of landmarks
+# hw3_slam_control.py - Updated to plot detected objects based on measured distance
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
@@ -13,8 +13,35 @@ class EKFSLAM:
         self.state = np.zeros((3 + 2 * len(object_list), 1))  # [x, y, theta, x1, y1, x2, y2, ...]
         self.P = np.eye(3 + 2 * len(object_list)) * 1000  # Large initial uncertainty for landmarks
         self.R = np.diag([0.1, 0.1])  # Measurement noise for range and bearing
+        self.Q = np.diag([0.05, 0.05, 0.01])  # Process noise for [x, y, theta]
         self.object_list = object_list
         self.colors = plt.cm.get_cmap('tab10', len(object_list))
+
+    def predict(self, control_input):
+        """Predict step for EKF based on control input."""
+        x, y, theta = self.state[0, 0], self.state[1, 0], self.state[2, 0]
+        distance, heading_change = control_input
+
+        # Predict the new state based on control input
+        new_x = x + distance * np.cos(theta)
+        new_y = y + distance * np.sin(theta)
+        new_theta = theta + heading_change
+        new_theta = (new_theta + np.pi) % (2 * np.pi) - np.pi  # Normalize theta
+
+        # Update state
+        self.state[0, 0] = new_x
+        self.state[1, 0] = new_y
+        self.state[2, 0] = new_theta
+
+        # Create an expanded process noise matrix that matches the size of P
+        Q_expanded = np.zeros_like(self.P)
+        Q_expanded[:3, :3] = self.Q  # Place Q in the top-left corner to affect only robot pose
+
+        # Update the covariance (process model) with the expanded process noise
+        F = np.eye(len(self.state))
+        F[0, 2] = -distance * np.sin(theta)
+        F[1, 2] = distance * np.cos(theta)
+        self.P = F @ self.P @ F.T + Q_expanded
 
     def update(self, measurement, obj_index):
         # Extract the robot's position and orientation from the state
@@ -66,9 +93,6 @@ class EKFSLAM:
         self.state += K @ innovation
         self.P = (np.eye(len(self.state)) - K @ H) @ self.P
 
-    def get_state(self):
-        return self.state
-
 class SlamControlNode(Node):
     def __init__(self):
         super().__init__('slam_control_node')
@@ -81,6 +105,7 @@ class SlamControlNode(Node):
         self.fig, self.ax = plt.subplots()
         self.set_plot_limits()
         self.robot_positions = []  # Store estimated robot positions from EKF
+        self.detected_objects = []  # Store positions of detected objects
         self.spin_and_track()
 
     def set_plot_limits(self):
@@ -95,30 +120,39 @@ class SlamControlNode(Node):
         # Update EKF SLAM with the measurement
         self.ekf_slam.update(measurement, int(obj_index))
         
-        # Update the robot position with EKF estimate
-        robot_x, robot_y = self.ekf_slam.state[0, 0], self.ekf_slam.state[1, 0]
+        # Calculate detected object's position based on distance and angle
+        robot_x, robot_y, theta = self.ekf_slam.state[0, 0], self.ekf_slam.state[1, 0], self.ekf_slam.state[2, 0]
+        obj_x = robot_x + distance * np.cos(theta + angle)
+        obj_y = robot_y + distance * np.sin(theta + angle)
+        object_name = self.objects_to_detect[obj_index]
+        self.detected_objects.append((obj_x, obj_y, object_name))
+        
+        # Update the robot position in the path
         self.robot_positions.append([robot_x, robot_y])
 
-    def plot_final_landmarks(self):
-        # Plot the robot path
+        # Plot the updated robot path and detected objects
+        self.update_and_plot()
+
+    def update_and_plot(self):
         self.ax.clear()
         self.set_plot_limits()
-        self.ax.plot(*zip(*self.robot_positions), 'bo-', label="Robot Path")
-        
-        # Plot final predicted positions of each landmark based on EKF state
-        legend_labels = {}
-        for i, obj_name in enumerate(self.objects_to_detect):
-            landmark_idx = 3 + 2 * i
-            obj_x, obj_y = self.ekf_slam.state[landmark_idx, 0], self.ekf_slam.state[landmark_idx + 1, 0]
-            color = self.ekf_slam.colors(i)
-            legend_labels[obj_name] = self.ax.plot(obj_x, obj_y, 'o', color=color, label=obj_name)[0]
 
-        # Display all unique object names in the bottom-left legend
+        # Plot the robot path
+        self.ax.plot(*zip(*self.robot_positions), 'bo-', label="Robot Path")
+
+        # Plot each detected object at its calculated position
+        legend_labels = {}
+        for x, y, name in self.detected_objects:
+            color = self.ekf_slam.colors(self.objects_to_detect.index(name))
+            if name not in legend_labels:
+                legend_labels[name] = self.ax.plot(x, y, 'o', color=color, label=name)[0]
+            else:
+                self.ax.plot(x, y, 'o', color=color)
+
+        # Display the legend in the bottom-left
         self.ax.legend(handles=legend_labels.values(), loc='lower left')
-        plt.title("Robot Path and Final Predicted Landmark Positions")
-        plt.xlabel("X position (meters)")
-        plt.ylabel("Y position (meters)")
-        plt.show()
+        plt.draw()
+        plt.pause(0.1)
         self.save_plot()
 
     def save_plot(self):
@@ -138,6 +172,12 @@ class SlamControlNode(Node):
 
     def move_forward(self, distance):
         print("Moving forward by 0.5 meters")
+        
+        # Perform a prediction step in the EKF for the forward movement
+        control_input = [distance, 0]  # No change in heading angle for straight movement
+        self.ekf_slam.predict(control_input)
+
+        # Publish the twist message to simulate movement (not actually affecting EKF state)
         move_twist = Twist()
         move_twist.linear.x = 2.0
         self.publisher_.publish(move_twist)
@@ -145,14 +185,19 @@ class SlamControlNode(Node):
         move_twist.linear.x = 0.0
         self.publisher_.publish(move_twist)
 
-        last_x, last_y = self.ekf_slam.state[0, 0], self.ekf_slam.state[1, 0]
-        new_x = last_x + distance * np.cos(self.ekf_slam.state[2, 0])
-        new_y = last_y + distance * np.sin(self.ekf_slam.state[2, 0])
-        self.robot_positions.append([new_x, new_y])
-        print(f"Updated Position: x = {new_x}, y = {new_y}")
+        # Update robot's position with the new EKF state
+        robot_x, robot_y = self.ekf_slam.state[0, 0], self.ekf_slam.state[1, 0]
+        self.robot_positions.append([robot_x, robot_y])
+        print(f"Updated Position: x = {robot_x}, y = {robot_y}")
 
     def turn_90_degrees(self):
         print("Turning 90 degrees")
+        
+        # Perform a prediction step in the EKF for the turn
+        control_input = [0, np.pi / 2]  # No movement forward, only change in heading angle
+        self.ekf_slam.predict(control_input)
+
+        # Publish the twist message to simulate rotation (not actually affecting EKF state)
         turn_twist = Twist()
         turn_twist.angular.z = 8.0
         self.publisher_.publish(turn_twist)
@@ -160,9 +205,27 @@ class SlamControlNode(Node):
         turn_twist.angular.z = 0.0
         self.publisher_.publish(turn_twist)
 
-        self.ekf_slam.state[2, 0] += np.pi / 2
-        self.ekf_slam.state[2, 0] %= 2 * np.pi
         print(f"Updated Heading (theta): {self.ekf_slam.state[2, 0]} radians")
+
+    def plot_final_landmarks(self):
+        # Plot the robot path
+        self.ax.clear()
+        self.set_plot_limits()
+        self.ax.plot(*zip(*self.robot_positions), 'bo-', label="Robot Path")
+
+        # Plot final detected object positions
+        legend_labels = {}
+        for x, y, name in self.detected_objects:
+            color = self.ekf_slam.colors(self.objects_to_detect.index(name))
+            legend_labels[name] = self.ax.plot(x, y, 'o', color=color, label=name)[0]
+
+        # Display all unique object names in the legend
+        self.ax.legend(handles=legend_labels.values(), loc='lower left')
+        plt.title("Robot Path and Final Detected Object Positions")
+        plt.xlabel("X position (meters)")
+        plt.ylabel("Y position (meters)")
+        plt.show()
+        self.save_plot()
 
 def main(args=None):
     rclpy.init(args=args)
