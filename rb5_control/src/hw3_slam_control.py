@@ -85,12 +85,12 @@ class SlamControlNode(Node):
         self.subscription = self.create_subscription(
             Float32MultiArray, '/detected_object_info', self.object_callback, 10
         )
-        self.objects_to_detect = ['stop sign', 'tv', 'car', 'oven', 'umbrella', 'teddy bear', 'bottle', 'backpack']
+        self.objects_to_detect = ['stop sign', 'elephant', 'car', 'airplane', 'umbrella', 'teddy bear', 'bottle', 'backpack']
         self.ekf_slam = EKFSLAM(self.objects_to_detect)
         self.fig, self.ax = plt.subplots()
         self.set_plot_limits()
-        self.robot_positions = []  # Store estimated robot positions from EKF
-        self.detected_objects = []  # Store positions of detected objects
+        self.robot_positions = []
+        self.detected_objects = []
         self.spin_and_track()
 
     def set_plot_limits(self):
