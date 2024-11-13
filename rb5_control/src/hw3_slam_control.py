@@ -1,4 +1,4 @@
-# hw3_slam_control.py - Fixed object indexing and added "Robot Path" to legend
+# hw3_slam_control.py - Adjusted to calculate object positions relative to the robot's current position
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
@@ -120,13 +120,17 @@ class SlamControlNode(Node):
         # Update EKF SLAM with the measurement
         self.ekf_slam.update(measurement, int(obj_index))
         
-        # Calculate detected object's position based on distance and angle
+        # Calculate detected object's position based on the robot's current position and orientation
         robot_x, robot_y, theta = self.ekf_slam.state[0, 0], self.ekf_slam.state[1, 0], self.ekf_slam.state[2, 0]
         obj_x = robot_x + distance * np.cos(theta + angle)
         obj_y = robot_y + distance * np.sin(theta + angle)
         object_name = self.objects_to_detect[int(obj_index)]
         self.detected_objects.append((obj_x, obj_y, object_name))
         
+        # Print robot's current position and the object's distance and angle
+        print(f"Robot Position: (x={robot_x:.2f}, y={robot_y:.2f}, theta={theta:.2f})")
+        print(f"Detected {object_name} at distance={distance:.2f}, angle={angle:.2f}")
+
         # Update the robot position in the path
         self.robot_positions.append([robot_x, robot_y])
 
