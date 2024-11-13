@@ -143,8 +143,10 @@ class SlamControlNode(Node):
             for _ in range(4):  # Stop every 0.5 meters
                 self.move_forward(0.5)
                 self.save_plot()
+                time.sleep(1)
             self.turn_90_degrees()
             self.save_plot()
+            time.sleep(1)
 
         self.plot_final_landmarks()
         self.print_final_coordinates()
