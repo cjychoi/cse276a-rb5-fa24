@@ -1,4 +1,4 @@
-# yolo_detection_node.py - Modified to publish distance and angle to detected objects
+# yolo_detection_node.py - Modified to publish distance and angle to detected objects, and print robot position
 import torch
 from ultralytics import YOLO
 import rclpy
@@ -17,16 +17,22 @@ class YoloDetectionNode(Node):
         self.topic_name = self.get_parameter('topic_name').value
         self.br = CvBridge()
 
+        # Robot's current position and orientation (placeholders for demonstration)
+        # In a real setup, subscribe to a topic that provides this information
+        self.robot_x = 0.0  # Placeholder for robot's x position
+        self.robot_y = 0.0  # Placeholder for robot's y position
+        self.robot_theta = 0.0  # Placeholder for robot's orientation (theta)
+
         # Objects to detect and their known widths (in meters)
         self.objects_to_detect = {
             'stop sign': 0.2,
             'elephant': 0.2,
             'car': 0.2,
             'airplane': 0.2,
-            'umbrella': 0.6,
             'teddy bear': 0.15,
             'bottle': 0.1,
-            'backpack': 0.3
+            'backpack': 0.3,
+            'umbrella': 0.6
         }
 
         # Load YOLOv8 model
@@ -67,6 +73,10 @@ class YoloDetectionNode(Node):
 
         # Calculate angle based on current rotation and image center offset
         angle_offset = float(-(x_center - (cv_image.shape[1] / 2)) / 500)
+
+        # Print robot's current position and detected object details
+        print(f"Robot Position: (x={self.robot_x:.2f}, y={self.robot_y:.2f}, theta={self.robot_theta:.2f})")
+        print(f"Detected {object_name} - Distance: {distance:.2f} m, Angle: {angle_offset:.2f} radians")
 
         # Publish object info (distance and angle relative to the robot's pose)
         msg = Float32MultiArray()
