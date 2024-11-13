@@ -1,4 +1,4 @@
-# hw3_slam_control.py - Adjusted to plot only final positions of detected objects relative to the origin
+# hw3_slam_control.py - Adjusted to calculate object positions relative to the robot's current position
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
@@ -89,6 +89,7 @@ class SlamControlNode(Node):
         self.ekf_slam = EKFSLAM(self.objects_to_detect)
         self.fig, self.ax = plt.subplots()
         self.set_plot_limits()
+        self.robot_positions = []
         self.detected_objects = []
         self.spin_and_track()
 
@@ -106,15 +107,45 @@ class SlamControlNode(Node):
         obj_y = robot_y + distance * np.sin(theta + angle)
         object_name = self.objects_to_detect[int(obj_index)]
         self.detected_objects.append((obj_x, obj_y, object_name))
+        
+        print(f"Robot Position: (x={robot_x:.2f}, y={robot_y:.2f}, theta={theta:.2f})")
+        print(f"Detected {object_name} at distance={distance:.2f}, angle={angle:.2f}")
+
+        self.robot_positions.append([robot_x, robot_y])
+        self.update_and_plot()
+
+    def update_and_plot(self):
+        self.ax.clear()
+        self.set_plot_limits()
+        self.ax.plot(*zip(*self.robot_positions), 'bo-', label="Robot Path")
+
+        legend_labels = {"Robot Path": self.ax.plot([], [], 'bo-', label="Robot Path")[0]}
+        for x, y, name in self.detected_objects:
+            color = self.ekf_slam.colors(self.objects_to_detect.index(name))
+            if name not in legend_labels:
+                legend_labels[name] = self.ax.plot(x, y, 'o', color=color, label=name)[0]
+            else:
+                self.ax.plot(x, y, 'o', color=color)
+
+        self.ax.legend(handles=legend_labels.values(), loc='lower left')
+        plt.draw()
+        plt.pause(0.1)
+        self.save_plot()
+
+    def save_plot(self):
+        filename = 'slam_plot.png'
+        self.fig.savefig(filename)
+        print(f"Plot saved as {filename}")
 
     def spin_and_track(self):
         time.sleep(2)
         for _ in range(4):
             for _ in range(4):  # Stop every 0.5 meters
                 self.move_forward(0.5)
+                self.save_plot()
             self.turn_90_degrees()
+            self.save_plot()
 
-        # Final plot after completing the square, showing only final landmark positions
         self.plot_final_landmarks()
         self.print_final_coordinates()
 
@@ -130,7 +161,9 @@ class SlamControlNode(Node):
         move_twist.linear.x = 0.0
         self.publisher_.publish(move_twist)
 
-        print(f"Updated Position: x = {self.ekf_slam.state[0, 0]}, y = {self.ekf_slam.state[1, 0]}")
+        robot_x, robot_y = self.ekf_slam.state[0, 0], self.ekf_slam.state[1, 0]
+        self.robot_positions.append([robot_x, robot_y])
+        print(f"Updated Position: x = {robot_x}, y = {robot_y}")
 
     def turn_90_degrees(self):
         print("Turning 90 degrees")
@@ -149,28 +182,19 @@ class SlamControlNode(Node):
     def plot_final_landmarks(self):
         self.ax.clear()
         self.set_plot_limits()
+        self.ax.plot(*zip(*self.robot_positions), 'bo-', label="Robot Path")
 
-        # Plot final detected object positions
-        legend_labels = {}
+        legend_labels = {"Robot Path": self.ax.plot([], [], 'bo-', label="Robot Path")[0]}
         for x, y, name in self.detected_objects:
             color = self.ekf_slam.colors(self.objects_to_detect.index(name))
-            if name not in legend_labels:
-                legend_labels[name] = self.ax.plot(x, y, 'o', color=color, label=name)[0]
-            else:
-                self.ax.plot(x, y, 'o', color=color)
+            legend_labels[name] = self.ax.plot(x, y, 'o', color=color, label=name)[0]
 
-        # Display all unique object names in the legend
         self.ax.legend(handles=legend_labels.values(), loc='lower left')
-        plt.title("Final Detected Object Positions")
+        plt.title("Robot Path and Final Detected Object Positions")
         plt.xlabel("X position (meters)")
         plt.ylabel("Y position (meters)")
         plt.show()
         self.save_plot()
-
-    def save_plot(self):
-        filename = 'slam_plot_final.png'
-        self.fig.savefig(filename)
-        print(f"Plot saved as {filename}")
 
     def print_final_coordinates(self):
         print("\nFinal Coordinates of Detected Objects:")
