@@ -1,27 +1,81 @@
-# Rb5 related packages in ROS2
+# CSE 276A - Intro to Robotics - FA24
+Members: Andrew Choi (A69033628), Nishanth Chidambaram (A69031827)
 
-These packages are developed using ROS Foxy on Ubuntu 20.04.
+### Connect to the RB5 robot
+``` ssh root@10.42.0.1 ```
+``` oelinux123 ```
 
-## 1. rb5_ros2_vision
 
-use the following command to launch the main camera on rb5
+### Connect to the Internet
 
-``` bash
-ros2 launch rb5_ros2_vision rb_camera_main_ocv_launch.py
-```
-make sure that 'use_rb_cam' parameter is set to true.
+```iw phy0 interface add ap0 type __ap```
 
-use the following command to launch on a webcam
-``` bash
-ros2 launch rb5_ros2_vision rb_camera_webcam_ocv_launch.py
-```
-make sure that 'use_rb_cam' parameter is set to false.
 
-If 'image_rectify' is set to true, make sure you set the 'camera_parameter_path'
-correctly to a xml or yaml/yml file. (tested on yaml) Notice that newer versions of opencv saves matrices with 'dt' representing data type. Also the file must start with the yaml version.
 
-## Notes on other versions of ROS2
 
-1. In launch files, dashing uses node_executable while foxy uses executable.
-2. Dashing doesn't support command line arguements. 
+### Build workspace & Source
+  
+```source /opt/ros/foxy/setup.bash && cd /root/cse276a_ws && colcon build &&  source install/setup.bash```
 
+### Run camera
+  
+```ros2 launch rb5_ros2_vision rb_camera_main_ocv_launch.py```
+
+
+### Source file
+```cd src/rb5_ros2/rb5_ros2_vision/launch```
+
+
+### For ros2 commands on local
+- On zsh
+  
+```micromamba activate ros_env```
+```rviz2```
+
+
+### Navigate to the source code
+```cd src/rb5_ros2/rb5_ros2_control/rb5_ros2_control```
+``` cd src/rb5_ros2/rb5_ros2_vision/launch ```
+
+Build workspace & Source
+```source /opt/ros/foxy/setup.bash && cd /root/cse276a_ws && colcon build && source install/setup.bash```
+
+### Run on 4 terminals
+After sourcing
+1. camera
+
+	```ros2 launch rb5_ros2_vision rb_camera_main_ocv_launch.py```
+3. twist
+   
+	```python3 src/rb5_ros2/rb5_control/src/mpi_twist_control_node.py```
+
+	```ros2 run rb5_control mpi_twist_control_node.py```
+
+5. yolo
+	
+ 	```cd src/rb5_ros2/rb5_ros2_vision/launch```
+
+	```python3 yolo_detection_node.py```
+
+7. motion
+	
+ 	```cd src/rb5_ros2/rb5_control/src/ && python3 hw1_solution.py```
+
+---
+## HW1
+[HW1 Report](https://docs.google.com/document/d/1tgoSK-LGrkjnmwbC2iX3vB4yHsQcUyFOQoaKGKj4cTM/edit?tab=t.0)
+[Demo Video](https://youtu.be/aajG44xzSN8)
+
+Run hw 1 code
+```python3 hw_1.py```
+
+## HW2
+[HW2 Report](https://docs.google.com/document/d/1fSxU7LPmJGaLbF6K0kpocTLwebwbZqaJzBPrKvLl9I0/edit?tab=t.0)
+[Demo Video](https://youtu.be/z6qyyYL_FeU)
+
+## HW3
+[HW3 Report](https://docs.google.com/document/d/12vi6x22ai03davU3_yrkwaHJN8hiRHjM2HlS1EhhmJg/edit?tab=t.0)
+[Demo Video]
+
+Landmark Objects
+- TV -> Bottle -> Potted Plant -> Suitcase -> Umbrella -> Teddy bear -> Backpack -> Stop sign
