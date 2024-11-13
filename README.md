@@ -51,4 +51,8 @@ Run hw 1 code
 
 ## HW2
 [HW2 Report](https://docs.google.com/document/d/1fSxU7LPmJGaLbF6K0kpocTLwebwbZqaJzBPrKvLl9I0/edit?tab=t.0)
+[Demo Video](https://youtu.be/z6qyyYL_FeU)
+
+## HW3
+[HW3 Report](https://docs.google.com/document/d/12vi6x22ai03davU3_yrkwaHJN8hiRHjM2HlS1EhhmJg/edit?tab=t.0)
 [Demo Video]
