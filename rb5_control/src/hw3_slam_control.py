@@ -124,7 +124,7 @@ class SlamControlNode(Node):
         robot_x, robot_y, theta = self.ekf_slam.state[0, 0], self.ekf_slam.state[1, 0], self.ekf_slam.state[2, 0]
         obj_x = robot_x + distance * np.cos(theta + angle)
         obj_y = robot_y + distance * np.sin(theta + angle)
-        object_name = self.objects_to_detect[obj_index]
+        object_name = self.objects_to_detect[int(obj_index)]
         self.detected_objects.append((obj_x, obj_y, object_name))
         
         # Update the robot position in the path
@@ -165,7 +165,9 @@ class SlamControlNode(Node):
         for _ in range(4):
             for _ in range(4):  # Stop every 0.5 meters
                 self.move_forward(0.5)
+                self.save_plot()
             self.turn_90_degrees()  # Turn 90 degrees
+            self.save_plot()
 
         # Final plot after completing the square, showing only final landmark positions
         self.plot_final_landmarks()
