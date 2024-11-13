@@ -43,15 +43,23 @@ Build workspace & Source
 ### Run on 4 terminals
 After sourcing
 1. camera
+
 	```ros2 launch rb5_ros2_vision rb_camera_main_ocv_launch.py```
-2 - twist
-	```python3 src/rb5_ros2/rb5_control/src/mpi_twist_control_node.py``` 
+3. twist
+   
+	```python3 src/rb5_ros2/rb5_control/src/mpi_twist_control_node.py```
+
 	```ros2 run rb5_control mpi_twist_control_node.py```
-3 - yolo
-	```cd src/rb5_ros2/rb5_ros2_vision/launch```
-	```python3 yolo_detection_node.py``` 
-4 - motion
-	```cd src/rb5_ros2/rb5_control/src/ && python3 hw1_solution.py```
+
+5. yolo
+	
+ 	```cd src/rb5_ros2/rb5_ros2_vision/launch```
+
+	```python3 yolo_detection_node.py```
+
+7. motion
+	
+ 	```cd src/rb5_ros2/rb5_control/src/ && python3 hw1_solution.py```
 
 ---
 ## HW1
