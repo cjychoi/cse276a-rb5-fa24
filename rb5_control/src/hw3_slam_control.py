@@ -85,7 +85,7 @@ class SlamControlNode(Node):
         self.subscription = self.create_subscription(
             Float32MultiArray, '/detected_object_info', self.object_callback, 10
         )
-        self.objects_to_detect = ['stop sign', 'elephant', 'car', 'airplane', 'umbrella', 'teddy bear', 'bottle', 'backpack']
+        self.objects_to_detect = ['stop sign', 'tv', 'car', 'oven', 'umbrella', 'teddy bear', 'bottle', 'backpack']
         self.ekf_slam = EKFSLAM(self.objects_to_detect)
         self.fig, self.ax = plt.subplots()
         self.set_plot_limits()

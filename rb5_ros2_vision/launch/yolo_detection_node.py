@@ -20,9 +20,9 @@ class YoloDetectionNode(Node):
         # Objects to detect and their known widths (in meters)
         self.objects_to_detect = {
             'stop sign': 0.2,
-            'elephant': 0.2,
+            'tv': 1.2,
             'car': 0.2,
-            'airplane': 0.2,
+            'oven': 0.4,
             'umbrella': 0.6,
             'teddy bear': 0.15,
             'bottle': 0.1,
