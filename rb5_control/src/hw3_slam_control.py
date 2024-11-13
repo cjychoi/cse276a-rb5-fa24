@@ -1,4 +1,4 @@
-# hw3_slam_control.py - Updated to plot detected objects based on measured distance
+# hw3_slam_control.py - Updated to print final coordinates of detected objects after EKF SLAM
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
@@ -171,6 +171,7 @@ class SlamControlNode(Node):
 
         # Final plot after completing the square, showing only final landmark positions
         self.plot_final_landmarks()
+        self.print_final_coordinates()  # Print the final coordinates of each detected object
 
     def move_forward(self, distance):
         print("Moving forward by 0.5 meters")
@@ -228,6 +229,13 @@ class SlamControlNode(Node):
         plt.ylabel("Y position (meters)")
         plt.show()
         self.save_plot()
+
+    def print_final_coordinates(self):
+        print("\nFinal Coordinates of Detected Objects:")
+        for i, obj_name in enumerate(self.objects_to_detect):
+            landmark_idx = 3 + 2 * i
+            obj_x, obj_y = self.ekf_slam.state[landmark_idx, 0], self.ekf_slam.state[landmark_idx + 1, 0]
+            print(f"{obj_name}: (x = {obj_x:.2f}, y = {obj_y:.2f})")
 
 def main(args=None):
     rclpy.init(args=args)
