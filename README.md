@@ -76,3 +76,6 @@ Run hw 1 code
 ## HW3
 [HW3 Report](https://docs.google.com/document/d/12vi6x22ai03davU3_yrkwaHJN8hiRHjM2HlS1EhhmJg/edit?tab=t.0)
 [Demo Video]
+
+Landmark Objects
+- TV -> Bottle -> Potted Plant -> Suitcase -> Umbrella -> Teddy bear -> Backpack -> Stop sign
