@@ -92,13 +92,26 @@ class SlamControlNode(Node):
         self.ax.set_ylim(-5, 5)
 
     def object_callback(self, msg):
-        distance, angle, obj_index = msg.data
-        object_name = self.objects_to_detect[int(obj_index)]
-        robot_x, robot_y = self.robot_positions[-1]
-        obj_x = robot_x + distance * np.cos(self.theta + angle)
-        obj_y = robot_y + distance * np.sin(self.theta + angle)
-        self.detections.append((obj_x, obj_y, object_name))
-        self.update_and_plot()
+    # Extract the detection info
+    distance, angle, obj_index = msg.data
+    object_name = self.objects_to_detect[int(obj_index)]
+    
+    # Update the EKF SLAM with the detection
+    measurement = [distance, angle]
+    self.ekf_slam.update(measurement, int(obj_index))
+    
+    # Update the robot position with current estimate (for plotting)
+    robot_x, robot_y = self.ekf_slam.state[0, 0], self.ekf_slam.state[1, 0]
+    self.robot_positions.append([robot_x, robot_y])
+
+    # Store object detection in world coordinates
+    obj_x = robot_x + distance * np.cos(self.theta + angle)
+    obj_y = robot_y + distance * np.sin(self.theta + angle)
+    self.detections.append((obj_x, obj_y, object_name))
+    
+    # Update the plot with new robot positions and detected object
+    self.update_and_plot()
+
 
     def update_and_plot(self):
         self.ax.clear()
