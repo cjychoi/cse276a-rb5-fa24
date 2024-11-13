@@ -89,8 +89,8 @@ class SlamControlNode(Node):
         self.ekf_slam = EKFSLAM(self.objects_to_detect)
         self.fig, self.ax = plt.subplots()
         self.set_plot_limits()
-        self.robot_positions = []
-        self.detected_objects = []
+        self.robot_positions = []  # Store estimated robot positions from EKF
+        self.detected_objects = []  # Store positions of detected objects
         self.spin_and_track()
 
     def set_plot_limits(self):
