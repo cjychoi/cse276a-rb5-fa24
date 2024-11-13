@@ -1,5 +1,4 @@
-# hw3_slam_control.py - Further adjustments to correctly update robot position in EKF
-
+# hw3_slam_control.py - Adjusted to calculate object positions relative to the robot's current position
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
@@ -45,23 +44,15 @@ class EKFSLAM:
         self.P = F @ self.P @ F.T + Q_expanded
 
     def update(self, measurement, obj_index):
-        # Extract the robot's position and orientation from the state
         x, y, theta = self.state[0, 0], self.state[1, 0], self.state[2, 0]
-        
-        # Extract the distance and bearing measurement to the landmark
         distance, bearing = measurement
-        
-        # Compute the landmark's index in the state vector
         landmark_idx = 3 + 2 * int(obj_index)
         
-        # Check if the landmark is already initialized
-        if self.P[landmark_idx, landmark_idx] > 999:  # High initial uncertainty for uninitialized landmarks
-            # Initialize the landmark position based on the robot's position and the measurement
+        if self.P[landmark_idx, landmark_idx] > 999:
             self.state[landmark_idx, 0] = x + distance * np.cos(theta + bearing)
             self.state[landmark_idx + 1, 0] = y + distance * np.sin(theta + bearing)
-            self.P[landmark_idx:landmark_idx + 2, landmark_idx:landmark_idx + 2] = np.eye(2) * 100  # Initial landmark uncertainty
+            self.P[landmark_idx:landmark_idx + 2, landmark_idx:landmark_idx + 2] = np.eye(2) * 100
 
-        # Predicted measurement for the landmark
         delta_x = self.state[landmark_idx, 0] - x
         delta_y = self.state[landmark_idx + 1, 0] - y
         q = delta_x**2 + delta_y**2
@@ -69,11 +60,9 @@ class EKFSLAM:
         predicted_bearing = np.arctan2(delta_y, delta_x) - theta
         predicted_measurement = np.array([[predicted_distance], [predicted_bearing]])
         
-        # Measurement innovation (difference between actual and predicted measurements)
         innovation = np.array([[distance - predicted_distance], [bearing - predicted_bearing]])
-        innovation[1, 0] = (innovation[1, 0] + np.pi) % (2 * np.pi) - np.pi  # Normalize bearing
+        innovation[1, 0] = (innovation[1, 0] + np.pi) % (2 * np.pi) - np.pi
 
-        # Compute the Jacobian of the measurement function with respect to the state
         H = np.zeros((2, len(self.state)))
         H[0, 0] = -delta_x / predicted_distance
         H[0, 1] = -delta_y / predicted_distance
@@ -84,13 +73,8 @@ class EKFSLAM:
         H[1, landmark_idx] = -delta_y / q
         H[1, landmark_idx + 1] = delta_x / q
 
-        # Compute the innovation covariance
         S = H @ self.P @ H.T + self.R
-
-        # Compute the Kalman gain
         K = self.P @ H.T @ np.linalg.inv(S)
-
-        # Update the state and covariance matrix
         self.state += K @ innovation
         self.P = (np.eye(len(self.state)) - K @ H) @ self.P
 
@@ -114,38 +98,27 @@ class SlamControlNode(Node):
         self.ax.set_ylim(-5, 5)
 
     def object_callback(self, msg):
-        # Extract the detection info
         distance, angle, obj_index = msg.data
         measurement = [distance, angle]
-        
-        # Update EKF SLAM with the measurement
         self.ekf_slam.update(measurement, int(obj_index))
         
-        # Calculate detected object's position based on the robot's current position and orientation
         robot_x, robot_y, theta = self.ekf_slam.state[0, 0], self.ekf_slam.state[1, 0], self.ekf_slam.state[2, 0]
         obj_x = robot_x + distance * np.cos(theta + angle)
         obj_y = robot_y + distance * np.sin(theta + angle)
         object_name = self.objects_to_detect[int(obj_index)]
         self.detected_objects.append((obj_x, obj_y, object_name))
         
-        # Print robot's current position and the object's distance and angle
         print(f"Robot Position: (x={robot_x:.2f}, y={robot_y:.2f}, theta={theta:.2f})")
         print(f"Detected {object_name} at distance={distance:.2f}, angle={angle:.2f}")
 
-        # Update the robot position in the path
         self.robot_positions.append([robot_x, robot_y])
-
-        # Plot the updated robot path and detected objects
         self.update_and_plot()
 
     def update_and_plot(self):
         self.ax.clear()
         self.set_plot_limits()
-
-        # Plot the robot path with label
         self.ax.plot(*zip(*self.robot_positions), 'bo-', label="Robot Path")
 
-        # Plot each detected object at its calculated position
         legend_labels = {"Robot Path": self.ax.plot([], [], 'bo-', label="Robot Path")[0]}
         for x, y, name in self.detected_objects:
             color = self.ekf_slam.colors(self.objects_to_detect.index(name))
@@ -154,7 +127,6 @@ class SlamControlNode(Node):
             else:
                 self.ax.plot(x, y, 'o', color=color)
 
-        # Display the legend in the bottom-left
         self.ax.legend(handles=legend_labels.values(), loc='lower left')
         plt.draw()
         plt.pause(0.1)
@@ -171,23 +143,17 @@ class SlamControlNode(Node):
             for _ in range(4):  # Stop every 0.5 meters
                 self.move_forward(0.5)
                 self.save_plot()
-                time.sleep(1)
-            self.turn_90_degrees()  # Turn 90 degrees
+            self.turn_90_degrees()
             self.save_plot()
-            time.sleep(1)
 
-        # Final plot after completing the square, showing only final landmark positions
         self.plot_final_landmarks()
         self.print_final_coordinates()
 
     def move_forward(self, distance):
         print("Moving forward by 0.5 meters")
-        
-        # Perform a prediction step in the EKF for the forward movement
-        control_input = [distance, 0]  # No change in heading angle for straight movement
+        control_input = [distance, 0]
         self.ekf_slam.predict(control_input)
 
-        # Publish the twist message to simulate movement (not actually affecting EKF state)
         move_twist = Twist()
         move_twist.linear.x = 2.0
         self.publisher_.publish(move_twist)
@@ -195,19 +161,15 @@ class SlamControlNode(Node):
         move_twist.linear.x = 0.0
         self.publisher_.publish(move_twist)
 
-        # Update robot's position with the new EKF state
         robot_x, robot_y = self.ekf_slam.state[0, 0], self.ekf_slam.state[1, 0]
         self.robot_positions.append([robot_x, robot_y])
         print(f"Updated Position: x = {robot_x}, y = {robot_y}")
 
     def turn_90_degrees(self):
         print("Turning 90 degrees")
-        
-        # Perform a prediction step in the EKF for the turn
-        control_input = [0, np.pi / 2]  # No movement forward, only change in heading angle
+        control_input = [0, np.pi / 2]
         self.ekf_slam.predict(control_input)
 
-        # Publish the twist message to simulate rotation (not actually affecting EKF state)
         turn_twist = Twist()
         turn_twist.angular.z = 8.0
         self.publisher_.publish(turn_twist)
@@ -218,18 +180,15 @@ class SlamControlNode(Node):
         print(f"Updated Heading (theta): {self.ekf_slam.state[2, 0]} radians")
 
     def plot_final_landmarks(self):
-        # Plot the robot path
         self.ax.clear()
         self.set_plot_limits()
         self.ax.plot(*zip(*self.robot_positions), 'bo-', label="Robot Path")
 
-        # Plot final detected object positions
         legend_labels = {"Robot Path": self.ax.plot([], [], 'bo-', label="Robot Path")[0]}
         for x, y, name in self.detected_objects:
             color = self.ekf_slam.colors(self.objects_to_detect.index(name))
             legend_labels[name] = self.ax.plot(x, y, 'o', color=color, label=name)[0]
 
-        # Display all unique object names in the legend
         self.ax.legend(handles=legend_labels.values(), loc='lower left')
         plt.title("Robot Path and Final Detected Object Positions")
         plt.xlabel("X position (meters)")
