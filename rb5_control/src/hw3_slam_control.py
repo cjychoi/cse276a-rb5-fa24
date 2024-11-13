@@ -1,4 +1,5 @@
-# hw3_slam_control.py - Adjusted to calculate object positions relative to the robot's current position
+# hw3_slam_control.py - Further adjustments to correctly update robot position in EKF
+
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
@@ -170,8 +171,10 @@ class SlamControlNode(Node):
             for _ in range(4):  # Stop every 0.5 meters
                 self.move_forward(0.5)
                 self.save_plot()
+                time.sleep(1)
             self.turn_90_degrees()  # Turn 90 degrees
             self.save_plot()
+            time.sleep(1)
 
         # Final plot after completing the square, showing only final landmark positions
         self.plot_final_landmarks()
