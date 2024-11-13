@@ -37,9 +37,21 @@ Members: Andrew Choi (A69033628), Nishanth Chidambaram (A69031827)
 ```cd src/rb5_ros2/rb5_ros2_control/rb5_ros2_control```
 ``` cd src/rb5_ros2/rb5_ros2_vision/launch ```
 
-```cd /root/cse276a_ws/src/rb5_ros2 &&  source /opt/ros/foxy/setup.bash && cd /root/cse276a_ws && colcon build && source install/setup.bash && cd src/rb5_ros2/rb5_ros2_control/rb5_ros2_control```
+Build workspace & Source
+```source /opt/ros/foxy/setup.bash && cd /root/cse276a_ws && colcon build && source install/setup.bash```
 
-```cd /root/cse276a_ws/src/rb5_ros2```
+### Run on 4 terminals
+After sourcing
+1. camera
+	```ros2 launch rb5_ros2_vision rb_camera_main_ocv_launch.py```
+2 - twist
+	```python3 src/rb5_ros2/rb5_control/src/mpi_twist_control_node.py``` 
+	```ros2 run rb5_control mpi_twist_control_node.py```
+3 - yolo
+	```cd src/rb5_ros2/rb5_ros2_vision/launch```
+	```python3 yolo_detection_node.py``` 
+4 - motion
+	```cd src/rb5_ros2/rb5_control/src/ && python3 hw1_solution.py```
 
 ---
 ## HW1
