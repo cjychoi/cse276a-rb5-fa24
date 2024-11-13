@@ -1,4 +1,4 @@
-# hw3_slam_control.py - Updated to print final coordinates of detected objects after EKF SLAM
+# hw3_slam_control.py - Fixed object indexing and added "Robot Path" to legend
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
@@ -51,7 +51,7 @@ class EKFSLAM:
         distance, bearing = measurement
         
         # Compute the landmark's index in the state vector
-        landmark_idx = 3 + 2 * obj_index
+        landmark_idx = 3 + 2 * int(obj_index)
         
         # Check if the landmark is already initialized
         if self.P[landmark_idx, landmark_idx] > 999:  # High initial uncertainty for uninitialized landmarks
@@ -137,11 +137,11 @@ class SlamControlNode(Node):
         self.ax.clear()
         self.set_plot_limits()
 
-        # Plot the robot path
+        # Plot the robot path with label
         self.ax.plot(*zip(*self.robot_positions), 'bo-', label="Robot Path")
 
         # Plot each detected object at its calculated position
-        legend_labels = {}
+        legend_labels = {"Robot Path": self.ax.plot([], [], 'bo-', label="Robot Path")[0]}
         for x, y, name in self.detected_objects:
             color = self.ekf_slam.colors(self.objects_to_detect.index(name))
             if name not in legend_labels:
@@ -171,7 +171,7 @@ class SlamControlNode(Node):
 
         # Final plot after completing the square, showing only final landmark positions
         self.plot_final_landmarks()
-        self.print_final_coordinates()  # Print the final coordinates of each detected object
+        self.print_final_coordinates()
 
     def move_forward(self, distance):
         print("Moving forward by 0.5 meters")
@@ -217,7 +217,7 @@ class SlamControlNode(Node):
         self.ax.plot(*zip(*self.robot_positions), 'bo-', label="Robot Path")
 
         # Plot final detected object positions
-        legend_labels = {}
+        legend_labels = {"Robot Path": self.ax.plot([], [], 'bo-', label="Robot Path")[0]}
         for x, y, name in self.detected_objects:
             color = self.ekf_slam.colors(self.objects_to_detect.index(name))
             legend_labels[name] = self.ax.plot(x, y, 'o', color=color, label=name)[0]
