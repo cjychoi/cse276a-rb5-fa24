@@ -1,4 +1,4 @@
-# hw3_slam_control.py - Fixed object indexing and added "Robot Path" to legend, with object detection details printed
+# hw3_slam_control.py - Fixed object indexing and added "Robot Path" to legend
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
@@ -127,10 +127,6 @@ class SlamControlNode(Node):
         object_name = self.objects_to_detect[int(obj_index)]
         self.detected_objects.append((obj_x, obj_y, object_name))
         
-        # Print robot's current position and the object's distance and angle
-        print(f"Robot Position: (x={robot_x:.2f}, y={robot_y:.2f}, theta={theta:.2f})")
-        print(f"Detected {object_name} at distance={distance:.2f}, angle={angle:.2f}")
-
         # Update the robot position in the path
         self.robot_positions.append([robot_x, robot_y])
 

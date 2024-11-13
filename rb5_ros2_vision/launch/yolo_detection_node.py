@@ -29,10 +29,10 @@ class YoloDetectionNode(Node):
             'elephant': 0.2,
             'car': 0.2,
             'airplane': 0.2,
+            'umbrella': 0.6,
             'teddy bear': 0.15,
             'bottle': 0.1,
-            'backpack': 0.3,
-            'umbrella': 0.6
+            'backpack': 0.3
         }
 
         # Load YOLOv8 model
