@@ -87,30 +87,17 @@ class SlamControlNode(Node):
 
     def spin_and_track(self, type, length):
         
-        # self.move_forward(0.5)
-        # self.save_plot()
-        # time.sleep(1)
-
-        # self.move_forward(0.5)
-        # self.save_plot()
-        # time.sleep(1)
-        
-        # for _ in range(4):
-        #     for _ in range(4):  # Stop every 0.5 meters
-        #         self.move_forward(0.5)
-        #         self.save_plot()
-        #         time.sleep(1)
-        #     self.turn_90_degrees()
-        #     self.save_plot()
-        #     time.sleep(1)
-
         if (type == 'move'):
+            print('moving')
             self.move_forward(length)
+            print('moved')
         elif (type == 'spin'):
+            print('spinning')
             if (length == 90):
                 self.turn_90_degrees()
             elif (length == 45):
                 self.turn_90_degrees()            # MAKE NEW FUNCTION FOR 45 DEGREE TURN FOR OCTOGON
+            print('spun')
 
         self.save_plot()
         time.sleep(1)
@@ -173,9 +160,7 @@ class SlamControlNode(Node):
             print(f"{obj_name}: (x = {obj_x:.2f}, y = {obj_y:.2f})")
 
 def main(args=None):
-    print(0)
     rclpy.init(args=args)
-    print(1)
     node = SlamControlNode()
     print("SLAM 1")
 
