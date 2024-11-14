@@ -79,36 +79,33 @@ class SlamControlNode(Node):
 
     def move_forward(self, distance):
         movement_msg = Float32MultiArray()
-        movement_msg.data = [distance, 0]
+        movement_msg.data = [float(distance), 0.0]
         self.movement_pub.publish(movement_msg)
 
     def turn_90_degrees(self):
         movement_msg = Float32MultiArray()
-        movement_msg.data = [0, np.pi / 2]
+        movement_msg.data = [0.0, float(np.pi / 2)]
         self.movement_pub.publish(movement_msg)
 
 def main(args=None):
     rclpy.init(args=args)
     node = SlamControlNode()
 
-    try:
-        rclpy.spin(node)
-    except KeyboardInterrupt:
-        pass
-
-
-    print("Start")
+    print("Slam Start")
 
     # TRY 1
     for _ in range(4):
         for _ in range(4):  # Stop every 0.5 meters
+            print("Slam Move")
             node.spin_and_track('move', 0.5)
             time.sleep(1)
+        print("Slam Spin")
         node.spin_and_track('spin', 90)
         time.sleep(1)
         
     try:
         rclpy.spin(node)
+        print("spin")
     except KeyboardInterrupt:
         pass
 
