@@ -102,10 +102,13 @@ class EKFSLAM(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = EKFSLAM(object_list=['tv', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'backpack', 'stop sign', 'oven', 'airplane'])
+    print("EKF 1")
     try:
         rclpy.spin(node)
+        print("EKF Spin")
     except KeyboardInterrupt:
         pass
+    print("EKF 2")
     node.destroy_node()
     rclpy.shutdown()
 
