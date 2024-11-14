@@ -1,64 +1,68 @@
-# hw3_slam_control.py - Adjusted to communicate with EKFSLAMNode for SLAM updates
+# slam_control_node.py - Modified to publish movement commands and plot EKF SLAM state
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
-from geometry_msgs.msg import Twist
-import numpy as np
 import matplotlib.pyplot as plt
 import time
 
 class SlamControlNode(Node):
     def __init__(self):
         super().__init__('slam_control_node')
-        self.publisher_ = self.create_publisher(Float32MultiArray, '/movement_command', 10)
-        self.subscription = self.create_subscription(
-            Float32MultiArray, '/ekf_slam_state', self.state_callback, 10
-        )
-        self.object_subscription = self.create_subscription(
-            Float32MultiArray, '/detected_object_info', self.object_callback, 10
-        )
-
+        self.command_publisher = self.create_publisher(Float32MultiArray, '/movement_command', 10)
+        self.subscription = self.create_subscription(Float32MultiArray, '/ekf_slam_state', self.update_robot_state, 10)
+        
+        # Initialize state for plotting
+        self.robot_positions = []  # List of robot's path positions
+        self.detected_objects = []  # List of detected object positions
+        
+        # Set up the plot
         self.fig, self.ax = plt.subplots()
-        self.robot_positions, self.detected_objects = [], []
         self.set_plot_limits()
 
     def set_plot_limits(self):
         self.ax.set_xlim(-5, 5)
         self.ax.set_ylim(-5, 5)
 
-    def state_callback(self, msg):
-        state = np.array(msg.data)
-        robot_x, robot_y = state[0], state[1]
-        self.robot_positions.append([robot_x, robot_y])
-
-        # Plot updated path
+    def update_robot_state(self, msg):
+        # Update the robot state from SLAM state received
+        self.robot_state = msg.data[:3]  # Extract x, y, theta
+        self.landmarks = msg.data[3:]    # Extract landmarks from SLAM state
+        
+        # Track robot positions for path plotting
+        self.robot_positions.append((self.robot_state[0], self.robot_state[1]))
+        
+        # Update detected objects based on landmark positions
+        self.detected_objects = [
+            (self.landmarks[i], self.landmarks[i+1], idx) 
+            for idx, i in enumerate(range(0, len(self.landmarks), 2))
+        ]
+        
+        # Print robot state
+        print(f"Updated Robot State: x = {self.robot_state[0]:.2f}, y = {self.robot_state[1]:.2f}, theta = {self.robot_state[2]:.2f}")
+        
+        # Plot updated robot path and detected objects
         self.update_and_plot()
-
-    def object_callback(self, msg):
-        distance, angle, obj_index = msg.data
-        obj_index = int(obj_index)
-
-        control_msg = Float32MultiArray()
-        control_msg.data = [distance, angle, obj_index]
-        self.publisher_.publish(control_msg)
-
-    def spin_and_track(self, type, length):
-        control_msg = Float32MultiArray()
-        control_msg.data = [length, 0 if type == 'move' else np.pi / 2]
-        self.publisher_.publish(control_msg)
-        self.save_plot()
-        time.sleep(1)
 
     def update_and_plot(self):
         self.ax.clear()
         self.set_plot_limits()
-        self.ax.plot(*zip(*self.robot_positions), 'bo-', label="Robot Path")
+        
+        # Plot robot path
+        if self.robot_positions:
+            self.ax.plot(*zip(*self.robot_positions), 'bo-', label="Robot Path")
+        
+        # Plot detected objects with unique colors
+        legend_labels = {"Robot Path": self.ax.plot([], [], 'bo-', label="Robot Path")[0]}
+        for x, y, obj_index in self.detected_objects:
+            color = plt.cm.get_cmap('tab10', len(self.detected_objects))(obj_index)
+            label = f"Object {obj_index}" if obj_index not in legend_labels else ""
+            if label:
+                legend_labels[label] = self.ax.plot(x, y, 'o', color=color, label=label)[0]
+            else:
+                self.ax.plot(x, y, 'o', color=color)
 
-        for x, y, name in self.detected_objects:
-            color = plt.cm.tab10(self.objects_to_detect.index(name) / len(self.objects_to_detect))
-            self.ax.plot(x, y, 'o', color=color, label=name)
-
-        self.ax.legend(loc='lower left')
+        # Add legend to the plot
+        self.ax.legend(handles=legend_labels.values(), loc='lower left')
         plt.draw()
         plt.pause(0.1)
         self.save_plot()
@@ -68,16 +72,26 @@ class SlamControlNode(Node):
         self.fig.savefig(filename)
         print(f"Plot saved as {filename}")
 
+    def publish_movement_command(self, distance=0.0, angle=0.0):
+        msg = Float32MultiArray()
+        msg.data = [distance, angle]
+        self.command_publisher.publish(msg)
+
+    def spin_and_track(self):
+        # Define the movement pattern: Move forward and turn in a square pattern
+        for _ in range(4):
+            for _ in range(4):  # Stop every 0.5 meters
+                self.publish_movement_command(0.5, 0.0)
+                time.sleep(1)
+            self.publish_movement_command(0.0, 1.57)  # 90-degree turn
+            time.sleep(1)
+        plt.show()
+
 def main(args=None):
     rclpy.init(args=args)
     node = SlamControlNode()
     try:
-        for _ in range(4):
-            for _ in range(4):
-                node.spin_and_track('move', 0.5)
-                time.sleep(1)
-            node.spin_and_track('spin', 90)
-            time.sleep(1)
+        node.spin_and_track()
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
