@@ -238,15 +238,16 @@ def main(args=None):
     rclpy.init(args=args)
     node = SlamControlNode()
 
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+
     for _ in range(4):
         for _ in range(4):  # Stop every 0.5 meters
             node.spin_and_track('move', 0.5)
         node.spin_and_track('spin', 90)
     
-    try:
-        rclpy.spin(node)
-    except KeyboardInterrupt:
-        pass
     node.destroy_node()
     rclpy.shutdown()
 
