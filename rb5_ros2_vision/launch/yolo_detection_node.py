@@ -27,7 +27,6 @@ class YoloDetectionNode(Node):
             'teddy bear': 0.15,
             'backpack': 0.3,
             'stop sign': 0.2,
-            'car': 0.2,
             'oven': 0.6,
             'airplane': 0.2
         }

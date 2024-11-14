@@ -94,7 +94,7 @@ class SlamControlNode(Node):
         self.subscription = self.create_subscription(
             Float32MultiArray, '/detected_object_info', self.object_callback, 10
         )
-        self.objects_to_detect = ['tv', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'backpack', 'stop sign',  'car', 'oven', 'airplane']
+        self.objects_to_detect = ['tv', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'backpack', 'stop sign', 'oven', 'airplane']
         self.ekf_slam = EKFSLAM(self.objects_to_detect)
         self.fig, self.ax = plt.subplots()
         self.set_plot_limits()
@@ -147,7 +147,6 @@ class SlamControlNode(Node):
         print(f"Plot saved as {filename}")
 
     def spin_and_track(self, type, length):
-        time.sleep(2)
         
         # self.move_forward(0.5)
         # self.save_plot()
@@ -238,16 +237,19 @@ def main(args=None):
     rclpy.init(args=args)
     node = SlamControlNode()
 
+    for _ in range(4):
+        for _ in range(4):  # Stop every 0.5 meters
+            node.spin_and_track('move', 0.5)
+            time.sleep(1)
+        node.spin_and_track('spin', 90)
+        time.sleep(1)
+
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
 
-    for _ in range(4):
-        for _ in range(4):  # Stop every 0.5 meters
-            node.spin_and_track('move', 0.5)
-        node.spin_and_track('spin', 90)
-    
+
     node.destroy_node()
     rclpy.shutdown()
 
