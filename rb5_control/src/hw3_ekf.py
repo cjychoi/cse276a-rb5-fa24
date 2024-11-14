@@ -18,6 +18,10 @@ class EKFSLAM(Node):
         self.object_list = object_list
         self.colors = plt.cm.get_cmap('tab10', len(object_list))
 
+        self.colors_pub = self.create_publisher(StringArray, '/ekf_slam_colors', 10)
+        publish_slam_colors()
+        
+
         # Subscriber to receive movement commands
         self.movement_sub = self.create_subscription(
             Float32MultiArray, '/movement_command', self.movement_callback, 10
@@ -28,14 +32,24 @@ class EKFSLAM(Node):
             Float32MultiArray, '/detected_object_info', self.update_callback, 10
         )
 
+        # Subscriber to receive update data
+        self.update_sub = self.create_subscription(
+            Float32MultiArray, '/ekf_update', self.update, 10
+        )
+
+        # Subscriber to receive predict data
+        self.predict_sub = self.create_subscription(
+            Array, '/ekf_predict', self.predict, 10
+        )
+
         # Publisher to send updated SLAM state
         self.state_pub = self.create_publisher(Float32MultiArray, '/ekf_slam_state', 10)
 
 
-    def predict(self, control_input):
+    def predict(self, msg):
         """Predict step for EKF based on control input."""
         x, y, theta = self.state[0, 0], self.state[1, 0], self.state[2, 0]
-        distance, heading_change = control_input
+        distance, heading_change = msg.data
 
         # Predict the new state based on control input
         new_x = x + distance * np.cos(theta)
@@ -58,8 +72,9 @@ class EKFSLAM(Node):
         F[1, 2] = distance * np.cos(theta)
         self.P = F @ self.P @ F.T + Q_expanded
 
-    def update(self, measurement, obj_index):
+    def update(self, msg):
         """Update step for EKF using the landmark position relative to world frame."""
+        measurement, obj_index = msg.data
         x, y, theta = self.state[0, 0], self.state[1, 0], self.state[2, 0]
         obj_x, obj_y = measurement  # World coordinates of the detected object
         landmark_idx = 3 + 2 * int(obj_index)
@@ -116,6 +131,11 @@ class EKFSLAM(Node):
         state_msg = Float32MultiArray()
         state_msg.data = np.concatenate((self.state[:3].flatten(), self.state[3:].flatten())).tolist()
         self.state_pub.publish(state_msg)
+
+    def publish_slam_colors(self):
+        state_msg = StringArray()
+        state_msg.data = self.colors
+        self.colors_pub.publish(state_msg)
     
 def main(args=None):
     rclpy.init(args=args)
