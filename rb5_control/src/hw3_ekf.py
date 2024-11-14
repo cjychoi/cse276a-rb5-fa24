@@ -1,22 +1,30 @@
-# hw3_slam_control.py - Adjusted to calculate object positions relative to the robot's current position and update EKF SLAM
+# ekf_slam_node.py - EKFSLAM node for handling SLAM updates
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
-from geometry_msgs.msg import Twist
 import numpy as np
-import matplotlib.pyplot as plt
-import time
 
 class EKFSLAM(Node):
     def __init__(self, object_list):
-        # Initialize SLAM state (robot pose and landmarks)
-        super().__init__('EKFSLAM')
+        super().__init__('ekf_slam_node')
         self.state = np.zeros((3 + 2 * len(object_list), 1))  # [x, y, theta, x1, y1, x2, y2, ...]
         self.P = np.eye(3 + 2 * len(object_list)) * 1000  # Large initial uncertainty for landmarks
         self.R = np.diag([0.1, 0.1])  # Measurement noise for range and bearing
         self.Q = np.diag([0.05, 0.05, 0.01])  # Process noise for [x, y, theta]
         self.object_list = object_list
-        self.colors = plt.cm.get_cmap('tab10', len(object_list))
+
+        # Subscriber to receive movement commands
+        self.movement_sub = self.create_subscription(
+            Float32MultiArray, '/movement_command', self.movement_callback, 10
+        )
+
+        # Subscriber to receive detected objects
+        self.object_sub = self.create_subscription(
+            Float32MultiArray, '/detected_object_info', self.update_callback, 10
+        )
+
+        # Publisher to send updated SLAM state
+        self.state_pub = self.create_publisher(Float32MultiArray, '/ekf_slam_state', 10)
 
     def predict(self, control_input):
         """Predict step for EKF based on control input."""
@@ -88,15 +96,31 @@ class EKFSLAM(Node):
         self.state += K @ innovation
         self.P = (np.eye(len(self.state)) - K @ H) @ self.P
 
+    def movement_callback(self, msg):
+        # Receive and process movement commands
+        distance, angle = msg.data
+        self.predict([distance, angle])
+        self.publish_slam_state()
+
+    def update_callback(self, msg):
+        # Receive detected object info and update SLAM
+        obj_x, obj_y, obj_index = msg.data
+        self.update([obj_x, obj_y], int(obj_index))
+        self.publish_slam_state()
+
+    def publish_slam_state(self):
+        # Publish current SLAM state including robot position and all landmarks
+        state_msg = Float32MultiArray()
+        state_msg.data = np.concatenate((self.state[:3].flatten(), self.state[3:].flatten())).tolist()
+        self.state_pub.publish(state_msg)
+
 def main(args=None):
     rclpy.init(args=args)
-    EKFNode = EKFSLAM(object_list = ['tv', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'backpack', 'stop sign', 'oven', 'airplane'])
-
+    node = EKFSLAM(object_list=['tv', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'backpack', 'stop sign', 'oven', 'airplane'])
     try:
-        rclpy.spin(EKFNode)
+        rclpy.spin(node)
     except KeyboardInterrupt:
         pass
-
     node.destroy_node()
     rclpy.shutdown()
 
