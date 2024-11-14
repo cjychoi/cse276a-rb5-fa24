@@ -173,9 +173,10 @@ class SlamControlNode(Node):
             print(f"{obj_name}: (x = {obj_x:.2f}, y = {obj_y:.2f})")
 
 def main(args=None):
+    print(0)
     rclpy.init(args=args)
+    print(1)
     node = SlamControlNode()
-
     print("SLAM 1")
 
     # TRY 1
