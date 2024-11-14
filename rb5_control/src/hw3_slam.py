@@ -51,6 +51,17 @@ class SlamControlNode(Node):
         self.detected_objects.append((obj_x, obj_y, object_name))
         self.update_and_plot()
 
+    def update_plot(self, msg):
+        state_data = msg.data
+        robot_x, robot_y, theta = state_data[:3]
+        self.robot_positions.append([robot_x, robot_y])
+        self.detected_objects.append((obj_x, obj_y, object_name))
+        
+        for i in range(3, len(state_data), 2):
+            obj_x, obj_y = state_data[i], state_data[i+1]
+            self.detected_objects.append((obj_x, obj_y))
+        self.update_and_plot()
+
     def update_and_plot(self):
         self.ax.clear()
         self.set_plot_limits()
