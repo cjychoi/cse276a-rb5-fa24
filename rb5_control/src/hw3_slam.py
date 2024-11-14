@@ -153,7 +153,7 @@ class SlamControlNode(Node):
         # self.ekf_slam.predict(control_input)
         state_msg = Float32MultiArray()
         state_msg.data = control_input
-        self.EKF_update_pub.publish(state_msg)
+        self.EKF_predict_pub.publish(state_msg)
 
         move_twist = Twist()
         move_twist.linear.x = 2.0
@@ -172,7 +172,7 @@ class SlamControlNode(Node):
         # self.ekf_slam.predict(control_input)
         state_msg = Float32MultiArray()
         state_msg.data = control_input
-        self.EKF_update_pub.publish(state_msg)
+        self.EKF_predict_pub.publish(state_msg)
 
         turn_twist = Twist()
         turn_twist.angular.z = 8.0
