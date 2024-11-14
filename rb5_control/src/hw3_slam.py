@@ -7,7 +7,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-distance, angle, obj_index, robot_x, robot_y, theta = 0
+distance = 0
+angle = 0
+obj_index = 0
+robot_x = 0
+robot_y = 0
+theta = 0
 
 class SlamControlNode(Node):
     global distance, angle, obj_index, robot_x, robot_y, theta
