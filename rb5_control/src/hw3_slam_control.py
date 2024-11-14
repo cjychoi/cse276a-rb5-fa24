@@ -241,13 +241,17 @@ def main(args=None):
         for _ in range(4):  # Stop every 0.5 meters
             node.spin_and_track('move', 0.5)
             time.sleep(1)
+            rclpy.spin_once(node)
+            time.sleep(1)
         node.spin_and_track('spin', 90)
         time.sleep(1)
+        rclpy.spin_once(node)
+            time.sleep(1)
 
-    try:
-        rclpy.spin(node)
-    except KeyboardInterrupt:
-        pass
+    # try:
+    #     rclpy.spin(node)
+    # except KeyboardInterrupt:
+    #     pass
 
 
     node.destroy_node()
