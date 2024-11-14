@@ -56,24 +56,42 @@ class EKFSLAMNode(Node):
         obj_x, obj_y = measurement
         landmark_idx = 3 + 2 * obj_index
 
+        # Initialize landmark position if it has high uncertainty
         if self.P[landmark_idx, landmark_idx] > 999:
             self.state[landmark_idx, 0], self.state[landmark_idx + 1, 0] = obj_x, obj_y
             self.P[landmark_idx:landmark_idx + 2, landmark_idx:landmark_idx + 2] = np.eye(2) * 100
 
+        # Calculate predicted measurement
         delta_x, delta_y = self.state[landmark_idx, 0] - x, self.state[landmark_idx + 1, 0] - y
         q = delta_x**2 + delta_y**2
-        predicted_distance, predicted_bearing = np.sqrt(q), np.arctan2(delta_y, delta_x) - theta
-        actual_distance, actual_bearing = np.sqrt((obj_x - x)**2 + (obj_y - y)**2), np.arctan2(obj_y - y, obj_x - x) - theta
+        predicted_distance = np.sqrt(q)
+        predicted_bearing = np.arctan2(delta_y, delta_x) - theta
+
+        # Actual measurement
+        actual_distance = np.sqrt((obj_x - x)**2 + (obj_y - y)**2)
+        actual_bearing = np.arctan2(obj_y - y, obj_x - x) - theta
         innovation = np.array([[actual_distance - predicted_distance], [(actual_bearing - predicted_bearing + np.pi) % (2 * np.pi) - np.pi]])
 
+        # Calculate Jacobian H of the measurement function
         H = np.zeros((2, len(self.state)))
-        H[0, 0], H[0, 1], H[1, 0], H[1, 1] = -delta_x / predicted_distance, -delta_y / predicted_distance, delta_y / q, -delta_x / q
-        H[0, landmark_idx], H[0, landmark_idx + 1], H[1, landmark_idx], H[1, landmark_idx + 1] = delta_x / predicted_distance, delta_y / predicted_distance, -delta_y / q, delta_x / q
+        H[0, 0] = -delta_x / predicted_distance
+        H[0, 1] = -delta_y / predicted_distance
+        H[1, 0] = delta_y / q
+        H[1, 1] = -delta_x / q
+        H[0, landmark_idx] = delta_x / predicted_distance
+        H[0, landmark_idx + 1] = delta_y / predicted_distance
+        H[1, landmark_idx] = -delta_y / q
+        H[1, landmark_idx + 1] = delta_x / q
 
-        S, K = H @ self.P @ H.T + self.R, self.P @ H.T @ np.linalg.inv(S)
+        # Compute the innovation covariance S and Kalman gain K
+        S = H @ self.P @ H.T + self.R  # S is now computed separately
+        K = self.P @ H.T @ np.linalg.inv(S)
+
+        # Update the state and covariance matrix
         self.state += K @ innovation
         self.P = (np.eye(len(self.state)) - K @ H) @ self.P
 
+        # Publish the updated state
         self.publish_state()
 
     def publish_state(self):
