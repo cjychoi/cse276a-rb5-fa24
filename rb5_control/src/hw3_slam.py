@@ -7,15 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-distance = 0
-angle = 0
-obj_index = 0
-robot_x = 0
-robot_y = 0
-theta = 0
-
 class SlamControlNode(Node):
-    global distance, angle, obj_index, robot_x, robot_y, theta
     def __init__(self):
         super().__init__('slam_control_node')
         self.movement_pub = self.create_publisher(Float32MultiArray, '/movement_command', 10)
@@ -26,32 +18,10 @@ class SlamControlNode(Node):
             Float32MultiArray, '/ekf_slam_state', self.update_plot, 10
         )
         
-        self.ekf_state_sub_checker = self.create_subscription(
-            Float32MultiArray, '/ekf_slam_state', self.checker, 10
-        )
-
-        self.ekf_state_sub_plot = self.create_subscription(
-            Float32MultiArray, '/ekf_slam_state', self.update_and_plot, 10
-        )
-
-        self.ekf_state_sub_plot2 = self.create_subscription(
-            Float32MultiArray, '/ekf_slam_state', self.plot_final_landmarks, 10
-        )
-
-        self.ekf_state_sub_print = self.create_subscription(
-            Float32MultiArray, '/ekf_slam_state', self.print_final_landmarks, 10
-        )
-        
         # Subscription for detected object information
         self.object_sub = self.create_subscription(
-            Float32MultiArray, '/detected_object_info', self.checker, 10
+            Float32MultiArray, '/detected_object_info', self.object_callback, 10
         )
-
-        self.EKF_pub = self.create_publisher(Float32MultiArray, '/EKF_update', 10)
-
-        self.EKF_predict_pub = self.create_publisher(Float32MultiArray, '/EKF_predict', 10)
-        
-        
         self.objects_to_detect = ['tv', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'backpack', 'stop sign', 'oven', 'airplane']
         # self.ekf_slam = EKFSLAM(self.objects_to_detect)
         self.fig, self.ax = plt.subplots()
@@ -59,36 +29,20 @@ class SlamControlNode(Node):
         self.robot_positions = []  # Store estimated robot positions from EKF
         self.detected_objects = []  # Store positions of detected objects
   #      self.spin_and_track()
-        check_image = False
-        check_EKF = False
 
     def set_plot_limits(self):
         self.ax.set_xlim(-5, 5)
         self.ax.set_ylim(-5, 5)
 
-    def checker(self, msg):
-        if len(msg.data) == 3:
-            distance, angle, obj_index = msg.data
-            check_image = True
-        else:
-            robot_x, robot_y, theta = msg.data[:3]
-            check_EKF = True
-
-        if (check_image and check_EKF):
-            object_callback()
-
-    def object_callback(self):
-        # distance, angle, obj_index = msg.data
-        # robot_x, robot_y, theta = self.ekf_slam.state[0, 0], self.ekf_slam.state[1, 0], self.ekf_slam.state[2, 0]
+    def object_callback(self, msg):
+        distance, angle, obj_index = msg.data
+        robot_x, robot_y, theta = self.ekf_slam.state[0, 0], self.ekf_slam.state[1, 0], self.ekf_slam.state[2, 0]
         obj_x = robot_x + distance * np.cos(theta + angle)
         obj_y = robot_y + distance * np.sin(theta + angle)
 
         # Update EKF with the world-frame coordinates of the detected object
-        # self.ekf_slam.update((obj_x, obj_y), int(obj_index))
-        state_msg = Float32MultiArray()
-        state_msg.data = np.concatenate((obj_x, obj_y), int(obj_index)).tolist()
-        self.EKF_pub.publish(state_msg)
-        
+        self.ekf_slam.update((obj_x, obj_y), int(obj_index))
+
         object_name = self.objects_to_detect[int(obj_index)]
         print(f"Robot Position: (x={robot_x:.2f}, y={robot_y:.2f}, theta={theta:.2f})")
         print(f"Detected {object_name} at world position (x={obj_x:.2f}, y={obj_y:.2f})")
@@ -108,14 +62,14 @@ class SlamControlNode(Node):
             self.detected_objects.append((obj_x, obj_y))
         self.update_and_plot()
 
-    def update_and_plot(self, msg):
+    def update_and_plot(self):
         self.ax.clear()
         self.set_plot_limits()
         self.ax.plot(*zip(*self.robot_positions), 'bo-', label="Robot Path")
 
         legend_labels = {"Robot Path": self.ax.plot([], [], 'bo-', label="Robot Path")[0]}
         for x, y, name in self.detected_objects:
-            color = msg.data.colors(self.objects_to_detect.index(name))
+            color = self.ekf_slam.colors(self.objects_to_detect.index(name))
             if name not in legend_labels:
                 legend_labels[name] = self.ax.plot(x, y, 'o', color=color, label=name)[0]
             else:
@@ -154,10 +108,7 @@ class SlamControlNode(Node):
     def move_forward(self, distance):
         print("Moving forward by 0.5 meters")
         control_input = [distance, 0]
-        # self.ekf_slam.predict(control_input)
-        state_msg = Float32MultiArray()
-        state_msg.data = np.concatenate(control_input).tolist()
-        self.EKF_predict_pub.publish(state_msg)
+        self.ekf_slam.predict(control_input)
 
         move_twist = Twist()
         move_twist.linear.x = 2.0
@@ -166,17 +117,14 @@ class SlamControlNode(Node):
         move_twist.linear.x = 0.0
         self.publisher_.publish(move_twist)
 
-        # robot_x, robot_y = self.ekf_slam.state[0, 0], self.ekf_slam.state[1, 0]
+        robot_x, robot_y = self.ekf_slam.state[0, 0], self.ekf_slam.state[1, 0]
         self.robot_positions.append([robot_x, robot_y])
         print(f"Updated Position: x = {robot_x}, y = {robot_y}")
 
     def turn_90_degrees(self):
         print("Turning 90 degrees")
         control_input = [0, np.pi / 2]
-        # self.ekf_slam.predict(control_input)
-        state_msg = Float32MultiArray()
-        state_msg.data = np.concatenate(control_input).tolist()
-        self.EKF_predict_pub.publish(state_msg)
+        self.ekf_slam.predict(control_input)
 
         turn_twist = Twist()
         turn_twist.angular.z = 8.0
@@ -187,14 +135,14 @@ class SlamControlNode(Node):
 
         print(f"Updated Heading (theta): {self.ekf_slam.state[2, 0]} radians")
 
-    def plot_final_landmarks(self, msg):
+    def plot_final_landmarks(self):
         self.ax.clear()
         self.set_plot_limits()
         self.ax.plot(*zip(*self.robot_positions), 'bo-', label="Robot Path")
 
         legend_labels = {"Robot Path": self.ax.plot([], [], 'bo-', label="Robot Path")[0]}
         for x, y, name in self.detected_objects:
-            color = msg.data.colors(self.objects_to_detect.index(name))
+            color = self.ekf_slam.colors(self.objects_to_detect.index(name))
             legend_labels[name] = self.ax.plot(x, y, 'o', color=color, label=name)[0]
 
         self.ax.legend(handles=legend_labels.values(), loc='lower left')
@@ -204,11 +152,11 @@ class SlamControlNode(Node):
         plt.show()
         self.save_plot()
 
-    def print_final_coordinates(self, msg):
+    def print_final_coordinates(self):
         print("\nFinal Coordinates of Detected Objects:")
         for i, obj_name in enumerate(self.objects_to_detect):
             landmark_idx = 3 + 2 * i
-            obj_x, obj_y = msg.data.state[landmark_idx, 0], msg.data.state[landmark_idx + 1, 0]
+            obj_x, obj_y = self.ekf_slam.state[landmark_idx, 0], self.ekf_slam.state[landmark_idx + 1, 0]
             print(f"{obj_name}: (x = {obj_x:.2f}, y = {obj_y:.2f})")
 
 def main(args=None):
