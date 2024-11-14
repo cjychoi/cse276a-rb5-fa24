@@ -74,9 +74,9 @@ class EKFSLAM(Node):
 
     def update(self, msg):
         """Update step for EKF using the landmark position relative to world frame."""
-        measurement, obj_index = msg.data
+        obj_x, obj_y, int(obj_index) = msg.data
         x, y, theta = self.state[0, 0], self.state[1, 0], self.state[2, 0]
-        obj_x, obj_y = measurement  # World coordinates of the detected object
+        # obj_x, obj_y = measurement  # World coordinates of the detected object
         landmark_idx = 3 + 2 * int(obj_index)
         
         if self.P[landmark_idx, landmark_idx] > 999:
