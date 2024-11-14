@@ -28,23 +28,14 @@ class EKFSLAM(Node):
             Float32MultiArray, '/detected_object_info', self.update_callback, 10
         )
 
-        # Subcriber to receive EKF data to update
-        self.EKF_update_sub = self.create_subscription(
-            Float32MultiArray, '/EKF_update', self.checker, 10
-        )
-
-        self.EKF_predict_sub = self.create_subscription(
-            Float32MultiArray, '/EKF_predict', self.predict, 10
-        )
-
         # Publisher to send updated SLAM state
         self.state_pub = self.create_publisher(Float32MultiArray, '/ekf_slam_state', 10)
 
 
-    def predict(self, msg):
+    def predict(self, control_input):
         """Predict step for EKF based on control input."""
         x, y, theta = self.state[0, 0], self.state[1, 0], self.state[2, 0]
-        distance, heading_change = msg.data
+        distance, heading_change = control_input
 
         # Predict the new state based on control input
         new_x = x + distance * np.cos(theta)
