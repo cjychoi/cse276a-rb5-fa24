@@ -40,7 +40,7 @@ class SlamControlNode(Node):
         self.EKF_update_pub = self.create_publisher(Float32MultiArray, '/ekf_update', 10)
 
         # Publisher to send updated SLAM state
-        self.EKF_predict_pub = self.create_publisher(Array, '/ekf_predict', 10)
+        self.EKF_predict_pub = self.create_publisher(Float32MultiArray, '/ekf_predict', 10)
 
         
         self.objects_to_detect = ['tv', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'backpack', 'stop sign', 'oven', 'airplane']
@@ -57,15 +57,16 @@ class SlamControlNode(Node):
     def get_EKF_state(self, msg):
         self.state = msg.data
         self.EKF_update = True
+        update_plot()
 
-        if (self.image_update = True) and (self.EKF_update = True):
+        if (self.image_update == True) and (self.EKF_update == True):
             object_callback()
 
     def get_image(self, msg):
         self.image = msg.data
         self.image_update = True
 
-        if (self.image_update = True) and (self.EKF_update = True):
+        if (self.image_update == True) and (self.EKF_update == True):
             object_callback()
         
     def set_plot_limits(self):
@@ -81,7 +82,7 @@ class SlamControlNode(Node):
         # Update EKF with the world-frame coordinates of the detected object
         # self.ekf_slam.update((obj_x, obj_y), int(obj_index))
         state_msg = Float32MultiArray()
-        state_msg.data = np.concatenate((obj_x, obj_y), int(obj_index)).tolist()
+        state_msg.data = [float(obj_x), float(obj_y), float(obj_index)]
         self.EKF_update_pub.publish(state_msg)
 
         object_name = self.objects_to_detect[int(obj_index)]
@@ -150,16 +151,16 @@ class SlamControlNode(Node):
         print("Moving forward by 0.5 meters")
         control_input = [distance, 0]
         # self.ekf_slam.predict(control_input)
-        state_msg = Array()
+        state_msg = Float32MultiArray()
         state_msg.data = control_input
         self.EKF_update_pub.publish(state_msg)
 
         move_twist = Twist()
         move_twist.linear.x = 2.0
-        self.publisher_.publish(move_twist)
+        self.twist_pub.publish(move_twist)
         time.sleep(distance / 0.5)
         move_twist.linear.x = 0.0
-        self.publisher_.publish(move_twist)
+        self.twist_pub.publish(move_twist)
 
         robot_x, robot_y = self.state[0, 0], self.state[1, 0]
         self.robot_positions.append([robot_x, robot_y])
@@ -169,16 +170,16 @@ class SlamControlNode(Node):
         print("Turning 90 degrees")
         control_input = [0, np.pi / 2]
         # self.ekf_slam.predict(control_input)
-        state_msg = Array()
+        state_msg = Float32MultiArray()
         state_msg.data = control_input
         self.EKF_update_pub.publish(state_msg)
 
         turn_twist = Twist()
         turn_twist.angular.z = 8.0
-        self.publisher_.publish(turn_twist)
+        self.twist_pub.publish(turn_twist)
         time.sleep(np.pi / 2)
         turn_twist.angular.z = 0.0
-        self.publisher_.publish(turn_twist)
+        self.twist_pub.publish(turn_twist)
 
         print(f"Updated Heading (theta): {self.state[2, 0]} radians")
 
