@@ -96,7 +96,48 @@ def main(args=None):
     except KeyboardInterrupt:
         pass
 
-    
+
+        # TRY 1
+    for _ in range(4):
+        for _ in range(4):  # Stop every 0.5 meters
+            print("SLAM loop")
+            node.spin_and_track('move', 0.5)
+            time.sleep(1)
+        node.spin_and_track('spin', 90)
+        time.sleep(1)
+        
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+
+
+    # # TRY 2
+    # try:
+    #     rclpy.spin(node)
+    # except KeyboardInterrupt:
+    #     pass
+
+    # for _ in range(4):
+    #     for _ in range(4):  # Stop every 0.5 meters
+    #         node.spin_and_track('move', 0.5)
+    #         time.sleep(1)
+    #     node.spin_and_track('spin', 90)
+    #     time.sleep(1)
+
+
+    # # TRY 3
+    # for _ in range(4):
+    #     for _ in range(4):  # Stop every 0.5 meters
+    #         node.spin_and_track('move', 0.5)
+    #         time.sleep(1)
+    #         # rclpy.spin_once(node)
+    #         # time.sleep(1)
+    #     node.spin_and_track('spin', 90)
+    #     time.sleep(1)
+    #     # rclpy.spin_once(node)
+    #     # time.sleep(1)
+
     node.destroy_node()
     rclpy.shutdown()
 

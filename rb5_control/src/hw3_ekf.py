@@ -85,7 +85,7 @@ class EKFSLAM(Node):
         self.P = (np.eye(len(self.state)) - K @ H) @ self.P
 
     def movement_callback(self, msg):
-        distance, angle = msg.data
+        distance, angle, obj_index = msg.data[:3]  # Extract only the distance and angle for control input
         self.predict([distance, angle])
         self.publish_slam_state()
 
