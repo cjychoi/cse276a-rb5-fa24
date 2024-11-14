@@ -100,7 +100,7 @@ class SlamControlNode(Node):
         self.set_plot_limits()
         self.robot_positions = []  # Store estimated robot positions from EKF
         self.detected_objects = []  # Store positions of detected objects
-        self.spin_and_track()
+  #      self.spin_and_track()
 
     def set_plot_limits(self):
         self.ax.set_xlim(-5, 5)
@@ -146,7 +146,7 @@ class SlamControlNode(Node):
         self.fig.savefig(filename)
         print(f"Plot saved as {filename}")
 
-    def spin_and_track(self):
+    def spin_and_track(self, type, length):
         time.sleep(2)
         
         # self.move_forward(0.5)
@@ -157,14 +157,25 @@ class SlamControlNode(Node):
         # self.save_plot()
         # time.sleep(1)
         
-        for _ in range(4):
-            for _ in range(4):  # Stop every 0.5 meters
-                self.move_forward(0.5)
-                self.save_plot()
-                time.sleep(1)
-            self.turn_90_degrees()
-            self.save_plot()
-            time.sleep(1)
+        # for _ in range(4):
+        #     for _ in range(4):  # Stop every 0.5 meters
+        #         self.move_forward(0.5)
+        #         self.save_plot()
+        #         time.sleep(1)
+        #     self.turn_90_degrees()
+        #     self.save_plot()
+        #     time.sleep(1)
+
+        if (type == 'move'):
+            self.move_forward(length)
+        elif (type == 'spin'):
+            if (length == 90):
+                self.turn_90_degrees()
+            elif (length == 45):
+                self.turn_90_degrees()            # MAKE NEW FUNCTION FOR 45 DEGREE TURN FOR OCTOGON
+
+        self.save_plot()
+        time.sleep(1)
 
         self.plot_final_landmarks()
         self.print_final_coordinates()
@@ -226,6 +237,12 @@ class SlamControlNode(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = SlamControlNode()
+
+    for _ in range(4):
+        for _ in range(4):  # Stop every 0.5 meters
+            self.spin_and_track('move', 0.5)
+        self.spin_and_track('spin', 90)
+    
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
