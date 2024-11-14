@@ -73,9 +73,13 @@ class SlamControlNode(Node):
 
     def spin_and_track(self, type, length):
         if type == 'move':
+            print('moving')
             self.move_forward(length)
+            print('moved')
         elif type == 'spin' and length == 90:
+            print('spinnning')
             self.turn_90_degrees()
+            print('spun')
 
     def move_forward(self, distance):
         movement_msg = Float32MultiArray()
