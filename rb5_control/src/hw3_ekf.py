@@ -90,7 +90,6 @@ class EKFSLAM:
 
 def main(args=None):
     rclpy.init(args=args)
-<<<<<<< HEAD
     node = EKFSLAM(object_list=['tv', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'backpack', 'stop sign', 'oven', 'airplane'])
     print("EKF 1")
     try:
@@ -99,12 +98,6 @@ def main(args=None):
     except KeyboardInterrupt:
         pass
     print("EKF 2")
-=======
-    node = EKFSLAM(object_list = = ['tv', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'backpack', 'stop sign', 'oven', 'airplane'])
-
-    rclpy.spin(node)
-
->>>>>>> f008a836d8a9e5d7b538d3ee15197b07624dd090
     node.destroy_node()
     rclpy.shutdown()
 

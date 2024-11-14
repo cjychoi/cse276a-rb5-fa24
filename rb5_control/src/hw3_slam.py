@@ -10,7 +10,6 @@ import time
 class SlamControlNode(Node):
     def __init__(self):
         super().__init__('slam_control_node')
-<<<<<<< HEAD
         self.movement_pub = self.create_publisher(Float32MultiArray, '/movement_command', 10)
         self.twist_pub = self.create_publisher(Twist, '/twist', 10)
         
@@ -21,10 +20,6 @@ class SlamControlNode(Node):
         
         # Subscription for detected object information
         self.object_sub = self.create_subscription(
-=======
-        self.publisher_ = self.create_publisher(Twist, '/twist', 10)
-        self.subscription = self.create_subscription(
->>>>>>> f008a836d8a9e5d7b538d3ee15197b07624dd090
             Float32MultiArray, '/detected_object_info', self.object_callback, 10
         )
         
@@ -77,35 +72,12 @@ class SlamControlNode(Node):
         print(f"Plot saved as {filename}")
 
     def spin_and_track(self, type, length):
-<<<<<<< HEAD
         if type == 'move':
-=======
-        
-        # self.move_forward(0.5)
-        # self.save_plot()
-        # time.sleep(1)
-
-        # self.move_forward(0.5)
-        # self.save_plot()
-        # time.sleep(1)
-        
-        # for _ in range(4):
-        #     for _ in range(4):  # Stop every 0.5 meters
-        #         self.move_forward(0.5)
-        #         self.save_plot()
-        #         time.sleep(1)
-        #     self.turn_90_degrees()
-        #     self.save_plot()
-        #     time.sleep(1)
-
-        if (type == 'move'):
->>>>>>> f008a836d8a9e5d7b538d3ee15197b07624dd090
             self.move_forward(length)
         elif type == 'spin' and length == 90:
             self.turn_90_degrees()
 
     def move_forward(self, distance):
-<<<<<<< HEAD
         movement_msg = Float32MultiArray()
         movement_msg.data = [distance, 0]
         self.movement_pub.publish(movement_msg)
@@ -114,60 +86,6 @@ class SlamControlNode(Node):
         movement_msg = Float32MultiArray()
         movement_msg.data = [0, np.pi / 2]
         self.movement_pub.publish(movement_msg)
-=======
-        print("Moving forward by 0.5 meters")
-        control_input = [distance, 0]
-        self.ekf_slam.predict(control_input)
-
-        move_twist = Twist()
-        move_twist.linear.x = 2.0
-        self.publisher_.publish(move_twist)
-        time.sleep(distance / 0.5)
-        move_twist.linear.x = 0.0
-        self.publisher_.publish(move_twist)
-
-        robot_x, robot_y = self.ekf_slam.state[0, 0], self.ekf_slam.state[1, 0]
-        self.robot_positions.append([robot_x, robot_y])
-        print(f"Updated Position: x = {robot_x}, y = {robot_y}")
-
-    def turn_90_degrees(self):
-        print("Turning 90 degrees")
-        control_input = [0, np.pi / 2]
-        self.ekf_slam.predict(control_input)
-
-        turn_twist = Twist()
-        turn_twist.angular.z = 8.0
-        self.publisher_.publish(turn_twist)
-        time.sleep(np.pi / 2)
-        turn_twist.angular.z = 0.0
-        self.publisher_.publish(turn_twist)
-
-        print(f"Updated Heading (theta): {self.ekf_slam.state[2, 0]} radians")
-
-    def plot_final_landmarks(self):
-        self.ax.clear()
-        self.set_plot_limits()
-        self.ax.plot(*zip(*self.robot_positions), 'bo-', label="Robot Path")
-
-        legend_labels = {"Robot Path": self.ax.plot([], [], 'bo-', label="Robot Path")[0]}
-        for x, y, name in self.detected_objects:
-            color = self.ekf_slam.colors(self.objects_to_detect.index(name))
-            legend_labels[name] = self.ax.plot(x, y, 'o', color=color, label=name)[0]
-
-        self.ax.legend(handles=legend_labels.values(), loc='lower left')
-        plt.title("Robot Path and Final Detected Object Positions")
-        plt.xlabel("X position (meters)")
-        plt.ylabel("Y position (meters)")
-        plt.show()
-        self.save_plot()
-
-    def print_final_coordinates(self):
-        print("\nFinal Coordinates of Detected Objects:")
-        for i, obj_name in enumerate(self.objects_to_detect):
-            landmark_idx = 3 + 2 * i
-            obj_x, obj_y = self.ekf_slam.state[landmark_idx, 0], self.ekf_slam.state[landmark_idx + 1, 0]
-            print(f"{obj_name}: (x = {obj_x:.2f}, y = {obj_y:.2f})")
->>>>>>> f008a836d8a9e5d7b538d3ee15197b07624dd090
 
 def main(args=None):
     rclpy.init(args=args)
