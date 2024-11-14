@@ -1,4 +1,4 @@
-# ekf_slam_node.py - EKFSLAM node for handling SLAM updates
+# ekf_slam_node.py
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
@@ -31,31 +31,26 @@ class EKFSLAM(Node):
         x, y, theta = self.state[0, 0], self.state[1, 0], self.state[2, 0]
         distance, heading_change = control_input
 
-        # Predict the new state based on control input
         new_x = x + distance * np.cos(theta)
         new_y = y + distance * np.sin(theta)
         new_theta = theta + heading_change
-        new_theta = (new_theta + np.pi) % (2 * np.pi) - np.pi  # Normalize theta
+        new_theta = (new_theta + np.pi) % (2 * np.pi) - np.pi
 
-        # Update state
         self.state[0, 0] = new_x
         self.state[1, 0] = new_y
         self.state[2, 0] = new_theta
 
-        # Create an expanded process noise matrix that matches the size of P
         Q_expanded = np.zeros_like(self.P)
-        Q_expanded[:3, :3] = self.Q  # Place Q in the top-left corner to affect only robot pose
+        Q_expanded[:3, :3] = self.Q
 
-        # Update the covariance (process model) with the expanded process noise
         F = np.eye(len(self.state))
         F[0, 2] = -distance * np.sin(theta)
         F[1, 2] = distance * np.cos(theta)
         self.P = F @ self.P @ F.T + Q_expanded
 
     def update(self, measurement, obj_index):
-        """Update step for EKF using the landmark position relative to world frame."""
         x, y, theta = self.state[0, 0], self.state[1, 0], self.state[2, 0]
-        obj_x, obj_y = measurement  # World coordinates of the detected object
+        obj_x, obj_y = measurement
         landmark_idx = 3 + 2 * int(obj_index)
         
         if self.P[landmark_idx, landmark_idx] > 999:
@@ -63,7 +58,6 @@ class EKFSLAM(Node):
             self.state[landmark_idx + 1, 0] = obj_y
             self.P[landmark_idx:landmark_idx + 2, landmark_idx:landmark_idx + 2] = np.eye(2) * 100
 
-        # Compute measurement prediction
         delta_x = self.state[landmark_idx, 0] - x
         delta_y = self.state[landmark_idx + 1, 0] - y
         q = delta_x**2 + delta_y**2
@@ -73,9 +67,8 @@ class EKFSLAM(Node):
         actual_distance = np.sqrt((obj_x - x)**2 + (obj_y - y)**2)
         actual_bearing = np.arctan2(obj_y - y, obj_x - x) - theta
         innovation = np.array([[actual_distance - predicted_distance], [actual_bearing - predicted_bearing]])
-        innovation[1, 0] = (innovation[1, 0] + np.pi) % (2 * np.pi) - np.pi  # Normalize bearing
+        innovation[1, 0] = (innovation[1, 0] + np.pi) % (2 * np.pi) - np.pi
 
-        # Calculate Jacobian H of the measurement function
         H = np.zeros((2, len(self.state)))
         H[0, 0] = -delta_x / predicted_distance
         H[0, 1] = -delta_y / predicted_distance
@@ -86,30 +79,22 @@ class EKFSLAM(Node):
         H[1, landmark_idx] = -delta_y / q
         H[1, landmark_idx + 1] = delta_x / q
 
-        # Compute the innovation covariance
         S = H @ self.P @ H.T + self.R
-
-        # Compute the Kalman gain
         K = self.P @ H.T @ np.linalg.inv(S)
-
-        # Update the state and covariance matrix
         self.state += K @ innovation
         self.P = (np.eye(len(self.state)) - K @ H) @ self.P
 
     def movement_callback(self, msg):
-        # Receive and process movement commands
         distance, angle = msg.data
         self.predict([distance, angle])
         self.publish_slam_state()
 
     def update_callback(self, msg):
-        # Receive detected object info and update SLAM
         obj_x, obj_y, obj_index = msg.data
         self.update([obj_x, obj_y], int(obj_index))
         self.publish_slam_state()
 
     def publish_slam_state(self):
-        # Publish current SLAM state including robot position and all landmarks
         state_msg = Float32MultiArray()
         state_msg.data = np.concatenate((self.state[:3].flatten(), self.state[3:].flatten())).tolist()
         self.state_pub.publish(state_msg)
