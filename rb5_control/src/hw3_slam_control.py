@@ -101,12 +101,12 @@ def update(self, measurement, obj_index):
     landmark_idx = 3 + 2 * int(obj_index)
     # self.state[landmark_idx, 0] = world_x
     # self.state[landmark_idx + 1, 0] = world_y\
-    self.get_logger.info('before state x: ', self.state[landmark_idx, 0])
-    self.get_logger.info('before state y: ', self.state[landmark_idx + 1, 0])
+    self.get_logger().info('before state x: ', self.state[landmark_idx, 0])
+    self.get_logger().info('before state y: ', self.state[landmark_idx + 1, 0])
     self.state[landmark_idx, 0] = 99999999
     self.state[landmark_idx + 1, 0] = 33333333
-    self.get_logger.info('after state x: ', self.state[landmark_idx, 0])
-    self.get_logger.info('after state y: ', self.state[landmark_idx + 1, 0])
+    self.get_logger().info('after state x: ', self.state[landmark_idx, 0])
+    self.get_logger().info('after state y: ', self.state[landmark_idx + 1, 0])
 
     # Initialize landmarks if needed (large initial uncertainty)
     if self.P[landmark_idx, landmark_idx] > 999:
