@@ -13,24 +13,15 @@ class SlamControlNode(Node):
 
         self.image_update = False
         self.EKF_update = False
-        
+        self.state = None  # Initialize self.state as None
         
         self.movement_pub = self.create_publisher(Float32MultiArray, '/movement_command', 10)
         self.twist_pub = self.create_publisher(Twist, '/twist', 10)
         
         # Subscription to receive EKF SLAM state
-        # self.ekf_state_sub = self.create_subscription(
-        #     Float32MultiArray, '/ekf_slam_state', self.update_plot, 10
-        # )
-
         self.ekf_state_sub = self.create_subscription(
             Float32MultiArray, '/ekf_slam_state', self.get_EKF_state, 10
         )
-
-        # # Subscription to receive EKF SLAM colors
-        # self.ekf_colors_sub = self.create_subscription(
-        #     StringArray, '/ekf_slam_colors', self.get_colors, 10
-        # )
         
         # Subscription for detected object information
         self.object_sub = self.create_subscription(
@@ -43,46 +34,42 @@ class SlamControlNode(Node):
         # Publisher to send predicted SLAM state
         self.EKF_predict_pub = self.create_publisher(Float32MultiArray, '/ekf_predict', 10)
 
-        
         self.objects_to_detect = ['tv', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'backpack', 'stop sign', 'oven', 'airplane']
-        # self.ekf_slam = EKFSLAM(self.objects_to_detect)
         self.fig, self.ax = plt.subplots()
         self.set_plot_limits()
         self.robot_positions = []  # Store estimated robot positions from EKF
         self.detected_objects = []  # Store positions of detected objects
         self.colors = plt.cm.get_cmap('tab10', len(self.objects_to_detect))
-  #      self.spin_and_track()
-
-    def get_colors(self, msg):
-        self.colors = msg.data
 
     def get_EKF_state(self, msg):
-        self.state = msg.data
+        # Set self.state with the data from the EKF SLAM node
+        self.state = np.array(msg.data)  # Store as a NumPy array for easy indexing
         self.EKF_update = True
-        update_plot()
+        self.update_plot()
 
-        if (self.image_update == True) and (self.EKF_update == True):
-            object_callback()
+        if self.image_update and self.EKF_update:
+            self.object_callback()
 
     def get_image(self, msg):
         self.image = msg.data
         self.image_update = True
 
-        if (self.image_update == True) and (self.EKF_update == True):
-            object_callback()
-        
+        if self.image_update and self.EKF_update:
+            self.object_callback()
+
     def set_plot_limits(self):
         self.ax.set_xlim(-5, 5)
         self.ax.set_ylim(-5, 5)
 
     def object_callback(self):
+        if self.state is None:
+            return  # Ensure that self.state is set before proceeding
+
         distance, angle, obj_index = self.image
-        robot_x, robot_y, theta = self.state[0, 0], self.state[1, 0], self.state[2, 0]
+        robot_x, robot_y, theta = self.state[0], self.state[1], self.state[2]
         obj_x = robot_x + distance * np.cos(theta + angle)
         obj_y = robot_y + distance * np.sin(theta + angle)
 
-        # Update EKF with the world-frame coordinates of the detected object
-        # self.ekf_slam.update((obj_x, obj_y), int(obj_index))
         state_msg = Float32MultiArray()
         state_msg.data = [float(obj_x), float(obj_y), float(obj_index)]
         self.EKF_update_pub.publish(state_msg)
@@ -96,13 +83,14 @@ class SlamControlNode(Node):
         self.update_and_plot()
 
     def update_plot(self):
-        state_data = self.state
-        robot_x, robot_y, theta = state_data[:3]
+        if self.state is None:
+            return  # Ensure self.state is set before plotting
+
+        robot_x, robot_y, theta = self.state[:3]
         self.robot_positions.append([robot_x, robot_y])
-        self.detected_objects.append((obj_x, obj_y, object_name))
         
-        for i in range(3, len(state_data), 2):
-            obj_x, obj_y = state_data[i], state_data[i+1]
+        for i in range(3, len(self.state), 2):
+            obj_x, obj_y = self.state[i], self.state[i+1]
             self.detected_objects.append((obj_x, obj_y))
         self.update_and_plot()
 
@@ -130,18 +118,17 @@ class SlamControlNode(Node):
         print(f"Plot saved as {filename}")
 
     def spin_and_track(self, type, length):
-        
-        if (type == 'move'):
-            print('moving')
+        if type == 'move':
+            print('Moving forward')
             self.move_forward(length)
-            print('moved')
-        elif (type == 'spin'):
-            print('spinning')
-            if (length == 90):
+            print('Moved forward')
+        elif type == 'spin':
+            print('Spinning')
+            if length == 90:
                 self.turn_90_degrees()
-            elif (length == 45):
-                self.turn_90_degrees()            # MAKE NEW FUNCTION FOR 45 DEGREE TURN FOR OCTOGON
-            print('spun')
+            elif length == 45:
+                self.turn_45_degrees()
+            print('Spun')
 
         self.save_plot()
         time.sleep(1)
@@ -152,7 +139,8 @@ class SlamControlNode(Node):
     def move_forward(self, distance):
         print("Moving forward by 0.5 meters")
         control_input = [distance, 0.0]
-        # self.ekf_slam.predict(control_input)
+        
+        # Send movement command to EKF SLAM node
         state_msg = Float32MultiArray()
         state_msg.data = control_input
         self.EKF_predict_pub.publish(state_msg)
@@ -164,14 +152,16 @@ class SlamControlNode(Node):
         move_twist.linear.x = 0.0
         self.twist_pub.publish(move_twist)
 
-        robot_x, robot_y = self.state[0, 0], self.state[1, 0]
-        self.robot_positions.append([robot_x, robot_y])
-        print(f"Updated Position: x = {robot_x}, y = {robot_y}")
+        if self.state is not None:
+            robot_x, robot_y = self.state[0], self.state[1]
+            self.robot_positions.append([robot_x, robot_y])
+            print(f"Updated Position: x = {robot_x}, y = {robot_y}")
 
     def turn_90_degrees(self):
         print("Turning 90 degrees")
         control_input = [0.0, np.pi / 2]
-        # self.ekf_slam.predict(control_input)
+        
+        # Send movement command to EKF SLAM node
         state_msg = Float32MultiArray()
         state_msg.data = control_input
         self.EKF_predict_pub.publish(state_msg)
@@ -183,7 +173,8 @@ class SlamControlNode(Node):
         turn_twist.angular.z = 0.0
         self.twist_pub.publish(turn_twist)
 
-        print(f"Updated Heading (theta): {self.state[2, 0]} radians")
+        if self.state is not None:
+            print(f"Updated Heading (theta): {self.state[2]} radians")
 
     def plot_final_landmarks(self):
         self.ax.clear()
@@ -206,8 +197,9 @@ class SlamControlNode(Node):
         print("\nFinal Coordinates of Detected Objects:")
         for i, obj_name in enumerate(self.objects_to_detect):
             landmark_idx = 3 + 2 * i
-            obj_x, obj_y = self.state[landmark_idx, 0], self.state[landmark_idx + 1, 0]
-            print(f"{obj_name}: (x = {obj_x:.2f}, y = {obj_y:.2f})")
+            if self.state is not None:
+                obj_x, obj_y = self.state[landmark_idx], self.state[landmark_idx + 1]
+                print(f"{obj_name}: (x = {obj_x:.2f}, y = {obj_y:.2f})")
 
 def main(args=None):
     rclpy.init(args=args)
@@ -217,10 +209,9 @@ def main(args=None):
     node.spin_and_track('move', 0.0)
     time.sleep(1)
     
-    # TRY 1
+    # Movement pattern example
     for _ in range(4):
         for _ in range(4):  # Stop every 0.5 meters
-            print("SLAM loop")
             node.spin_and_track('move', 0.5)
             time.sleep(1)
         node.spin_and_track('spin', 90)
@@ -230,34 +221,6 @@ def main(args=None):
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
-
-
-    # # TRY 2
-    # try:
-    #     rclpy.spin(node)
-    # except KeyboardInterrupt:
-    #     pass
-
-    # for _ in range(4):
-    #     for _ in range(4):  # Stop every 0.5 meters
-    #         node.spin_and_track('move', 0.5)
-    #         time.sleep(1)
-    #     node.spin_and_track('spin', 90)
-    #     time.sleep(1)
-
-
-    # # TRY 3
-    # for _ in range(4):
-    #     for _ in range(4):  # Stop every 0.5 meters
-    #         node.spin_and_track('move', 0.5)
-    #         time.sleep(1)
-    #         # rclpy.spin_once(node)
-    #         # time.sleep(1)
-    #     node.spin_and_track('spin', 90)
-    #     time.sleep(1)
-    #     # rclpy.spin_once(node)
-    #     # time.sleep(1)
-
 
     node.destroy_node()
     rclpy.shutdown()
