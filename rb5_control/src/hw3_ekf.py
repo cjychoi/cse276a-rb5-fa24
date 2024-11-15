@@ -1,4 +1,4 @@
-# hw3_slam_control.py - Adjusted to calculate object positions relative to the robot's current position and update EKF SLAM
+# hw3_ekf.py - Adjusted to calculate object positions relative to the robot's current position and update EKF SLAM
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray

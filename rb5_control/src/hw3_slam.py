@@ -14,6 +14,7 @@ class SlamControlNode(Node):
         self.image_update = False
         self.EKF_update = False
         
+        
         self.movement_pub = self.create_publisher(Float32MultiArray, '/movement_command', 10)
         self.twist_pub = self.create_publisher(Twist, '/twist', 10)
         
@@ -215,6 +216,7 @@ def main(args=None):
 
     node.spin_and_track('move', 0.0)
     time.sleep(1)
+    
     # TRY 1
     for _ in range(4):
         for _ in range(4):  # Stop every 0.5 meters
