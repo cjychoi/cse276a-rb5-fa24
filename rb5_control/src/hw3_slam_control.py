@@ -87,33 +87,47 @@ class EKFSLAM:
     #     self.state += K @ innovation
     #     self.P = (np.eye(len(self.state)) - K @ H) @ self.P
     def update(self, measurement, obj_index):
-        """Update step for EKF using the landmark position relative to the robot's origin."""
-        # Robot's current position and orientation
+        """Update step for EKF using the landmark position relative to world frame."""
         x, y, theta = self.state[0, 0], self.state[1, 0], self.state[2, 0]
         obj_x, obj_y = measurement  # World coordinates of the detected object
-        landmark_idx = 3 + 2 * int(obj_index)
         
-        # Check if this landmark has been seen before (high initial uncertainty means it hasn't been seen)
+        # Compute the distance and angle from the robot's current position to the landmark
+        delta_x = obj_x - x
+        delta_y = obj_y - y
+        distance_to_landmark = np.sqrt(delta_x**2 + delta_y**2)
+        angle_to_landmark = np.arctan2(delta_y, delta_x) - theta
+    
+        # Normalize the angle to be between -pi and pi
+        angle_to_landmark = (angle_to_landmark + np.pi) % (2 * np.pi) - np.pi
+    
+        # Calculate the position offset from the robot's original position (0, 0)
+        original_x, original_y = 0, 0  # The original position of the robot
+        offset_x = obj_x - original_x
+        offset_y = obj_y - original_y
+    
+        # Store the offset as the new position of the detected landmark in the objects list
+        object_name = self.objects_to_detect[int(obj_index)]
+        self.objects_to_detect[int(obj_index)] = {'name': object_name, 'offset_x': offset_x, 'offset_y': offset_y}
+    
+        # Update EKF with the world-frame coordinates of the detected object
+        landmark_idx = 3 + 2 * int(obj_index)
         if self.P[landmark_idx, landmark_idx] > 999:
-            # Initialize landmark position in the state vector
-            self.state[landmark_idx, 0] = obj_x - self.state[0, 0]  # Set landmark's x relative to the robot's x
-            self.state[landmark_idx + 1, 0] = obj_y - self.state[1, 0]  # Set landmark's y relative to the robot's y
-            # Reduce initial uncertainty for this landmark
+            self.state[landmark_idx, 0] = obj_x
+            self.state[landmark_idx + 1, 0] = obj_y
             self.P[landmark_idx:landmark_idx + 2, landmark_idx:landmark_idx + 2] = np.eye(2) * 100
-
-        # Compute measurement prediction (range and bearing to landmark)
+    
+        # Compute measurement prediction
         delta_x = self.state[landmark_idx, 0] - x
         delta_y = self.state[landmark_idx + 1, 0] - y
         q = delta_x**2 + delta_y**2
         predicted_distance = np.sqrt(q)
         predicted_bearing = np.arctan2(delta_y, delta_x) - theta
-
-        # Calculate actual measurement values (range and bearing) from the detected object
+    
         actual_distance = np.sqrt((obj_x - x)**2 + (obj_y - y)**2)
         actual_bearing = np.arctan2(obj_y - y, obj_x - x) - theta
         innovation = np.array([[actual_distance - predicted_distance], [actual_bearing - predicted_bearing]])
         innovation[1, 0] = (innovation[1, 0] + np.pi) % (2 * np.pi) - np.pi  # Normalize bearing
-
+    
         # Calculate Jacobian H of the measurement function
         H = np.zeros((2, len(self.state)))
         H[0, 0] = -delta_x / predicted_distance
@@ -124,16 +138,17 @@ class EKFSLAM:
         H[0, landmark_idx + 1] = delta_y / predicted_distance
         H[1, landmark_idx] = -delta_y / q
         H[1, landmark_idx + 1] = delta_x / q
-
+    
         # Compute the innovation covariance
         S = H @ self.P @ H.T + self.R
-
+    
         # Compute the Kalman gain
         K = self.P @ H.T @ np.linalg.inv(S)
-
+    
         # Update the state and covariance matrix
         self.state += K @ innovation
         self.P = (np.eye(len(self.state)) - K @ H) @ self.P
+
 
 
 class SlamControlNode(Node):
