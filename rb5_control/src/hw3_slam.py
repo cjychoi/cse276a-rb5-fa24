@@ -52,7 +52,7 @@ class SlamControlNode(Node):
         self.colors = plt.cm.get_cmap('tab10', len(self.objects_to_detect))
   #      self.spin_and_track()
 
-        self.state = np.zeros((3 + 2 * len(object_list), 1))  # [x, y, theta, x1, y1, x2, y2, ...]
+        self.state = np.zeros((3 + 2 * len(self.objects_to_detect), 1))  # [x, y, theta, x1, y1, x2, y2, ...]
 
     def get_colors(self, msg):
         self.colors = msg.data
@@ -219,13 +219,13 @@ def main(args=None):
     time.sleep(1)
 
     # TRY 1
-    # for _ in range(4):
-    #     for _ in range(4):  # Stop every 0.5 meters
-    #         print("SLAM loop")
-    #         node.spin_and_track('move', 0.5)
-    #         time.sleep(1)
-    #     node.spin_and_track('spin', 90)
-    #     time.sleep(1)
+    for _ in range(1):
+        for _ in range(4):  # Stop every 0.5 meters
+            print("SLAM loop")
+            node.spin_and_track('move', 0.5)
+            time.sleep(1)
+        node.spin_and_track('spin', 90)
+        time.sleep(1)
         
     try:
         rclpy.spin(node)
