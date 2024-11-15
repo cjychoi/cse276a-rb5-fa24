@@ -18,6 +18,10 @@ class EKFSLAM(Node):
         self.object_list = object_list
         self.colors = plt.cm.get_cmap('tab10', len(object_list))
 
+        # self.colors_pub = self.create_publisher(StringArray, '/ekf_slam_colors', 10)
+        # publish_slam_colors()
+        
+
         # Subscriber to receive movement commands
         self.movement_sub = self.create_subscription(
             Float32MultiArray, '/movement_command', self.movement_callback, 10
@@ -40,6 +44,7 @@ class EKFSLAM(Node):
 
         # Publisher to send updated SLAM state
         self.state_pub = self.create_publisher(Float32MultiArray, '/ekf_slam_state', 10)
+
 
     def predict(self, msg):
         """Predict step for EKF based on control input."""
@@ -69,11 +74,16 @@ class EKFSLAM(Node):
 
     def update(self, msg):
         """Update step for EKF using the landmark position relative to world frame."""
-        obj_x, obj_y, obj_index = msg.data
-        obj_index = int(obj_index)
+        if msg.data:
+            obj_x, obj_y, obj_index = msg.data
+            obj_index = int(obj_index)
+        else:
+            obj_x, obj_y = msg[0]
+            obj_index = msg[1]
         
         x, y, theta = self.state[0, 0], self.state[1, 0], self.state[2, 0]
-        landmark_idx = 3 + 2 * obj_index
+        # obj_x, obj_y = measurement  # World coordinates of the detected object
+        landmark_idx = 3 + 2 * int(obj_index)
         
         if self.P[landmark_idx, landmark_idx] > 999:
             self.state[landmark_idx, 0] = obj_x
@@ -114,17 +124,13 @@ class EKFSLAM(Node):
         self.P = (np.eye(len(self.state)) - K @ H) @ self.P
 
     def movement_callback(self, msg):
-        # Publish the received movement command to predict
-        predict_msg = Float32MultiArray()
-        predict_msg.data = msg.data
-        self.predict(predict_msg)
+        distance, angle = msg.data
+        self.predict([distance, angle])
         self.publish_slam_state()
 
     def update_callback(self, msg):
-        # Publish the received object data to the `/ekf_update` topic
-        update_msg = Float32MultiArray()
-        update_msg.data = msg.data
-        self.update(update_msg)
+        obj_x, obj_y, obj_index = msg.data
+        self.update([[obj_x, obj_y], int(obj_index)])
         self.publish_slam_state()
 
     def publish_slam_state(self):
@@ -132,10 +138,15 @@ class EKFSLAM(Node):
         state_msg.data = np.concatenate((self.state[:3].flatten(), self.state[3:].flatten())).tolist()
         self.state_pub.publish(state_msg)
 
+    def publish_slam_colors(self):
+        state_msg = StringArray()
+        state_msg.data = self.colors
+        self.colors_pub.publish(state_msg)
+    
 def main(args=None):
     rclpy.init(args=args)
     node = EKFSLAM(object_list=['tv', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'backpack', 'stop sign', 'oven', 'airplane'])
-    print("EKF Running...")
+    print("EKF")
     try:
         rclpy.spin(node)
         print("EKF spin")
