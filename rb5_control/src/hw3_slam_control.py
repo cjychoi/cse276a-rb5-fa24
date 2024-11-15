@@ -101,14 +101,8 @@ class EKFSLAM:
 
         # Update state with the calculated landmark position
         landmark_idx = 3 + 2 * int(obj_index)
-        # self.state[landmark_idx, 0] = world_x
-        # self.state[landmark_idx + 1, 0] = world_y\
-        print('before state x: ', self.state[landmark_idx, 0])
-        print('before state y: ', self.state[landmark_idx + 1, 0])
-        self.state[landmark_idx, 0] = 99999999
-        self.state[landmark_idx + 1, 0] = 33333333
-        print('after state x: ', self.state[landmark_idx, 0])
-        print('after state y: ', self.state[landmark_idx + 1, 0])
+        self.state[landmark_idx, 0] = world_x
+        self.state[landmark_idx + 1, 0] = world_y
 
         # Initialize landmarks if needed (large initial uncertainty)
         if self.P[landmark_idx, landmark_idx] > 999:
@@ -184,8 +178,8 @@ class SlamControlNode(Node):
         print('done updating')
 
         object_name = self.objects_to_detect[int(obj_index)]
-        # print(f"Robot Position: (x={robot_x:.2f}, y={robot_y:.2f}, theta={theta:.2f})")
-        # print(f"Detected {object_name} at world position (x={obj_x:.2f}, y={obj_y:.2f})")
+        print(f"Robot Position: (x={robot_x:.2f}, y={robot_y:.2f}, theta={theta:.2f})")
+        print(f"Detected {object_name} at world position (x={obj_x:.2f}, y={obj_y:.2f})")
 
         self.robot_positions.append([robot_x, robot_y])
         self.detected_objects.append((obj_x, obj_y, object_name))
@@ -212,7 +206,7 @@ class SlamControlNode(Node):
     def save_plot(self):
         filename = 'slam_plot.png'
         self.fig.savefig(filename)
-        # print(f"Plot saved as {filename}")
+        print(f"Plot saved as {filename}")
 
     def spin_and_track(self, type, length):
         
@@ -248,7 +242,7 @@ class SlamControlNode(Node):
         self.print_final_coordinates()
 
     def move_forward(self, distance):
-        # print("Moving forward by 0.5 meters")
+        print("Moving forward by 0.5 meters")
         control_input = [distance, 0]
         self.ekf_slam.predict(control_input)
 
@@ -261,10 +255,10 @@ class SlamControlNode(Node):
 
         robot_x, robot_y = self.ekf_slam.state[0, 0], self.ekf_slam.state[1, 0]
         self.robot_positions.append([robot_x, robot_y])
-        # print(f"Updated Position: x = {robot_x}, y = {robot_y}")
+        print(f"Updated Position: x = {robot_x}, y = {robot_y}")
 
     def turn_90_degrees(self):
-        # print("Turning 90 degrees")
+        print("Turning 90 degrees")
         control_input = [0, np.pi / 2]
         self.ekf_slam.predict(control_input)
 
@@ -275,7 +269,7 @@ class SlamControlNode(Node):
         turn_twist.angular.z = 0.0
         self.publisher_.publish(turn_twist)
 
-        # print(f"Updated Heading (theta): {self.ekf_slam.state[2, 0]} radians")
+        print(f"Updated Heading (theta): {self.ekf_slam.state[2, 0]} radians")
 
     def plot_final_landmarks(self):
         self.ax.clear()
@@ -295,18 +289,18 @@ class SlamControlNode(Node):
         self.save_plot()
 
     def print_final_coordinates(self):
-        # print("\nFinal Coordinates of Detected Objects:")
+        print("\nFinal Coordinates of Detected Objects:")
         for i, obj_name in enumerate(self.objects_to_detect):
             landmark_idx = 3 + 2 * i
             obj_x, obj_y = self.ekf_slam.state[landmark_idx, 0], self.ekf_slam.state[landmark_idx + 1, 0]
-            # print(f"{obj_name}: (x = {obj_x:.2f}, y = {obj_y:.2f})")
-        # print('state: ', self.ekf_slam.state)
+            print(f"{obj_name}: (x = {obj_x:.2f}, y = {obj_y:.2f})")
+        print('state: ', self.ekf_slam.state)
 
 def main(args=None):
     rclpy.init(args=args)
     node = SlamControlNode()
 
-    # print("SLAM 1")
+    print("SLAM 1")
 
     spin_thread = (threading.Thread(target=rclpy.spin, args=(node,)))
     spin_thread.start()
@@ -318,7 +312,7 @@ def main(args=None):
         # TRY 1
         for _ in range(4):
             for _ in range(4):  # Stop every 0.5 meters
-                # print("SLAM loop")
+                print("SLAM loop")
                 node.spin_and_track('move', 0.5)
                 time.sleep(1)
             node.spin_and_track('spin', 90)
