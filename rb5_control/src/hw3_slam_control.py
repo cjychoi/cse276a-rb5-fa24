@@ -88,58 +88,65 @@ class EKFSLAM:
     #     self.P = (np.eye(len(self.state)) - K @ H) @ self.P
 
 
-    def update(self, measurement, obj_index):
-        """Update step for EKF using the landmark position relative to world frame."""
-        x, y, theta = self.state[0, 0], self.state[1, 0], self.state[2, 0]
-        obj_x, obj_y = measurement  # World coordinates of the detected object
+def update(self, measurement, obj_index):
+    """Update step for EKF using the landmark position relative to the robot's original pose."""
+    x, y, theta = self.state[0, 0], self.state[1, 0], self.state[2, 0]
+    distance, angle = measurement  # Distance and angle relative to the robot
 
-        # Calculate the offset from the robot's current position to the landmark
-        offset_x = obj_x - x  # Offset in the x-direction
-        offset_y = obj_y - y  # Offset in the y-direction
+    # Calculate landmark's position in the world frame (robot's original pose)
+    world_x = x + distance * np.cos(theta + angle)
+    world_y = y + distance * np.sin(theta + angle)
 
-        # Update state with the calculated offset
-        landmark_idx = 3 + 2 * int(obj_index)
-        self.state[landmark_idx, 0] = 9999999 #offset_x
-        self.state[landmark_idx + 1, 0] = 1111111 #offset_y
+    # Update state with the calculated landmark position
+    landmark_idx = 3 + 2 * int(obj_index)
+    # self.state[landmark_idx, 0] = world_x
+    # self.state[landmark_idx + 1, 0] = world_y\
+    print('before state x: ', self.state[landmark_idx, 0])
+    print('before state y: ', self.state[landmark_idx + 1, 0])
+    self.state[landmark_idx, 0] = 99999999
+    self.state[landmark_idx + 1, 0] = 33333333
+    print('after state x: ', self.state[landmark_idx, 0])
+    print('after state y: ', self.state[landmark_idx + 1, 0])
 
-        # Initialize landmarks if needed (large initial uncertainty)
-        if self.P[landmark_idx, landmark_idx] > 999:
-            self.P[landmark_idx:landmark_idx + 2, landmark_idx:landmark_idx + 2] = np.eye(2) * 100
+    # Initialize landmarks if needed (large initial uncertainty)
+    if self.P[landmark_idx, landmark_idx] > 999:
+        self.P[landmark_idx:landmark_idx + 2, landmark_idx:landmark_idx + 2] = np.eye(2) * 100
 
-        # Compute measurement prediction
-        delta_x = offset_x
-        delta_y = offset_y
-        q = delta_x**2 + delta_y**2
-        predicted_distance = np.sqrt(q)
-        predicted_bearing = np.arctan2(delta_y, delta_x) - theta
+    # Compute measurement prediction
+    delta_x = world_x - x
+    delta_y = world_y - y
+    q = delta_x**2 + delta_y**2
+    predicted_distance = np.sqrt(q)
+    predicted_bearing = np.arctan2(delta_y, delta_x) - theta
 
-        actual_distance = np.sqrt((obj_x - x)**2 + (obj_y - y)**2)
-        actual_bearing = np.arctan2(obj_y - y, obj_x - x) - theta
-        innovation = np.array([[actual_distance - predicted_distance], [actual_bearing - predicted_bearing]])
+    # Compute the actual measurement
+    actual_distance = distance
+    actual_bearing = angle
+    innovation = np.array([[actual_distance - predicted_distance], [actual_bearing - predicted_bearing]])
 
-        # Normalize bearing
-        innovation[1, 0] = (innovation[1, 0] + np.pi) % (2 * np.pi) - np.pi
+    # Normalize bearing
+    innovation[1, 0] = (innovation[1, 0] + np.pi) % (2 * np.pi) - np.pi
 
-        # Calculate Jacobian H of the measurement function
-        H = np.zeros((2, len(self.state)))
-        H[0, 0] = -delta_x / predicted_distance
-        H[0, 1] = -delta_y / predicted_distance
-        H[1, 0] = delta_y / q
-        H[1, 1] = -delta_x / q
-        H[0, landmark_idx] = delta_x / predicted_distance
-        H[0, landmark_idx + 1] = delta_y / predicted_distance
-        H[1, landmark_idx] = -delta_y / q
-        H[1, landmark_idx + 1] = delta_x / q
+    # Calculate Jacobian H of the measurement function
+    H = np.zeros((2, len(self.state)))
+    H[0, 0] = -delta_x / predicted_distance
+    H[0, 1] = -delta_y / predicted_distance
+    H[1, 0] = delta_y / q
+    H[1, 1] = -delta_x / q
+    H[0, landmark_idx] = delta_x / predicted_distance
+    H[0, landmark_idx + 1] = delta_y / predicted_distance
+    H[1, landmark_idx] = -delta_y / q
+    H[1, landmark_idx + 1] = delta_x / q
 
-        # Compute the innovation covariance
-        S = H @ self.P @ H.T + self.R
+    # Compute the innovation covariance
+    S = H @ self.P @ H.T + self.R
 
-        # Compute the Kalman gain
-        K = self.P @ H.T @ np.linalg.inv(S)
+    # Compute the Kalman gain
+    K = self.P @ H.T @ np.linalg.inv(S)
 
-        # Update the state and covariance matrix
-        self.state += K @ innovation
-        self.P = (np.eye(len(self.state)) - K @ H) @ self.P
+    # Update the state and covariance matrix
+    self.state += K @ innovation
+    self.P = (np.eye(len(self.state)) - K @ H) @ self.P
 
     
 
