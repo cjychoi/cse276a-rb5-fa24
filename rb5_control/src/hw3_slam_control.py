@@ -100,6 +100,7 @@ class EKFSLAM:
         world_y = y + distance * np.sin(theta + angle)
 
         # Update state with the calculated landmark position
+        print('found object index is : ', obj_index)
         landmark_idx = 3 + 2 * int(obj_index)
         self.state[landmark_idx, 0] = world_x
         self.state[landmark_idx + 1, 0] = world_y
