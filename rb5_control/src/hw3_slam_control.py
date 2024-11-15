@@ -303,24 +303,23 @@ def main(args=None):
 
     print("SLAM 1")
 
-    spin_thread = (threading.Thread(target=rclpy.spin, args=(node,)))
-    spin_thread.start()
     
-    try:
-        node.spin_and_track('move', 0.0)
+    node.spin_and_track('move', 0.0)
+    time.sleep(1)
+
+    # TRY 1
+    for _ in range(4):
+        for _ in range(4):  # Stop every 0.5 meters
+            print("SLAM loop")
+            node.spin_and_track('move', 0.5)
+            time.sleep(1)
+        node.spin_and_track('spin', 90)
         time.sleep(1)
 
-        # TRY 1
-        for _ in range(4):
-            for _ in range(4):  # Stop every 0.5 meters
-                print("SLAM loop")
-                node.spin_and_track('move', 0.5)
-                time.sleep(1)
-            node.spin_and_track('spin', 90)
-            time.sleep(1)
+    try:
+        rclpy.spin(node)
     except KeyboardInterrupt:
         pass
-    finally:
         
 
 
@@ -351,9 +350,8 @@ def main(args=None):
     #     # time.sleep(1)
 
 
-        node.destroy_node()
-        rclpy.shutdown()
-        spin_thread.join()
+    node.destroy_node()
+    rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
