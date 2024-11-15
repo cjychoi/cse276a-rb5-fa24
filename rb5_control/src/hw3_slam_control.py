@@ -283,6 +283,7 @@ class SlamControlNode(Node):
             landmark_idx = 3 + 2 * i
             obj_x, obj_y = self.ekf_slam.state[landmark_idx, 0], self.ekf_slam.state[landmark_idx + 1, 0]
             print(f"{obj_name}: (x = {obj_x:.2f}, y = {obj_y:.2f})")
+        print('state: ', self.state)
 
 def main(args=None):
     rclpy.init(args=args)
@@ -305,7 +306,6 @@ def main(args=None):
     try:
         rclpy.spin_once(node)
     except KeyboardInterrupt:
-        print(self.state)
         pass
 
 
