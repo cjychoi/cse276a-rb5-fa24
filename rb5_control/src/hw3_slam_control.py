@@ -90,6 +90,8 @@ class EKFSLAM:
 
 def update(self, measurement, obj_index):
     """Update step for EKF using the landmark position relative to the robot's original pose."""
+    print('starting update - print')
+    self.get_logger().info('starting update - logger')
     x, y, theta = self.state[0, 0], self.state[1, 0], self.state[2, 0]
     distance, angle = measurement  # Distance and angle relative to the robot
 
@@ -177,7 +179,9 @@ class SlamControlNode(Node):
         obj_y = robot_y + distance * np.sin(theta + angle)
 
         # Update EKF with the world-frame coordinates of the detected object
+        print('updating')
         self.ekf_slam.update((obj_x, obj_y), int(obj_index))
+        print('done updating')
 
         object_name = self.objects_to_detect[int(obj_index)]
         # print(f"Robot Position: (x={robot_x:.2f}, y={robot_y:.2f}, theta={theta:.2f})")
