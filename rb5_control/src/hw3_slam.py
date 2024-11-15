@@ -38,7 +38,7 @@ class SlamControlNode(Node):
         self.fig, self.ax = plt.subplots()
         self.set_plot_limits()
         self.robot_positions = []  # Store estimated robot positions from EKF
-        self.detected_objects = []  # Store positions of detected objects
+        self.detected_objects = []  # Store positions of detected objects, with optional names
         self.colors = plt.cm.get_cmap('tab10', len(self.objects_to_detect))
 
     def get_EKF_state(self, msg):
@@ -91,7 +91,7 @@ class SlamControlNode(Node):
         
         for i in range(3, len(self.state), 2):
             obj_x, obj_y = self.state[i], self.state[i+1]
-            self.detected_objects.append((obj_x, obj_y))
+            self.detected_objects.append((obj_x, obj_y, 'Unknown'))  # Default name for objects without labels
         self.update_and_plot()
 
     def update_and_plot(self):
@@ -101,7 +101,7 @@ class SlamControlNode(Node):
 
         legend_labels = {"Robot Path": self.ax.plot([], [], 'bo-', label="Robot Path")[0]}
         for x, y, name in self.detected_objects:
-            color = self.colors(self.objects_to_detect.index(name))
+            color = self.colors(self.objects_to_detect.index(name)) if name in self.objects_to_detect else 'gray'
             if name not in legend_labels:
                 legend_labels[name] = self.ax.plot(x, y, 'o', color=color, label=name)[0]
             else:
@@ -183,7 +183,7 @@ class SlamControlNode(Node):
 
         legend_labels = {"Robot Path": self.ax.plot([], [], 'bo-', label="Robot Path")[0]}
         for x, y, name in self.detected_objects:
-            color = self.colors(self.objects_to_detect.index(name))
+            color = self.colors(self.objects_to_detect.index(name)) if name in self.objects_to_detect else 'gray'
             legend_labels[name] = self.ax.plot(x, y, 'o', color=color, label=name)[0]
 
         self.ax.legend(handles=legend_labels.values(), loc='lower left')
@@ -206,16 +206,18 @@ def main(args=None):
     node = SlamControlNode()
     print("SLAM 1")
 
+
     node.spin_and_track('move', 0.0)
-    time.sleep(1)
+    time.sleep(2)
     
+
     # Movement pattern example
-    for _ in range(4):
-        for _ in range(4):  # Stop every 0.5 meters
-            node.spin_and_track('move', 0.5)
-            time.sleep(1)
-        node.spin_and_track('spin', 90)
-        time.sleep(1)
+    # for _ in range(4):
+    #     for _ in range(4):  # Stop every 0.5 meters
+    #         node.spin_and_track('move', 0.5)
+    #         time.sleep(1)
+    #     node.spin_and_track('spin', 90)
+    #     time.sleep(1)
         
     try:
         rclpy.spin(node)
