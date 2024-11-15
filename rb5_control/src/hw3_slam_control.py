@@ -320,7 +320,7 @@ def main(args=None):
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
-        print('state: ', self.ekf_slam.state)
+        print('state: ', node.ekf_slam.state)
         pass
         
 
