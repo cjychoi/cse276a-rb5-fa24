@@ -6,6 +6,7 @@ from geometry_msgs.msg import Twist
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+import threading
 
 class EKFSLAM:
     def __init__(self, object_list):
@@ -88,67 +89,66 @@ class EKFSLAM:
     #     self.P = (np.eye(len(self.state)) - K @ H) @ self.P
 
 
-def update(self, measurement, obj_index):
-    """Update step for EKF using the landmark position relative to the robot's original pose."""
-    print('starting update - print')
-    self.get_logger().info('starting update - logger')
-    x, y, theta = self.state[0, 0], self.state[1, 0], self.state[2, 0]
-    distance, angle = measurement  # Distance and angle relative to the robot
+    def update(self, measurement, obj_index):
+        """Update step for EKF using the landmark position relative to the robot's original pose."""
+        print('starting update - print')
+        x, y, theta = self.state[0, 0], self.state[1, 0], self.state[2, 0]
+        distance, angle = measurement  # Distance and angle relative to the robot
 
-    # Calculate landmark's position in the world frame (robot's original pose)
-    world_x = x + distance * np.cos(theta + angle)
-    world_y = y + distance * np.sin(theta + angle)
+        # Calculate landmark's position in the world frame (robot's original pose)
+        world_x = x + distance * np.cos(theta + angle)
+        world_y = y + distance * np.sin(theta + angle)
 
-    # Update state with the calculated landmark position
-    landmark_idx = 3 + 2 * int(obj_index)
-    # self.state[landmark_idx, 0] = world_x
-    # self.state[landmark_idx + 1, 0] = world_y\
-    self.get_logger().info('before state x: ', self.state[landmark_idx, 0])
-    self.get_logger().info('before state y: ', self.state[landmark_idx + 1, 0])
-    self.state[landmark_idx, 0] = 99999999
-    self.state[landmark_idx + 1, 0] = 33333333
-    self.get_logger().info('after state x: ', self.state[landmark_idx, 0])
-    self.get_logger().info('after state y: ', self.state[landmark_idx + 1, 0])
+        # Update state with the calculated landmark position
+        landmark_idx = 3 + 2 * int(obj_index)
+        # self.state[landmark_idx, 0] = world_x
+        # self.state[landmark_idx + 1, 0] = world_y\
+        print('before state x: ', self.state[landmark_idx, 0])
+        print('before state y: ', self.state[landmark_idx + 1, 0])
+        self.state[landmark_idx, 0] = 99999999
+        self.state[landmark_idx + 1, 0] = 33333333
+        print('after state x: ', self.state[landmark_idx, 0])
+        print('after state y: ', self.state[landmark_idx + 1, 0])
 
-    # Initialize landmarks if needed (large initial uncertainty)
-    if self.P[landmark_idx, landmark_idx] > 999:
-        self.P[landmark_idx:landmark_idx + 2, landmark_idx:landmark_idx + 2] = np.eye(2) * 100
+        # Initialize landmarks if needed (large initial uncertainty)
+        if self.P[landmark_idx, landmark_idx] > 999:
+            self.P[landmark_idx:landmark_idx + 2, landmark_idx:landmark_idx + 2] = np.eye(2) * 100
 
-    # Compute measurement prediction
-    delta_x = world_x - x
-    delta_y = world_y - y
-    q = delta_x**2 + delta_y**2
-    predicted_distance = np.sqrt(q)
-    predicted_bearing = np.arctan2(delta_y, delta_x) - theta
+        # Compute measurement prediction
+        delta_x = world_x - x
+        delta_y = world_y - y
+        q = delta_x**2 + delta_y**2
+        predicted_distance = np.sqrt(q)
+        predicted_bearing = np.arctan2(delta_y, delta_x) - theta
 
-    # Compute the actual measurement
-    actual_distance = distance
-    actual_bearing = angle
-    innovation = np.array([[actual_distance - predicted_distance], [actual_bearing - predicted_bearing]])
+        # Compute the actual measurement
+        actual_distance = distance
+        actual_bearing = angle
+        innovation = np.array([[actual_distance - predicted_distance], [actual_bearing - predicted_bearing]])
 
-    # Normalize bearing
-    innovation[1, 0] = (innovation[1, 0] + np.pi) % (2 * np.pi) - np.pi
+        # Normalize bearing
+        innovation[1, 0] = (innovation[1, 0] + np.pi) % (2 * np.pi) - np.pi
 
-    # Calculate Jacobian H of the measurement function
-    H = np.zeros((2, len(self.state)))
-    H[0, 0] = -delta_x / predicted_distance
-    H[0, 1] = -delta_y / predicted_distance
-    H[1, 0] = delta_y / q
-    H[1, 1] = -delta_x / q
-    H[0, landmark_idx] = delta_x / predicted_distance
-    H[0, landmark_idx + 1] = delta_y / predicted_distance
-    H[1, landmark_idx] = -delta_y / q
-    H[1, landmark_idx + 1] = delta_x / q
+        # Calculate Jacobian H of the measurement function
+        H = np.zeros((2, len(self.state)))
+        H[0, 0] = -delta_x / predicted_distance
+        H[0, 1] = -delta_y / predicted_distance
+        H[1, 0] = delta_y / q
+        H[1, 1] = -delta_x / q
+        H[0, landmark_idx] = delta_x / predicted_distance
+        H[0, landmark_idx + 1] = delta_y / predicted_distance
+        H[1, landmark_idx] = -delta_y / q
+        H[1, landmark_idx + 1] = delta_x / q
 
-    # Compute the innovation covariance
-    S = H @ self.P @ H.T + self.R
+        # Compute the innovation covariance
+        S = H @ self.P @ H.T + self.R
 
-    # Compute the Kalman gain
-    K = self.P @ H.T @ np.linalg.inv(S)
+        # Compute the Kalman gain
+        K = self.P @ H.T @ np.linalg.inv(S)
 
-    # Update the state and covariance matrix
-    self.state += K @ innovation
-    self.P = (np.eye(len(self.state)) - K @ H) @ self.P
+        # Update the state and covariance matrix
+        self.state += K @ innovation
+        self.P = (np.eye(len(self.state)) - K @ H) @ self.P
 
     
 
@@ -307,23 +307,26 @@ def main(args=None):
     node = SlamControlNode()
 
     # print("SLAM 1")
-    
-    node.spin_and_track('move', 0.0)
-    time.sleep(1)
 
-    # TRY 1
-    for _ in range(4):
-        for _ in range(4):  # Stop every 0.5 meters
-            # print("SLAM loop")
-            node.spin_and_track('move', 0.5)
-            time.sleep(1)
-        node.spin_and_track('spin', 90)
-        time.sleep(1)
-        
+    spin_thread = (threading.Thread(target=rclpy.spin, args=(node,)))
+    spin_thread.start()
+    
     try:
-        rclpy.spin(node)
+        node.spin_and_track('move', 0.0)
+        time.sleep(1)
+
+        # TRY 1
+        for _ in range(4):
+            for _ in range(4):  # Stop every 0.5 meters
+                # print("SLAM loop")
+                node.spin_and_track('move', 0.5)
+                time.sleep(1)
+            node.spin_and_track('spin', 90)
+            time.sleep(1)
     except KeyboardInterrupt:
         pass
+    finally:
+        
 
 
     # # TRY 2
@@ -353,8 +356,9 @@ def main(args=None):
     #     # time.sleep(1)
 
 
-    node.destroy_node()
-    rclpy.shutdown()
+        node.destroy_node()
+        rclpy.shutdown()
+        spin_thread.join()
 
 if __name__ == '__main__':
     main()
