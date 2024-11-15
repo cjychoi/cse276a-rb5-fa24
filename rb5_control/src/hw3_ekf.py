@@ -39,7 +39,7 @@ class EKFSLAM(Node):
 
         # Subscriber to receive predict data
         self.predict_sub = self.create_subscription(
-            Array, '/ekf_predict', self.predict, 10
+            Float32MultiArray, '/ekf_predict', self.predict, 10
         )
 
         # Publisher to send updated SLAM state
@@ -74,7 +74,9 @@ class EKFSLAM(Node):
 
     def update(self, msg):
         """Update step for EKF using the landmark position relative to world frame."""
-        obj_x, obj_y, int(obj_index) = msg.data
+        obj_x, obj_y, obj_index = msg.data
+        obj_index = int(obj_index)
+        
         x, y, theta = self.state[0, 0], self.state[1, 0], self.state[2, 0]
         # obj_x, obj_y = measurement  # World coordinates of the detected object
         landmark_idx = 3 + 2 * int(obj_index)

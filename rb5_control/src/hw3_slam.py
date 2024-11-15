@@ -150,7 +150,7 @@ class SlamControlNode(Node):
 
     def move_forward(self, distance):
         print("Moving forward by 0.5 meters")
-        control_input = [distance, 0]
+        control_input = [distance, 0.0]
         # self.ekf_slam.predict(control_input)
         state_msg = Float32MultiArray()
         state_msg.data = control_input
@@ -169,7 +169,7 @@ class SlamControlNode(Node):
 
     def turn_90_degrees(self):
         print("Turning 90 degrees")
-        control_input = [0, np.pi / 2]
+        control_input = [0.0, np.pi / 2]
         # self.ekf_slam.predict(control_input)
         state_msg = Float32MultiArray()
         state_msg.data = control_input
