@@ -74,8 +74,12 @@ class EKFSLAM(Node):
 
     def update(self, msg):
         """Update step for EKF using the landmark position relative to world frame."""
-        obj_x, obj_y, obj_index = msg.data
-        obj_index = int(obj_index)
+        if msg.data:
+            obj_x, obj_y, obj_index = msg.data
+            obj_index = int(obj_index)
+        else:
+            obj_x, obj_y = msg[0]
+            obj_index = msg[1]
         
         x, y, theta = self.state[0, 0], self.state[1, 0], self.state[2, 0]
         # obj_x, obj_y = measurement  # World coordinates of the detected object
@@ -126,7 +130,7 @@ class EKFSLAM(Node):
 
     def update_callback(self, msg):
         obj_x, obj_y, obj_index = msg.data
-        self.update([obj_x, obj_y], int(obj_index))
+        self.update([[obj_x, obj_y], int(obj_index)])
         self.publish_slam_state()
 
     def publish_slam_state(self):
