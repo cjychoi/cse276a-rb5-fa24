@@ -45,7 +45,7 @@ class EKFSLAM(Node):
         # Publisher to send updated SLAM state
         self.state_pub = self.create_publisher(Float32MultiArray, '/ekf_slam_state', 10)
 
-        publish_slam_state()
+        self.publish_slam_state()
 
 
     def predict(self, msg):
@@ -148,7 +148,7 @@ class EKFSLAM(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = EKFSLAM(object_list=['tv', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'backpack', 'stop sign', 'oven', 'airplane'])
-    print("EKF")
+    print("EKF running...")
     try:
         rclpy.spin(node)
         print("EKF spin")
