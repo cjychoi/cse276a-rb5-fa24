@@ -99,8 +99,8 @@ class EKFSLAM:
 
         # Update state with the calculated offset
         landmark_idx = 3 + 2 * int(obj_index)
-        self.state[landmark_idx, 0] = offset_x
-        self.state[landmark_idx + 1, 0] = offset_y
+        self.state[landmark_idx, 0] = 9999999 #offset_x
+        self.state[landmark_idx + 1, 0] = 1111111 #offset_y
 
         # Initialize landmarks if needed (large initial uncertainty)
         if self.P[landmark_idx, landmark_idx] > 999:
