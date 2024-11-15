@@ -72,7 +72,7 @@ class YoloDetectionNode(Node):
         angle_offset = float(-(x_center - (cv_image.shape[1] / 2)) / 500)
 
         # Print detected object details
-        print(f"Detected {object_name} - Distance: {distance:.2f} m, Angle: {angle_offset:.2f} radians")
+        print(f"Detected {object_name} - Distance: {distance:.2f} m, Angle: {angle_offset:.2f} radians\n")
 
         # Publish object info (distance and angle relative to the robot's pose)
         msg = Float32MultiArray()
