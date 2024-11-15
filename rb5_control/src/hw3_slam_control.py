@@ -292,6 +292,7 @@ class SlamControlNode(Node):
 
     def print_final_coordinates(self):
         print("\nFinal Coordinates of Detected Objects:")
+        print(self.ekf_slam.objects_to_detect)
         for i, obj_name in enumerate(self.objects_to_detect):
             landmark_idx = 3 + 2 * i
             obj_x, obj_y = self.ekf_slam.state[landmark_idx, 0], self.ekf_slam.state[landmark_idx + 1, 0]
