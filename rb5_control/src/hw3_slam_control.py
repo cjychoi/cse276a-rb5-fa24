@@ -321,7 +321,7 @@ def main(args=None):
         time.sleep(1)
         
     try:
-        rclpy.spin_once(node)
+        rclpy.spin(node)
     except KeyboardInterrupt:
         pass
 
