@@ -170,7 +170,7 @@ class SlamControlNode(Node):
         obj_y = robot_y + distance * np.sin(theta + angle)
 
         # Update EKF with the world-frame coordinates of the detected object
-        self.ekf_slam.update((obj_x, obj_y), int(obj_index), self)
+        self.ekf_slam.update((obj_x, obj_y), int(obj_index))
 
         object_name = self.objects_to_detect[int(obj_index)]
         print(f"Robot Position: (x={robot_x:.2f}, y={robot_y:.2f}, theta={theta:.2f})")
