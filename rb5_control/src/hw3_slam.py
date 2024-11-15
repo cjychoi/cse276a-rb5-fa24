@@ -26,10 +26,10 @@ class SlamControlNode(Node):
             Float32MultiArray, '/ekf_slam_state', self.get_EKF_state, 10
         )
 
-        # Subscription to receive EKF SLAM colors
-        self.ekf_colors_sub = self.create_subscription(
-            StringArray, '/ekf_slam_colors', self.get_colors, 10
-        )
+        # # Subscription to receive EKF SLAM colors
+        # self.ekf_colors_sub = self.create_subscription(
+        #     StringArray, '/ekf_slam_colors', self.get_colors, 10
+        # )
         
         # Subscription for detected object information
         self.object_sub = self.create_subscription(
@@ -49,6 +49,7 @@ class SlamControlNode(Node):
         self.set_plot_limits()
         self.robot_positions = []  # Store estimated robot positions from EKF
         self.detected_objects = []  # Store positions of detected objects
+        self.colors = plt.cm.get_cmap('tab10', len(self.objects_to_detect))
   #      self.spin_and_track()
 
     def get_colors(self, msg):
