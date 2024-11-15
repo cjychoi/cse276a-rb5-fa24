@@ -85,7 +85,7 @@ class SlamControlNode(Node):
         # Update EKF with the world-frame coordinates of the detected object
         # self.ekf_slam.update((obj_x, obj_y), int(obj_index))
         state_msg = Float32MultiArray()
-        state_msg.data = [float(obj_x), float(obj_y), float(obj_index)]
+        msg.data = [distance, angle_offset, float(self.objects_to_detect[obj_index])]
         self.EKF_update_pub.publish(state_msg)
 
         object_name = self.objects_to_detect[int(obj_index)]
