@@ -44,9 +44,7 @@ class EKFSLAM(Node):
 
         # Publisher to send updated SLAM state
         self.state_pub = self.create_publisher(Float32MultiArray, '/ekf_slam_state', 10)
-
-        self.publish_slam_state()
-
+        
 
     def predict(self, msg):
         """Predict step for EKF based on control input."""
