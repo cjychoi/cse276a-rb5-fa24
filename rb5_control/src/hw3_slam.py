@@ -39,7 +39,7 @@ class SlamControlNode(Node):
         # Publisher to send updated SLAM state
         self.EKF_update_pub = self.create_publisher(Float32MultiArray, '/ekf_update', 10)
 
-        # Publisher to send updated SLAM state
+        # Publisher to send predicted SLAM state
         self.EKF_predict_pub = self.create_publisher(Float32MultiArray, '/ekf_predict', 10)
 
         
@@ -213,6 +213,8 @@ def main(args=None):
     node = SlamControlNode()
     print("SLAM 1")
 
+    node.spin_and_track('move', 0.0)
+    time.sleep(1)
     # TRY 1
     for _ in range(4):
         for _ in range(4):  # Stop every 0.5 meters
