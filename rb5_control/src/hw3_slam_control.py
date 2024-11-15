@@ -239,8 +239,8 @@ class SlamControlNode(Node):
         self.save_plot()
         time.sleep(1)
 
-        # self.plot_final_landmarks()
-        # self.print_final_coordinates()
+        self.plot_final_landmarks()
+        self.print_final_coordinates()
 
     def move_forward(self, distance):
         print("Moving forward by 0.5 meters")
@@ -321,8 +321,6 @@ def main(args=None):
     except KeyboardInterrupt:
         pass
     finally:
-        self.plot_final_landmarks()
-        self.print_final_coordinates()
         
 
 
