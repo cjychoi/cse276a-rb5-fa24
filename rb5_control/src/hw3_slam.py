@@ -52,6 +52,8 @@ class SlamControlNode(Node):
         self.colors = plt.cm.get_cmap('tab10', len(self.objects_to_detect))
   #      self.spin_and_track()
 
+        self.state = np.zeros((3 + 2 * len(object_list), 1))  # [x, y, theta, x1, y1, x2, y2, ...]
+
     def get_colors(self, msg):
         self.colors = msg.data
 
