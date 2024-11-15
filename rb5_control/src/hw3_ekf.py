@@ -34,7 +34,7 @@ class EKFSLAM(Node):
 
         # Subscriber to receive update data
         self.update_sub = self.create_subscription(
-            Float32MultiArray, '/ekf_update', self.update, 10
+            Float32MultiArray, '/ekf_update', self.update_callback, 10
         )
 
         # Subscriber to receive predict data
@@ -72,18 +72,10 @@ class EKFSLAM(Node):
         F[1, 2] = distance * np.cos(theta)
         self.P = F @ self.P @ F.T + Q_expanded
 
-    def update(self, msg):
-        """Update step for EKF using the landmark position relative to world frame."""
-        if type(msg) == 'list':
-            obj_x, obj_y = msg[0]
-            obj_index = msg[1]
-            [[obj_x, obj_y], int(obj_index)]
-        else:
-            obj_x, obj_y, obj_index = msg.data
-            obj_index = int(obj_index)
-        
+    def update(self, measurement, obj_index):
+        """Update step for EKF using the landmark position relative to world frame."""        
         x, y, theta = self.state[0, 0], self.state[1, 0], self.state[2, 0]
-        # obj_x, obj_y = measurement  # World coordinates of the detected object
+        obj_x, obj_y = measurement  # World coordinates of the detected object
         landmark_idx = 3 + 2 * int(obj_index)
         
         if self.P[landmark_idx, landmark_idx] > 999:
