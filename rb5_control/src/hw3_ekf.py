@@ -123,7 +123,7 @@ class EKFSLAM(Node):
 
     def update_callback(self, msg):
         obj_x, obj_y, obj_index = msg.data
-        self.update([[obj_x, obj_y], int(obj_index)])
+        self.update([obj_x, obj_y], int(obj_index))
         self.publish_slam_state()
 
     def publish_slam_state(self):

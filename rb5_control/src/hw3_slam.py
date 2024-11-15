@@ -60,17 +60,17 @@ class SlamControlNode(Node):
     def get_EKF_state(self, msg):
         self.state = msg.data
         self.EKF_update = True
-        update_plot()
+        self.update_plot()
 
         if (self.image_update == True) and (self.EKF_update == True):
-            object_callback()
+            self.object_callback()
 
     def get_image(self, msg):
         self.image = msg.data
         self.image_update = True
 
         if (self.image_update == True) and (self.EKF_update == True):
-            object_callback()
+            self.object_callback()
         
     def set_plot_limits(self):
         self.ax.set_xlim(-5, 5)
@@ -100,11 +100,11 @@ class SlamControlNode(Node):
         state_data = self.state
         robot_x, robot_y, theta = state_data[:3]
         self.robot_positions.append([robot_x, robot_y])
-        self.detected_objects.append((obj_x, obj_y, object_name))
+        # self.detected_objects.append((obj_x, obj_y, object_name))
         
         for i in range(3, len(state_data), 2):
             obj_x, obj_y = state_data[i], state_data[i+1]
-            self.detected_objects.append((obj_x, obj_y))
+            self.detected_objects.append((obj_x, obj_y, self.objects_to_detect[(i-2)//2]))
         self.update_and_plot()
 
     def update_and_plot(self):
