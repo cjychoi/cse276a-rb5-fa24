@@ -104,6 +104,7 @@ class EKFSLAM:
         landmark_idx = 3 + 2 * int(obj_index)
         self.state[landmark_idx, 0] = world_x
         self.state[landmark_idx + 1, 0] = world_y
+        print('object found at ', self.state[landmark_idx, 0], ', ', self.state[landmark_idx + 1, 0])
 
         # Initialize landmarks if needed (large initial uncertainty)
         if self.P[landmark_idx, landmark_idx] > 999:
