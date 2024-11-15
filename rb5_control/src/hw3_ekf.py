@@ -18,8 +18,8 @@ class EKFSLAM(Node):
         self.object_list = object_list
         self.colors = plt.cm.get_cmap('tab10', len(object_list))
 
-        self.colors_pub = self.create_publisher(StringArray, '/ekf_slam_colors', 10)
-        publish_slam_colors()
+        # self.colors_pub = self.create_publisher(StringArray, '/ekf_slam_colors', 10)
+        # publish_slam_colors()
         
 
         # Subscriber to receive movement commands
