@@ -54,6 +54,22 @@ class SlamControlNode(Node):
 
         self.state = np.zeros((3 + 2 * len(self.objects_to_detect), 1))  # [x, y, theta, x1, y1, x2, y2, ...]
 
+        print("SLAM 1")
+        node.spin_and_track('move', 0.0)
+        time.sleep(1)
+    
+        # TRY 1
+        # # Square movement
+        for _ in range(1):
+            for _ in range(4):  # Stop every 0.5 meters
+                print("SLAM loop")
+                node.spin_and_track('move', 0.5)
+                time.sleep(1)
+            node.spin_and_track('spin', 90)
+            time.sleep(1)
+    
+        node.update_and_plot()
+
     def get_colors(self, msg):
         self.colors = msg.data
 
@@ -258,22 +274,22 @@ class SlamControlNode(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = SlamControlNode()
-    print("SLAM 1")
+    # print("SLAM 1")
 
-    node.spin_and_track('move', 0.0)
-    time.sleep(1)
+    # node.spin_and_track('move', 0.0)
+    # time.sleep(1)
 
-    # TRY 1
-    # # Square movement
-    for _ in range(1):
-        for _ in range(4):  # Stop every 0.5 meters
-            print("SLAM loop")
-            node.spin_and_track('move', 0.5)
-            time.sleep(1)
-        node.spin_and_track('spin', 90)
-        time.sleep(1)
+    # # TRY 1
+    # # # Square movement
+    # for _ in range(1):
+    #     for _ in range(4):  # Stop every 0.5 meters
+    #         print("SLAM loop")
+    #         node.spin_and_track('move', 0.5)
+    #         time.sleep(1)
+    #     node.spin_and_track('spin', 90)
+    #     time.sleep(1)
 
-    node.update_and_plot()
+    # node.update_and_plot()
     # node.plot_final_landmarks()
 
     # node.spin_and_track('move', 0.5)
