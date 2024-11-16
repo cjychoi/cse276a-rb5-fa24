@@ -23,7 +23,7 @@ class SlamControlNode(Node):
         # )
 
         self.ekf_state_sub = self.create_subscription(
-            Float32MultiArray, '/ekf_slam_state', self.get_EKF_state, 10
+            Float32MultiArray, '/ekf_slam_state', '/get_EKF_state', 10
         )
 
         # # Subscription to receive EKF SLAM colors
@@ -33,7 +33,7 @@ class SlamControlNode(Node):
         
         # Subscription for detected object information
         self.object_sub = self.create_subscription(
-            Float32MultiArray, '/detected_object_info', self.get_image, 10
+            Float32MultiArray, '/detected_object_info', '/get_image', 10
         )
 
         # Publisher to send updated SLAM state
@@ -59,6 +59,9 @@ class SlamControlNode(Node):
 
     def get_EKF_state(self, msg):
         self.state = msg.data
+        print('\n\n\n state: ', self.state, '\n\n\n')
+        print('\n\n\n msg: ', msg.data, '\n\n\n')
+        
         self.EKF_update = True
         self.update_plot()
 
