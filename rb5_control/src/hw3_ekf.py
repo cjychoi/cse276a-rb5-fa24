@@ -73,6 +73,10 @@ class EKFSLAM(Node):
         self.P = F @ self.P @ F.T + Q_expanded
 
         print('predict state: ', self.state)
+        # self.publish_slam_state()
+        state_msg = Float32MultiArray()
+        state_msg.data = np.concatenate((self.state[:3].flatten(), self.state[3:].flatten())).tolist()
+        self.state_pub.publish(state_msg)
 
     def update(self, measurement, obj_index):
         """Update step for EKF using the landmark position relative to world frame."""        
@@ -119,26 +123,28 @@ class EKFSLAM(Node):
         self.P = (np.eye(len(self.state)) - K @ H) @ self.P
 
         print('update state: ', self.state)
-
-    def movement_callback(self, msg):
-        distance, angle = msg.data
-        self.predict([distance, angle])
-        self.publish_slam_state()
-
-    def update_callback(self, msg):
-        obj_x, obj_y, obj_index = msg.data
-        self.update([obj_x, obj_y], int(obj_index))
-        self.publish_slam_state()
-
-    def publish_slam_state(self):
+        # self.publish_slam_state()
         state_msg = Float32MultiArray()
         state_msg.data = np.concatenate((self.state[:3].flatten(), self.state[3:].flatten())).tolist()
         self.state_pub.publish(state_msg)
 
-    def publish_slam_colors(self):
-        state_msg = StringArray()
-        state_msg.data = self.colors
-        self.colors_pub.publish(state_msg)
+    def movement_callback(self, msg):
+        distance, angle = msg.data
+        self.predict([distance, angle])
+
+    def update_callback(self, msg):
+        obj_x, obj_y, obj_index = msg.data
+        self.update([obj_x, obj_y], int(obj_index))
+
+    # def publish_slam_state(self):
+    #     state_msg = Float32MultiArray()
+    #     state_msg.data = np.concatenate((self.state[:3].flatten(), self.state[3:].flatten())).tolist()
+    #     self.state_pub.publish(state_msg)
+
+    # def publish_slam_colors(self):
+    #     state_msg = StringArray()
+    #     state_msg.data = self.colors
+    #     self.colors_pub.publish(state_msg)
     
 def main(args=None):
     rclpy.init(args=args)
