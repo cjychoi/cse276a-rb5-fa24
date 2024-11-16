@@ -17,6 +17,69 @@ class MovementCommands(Node):
         
         self.plot_final_landmarks_pub = self.create_publisher(Bool, '/start_plot_final_landmarks', 10)
 
+        # Subscription to flag when step is done
+        self.done_sub = self.create_subscription(
+            Bool, '/done_flag', self.next_step, 10
+        )
+
+        self.steps = [
+            # square
+            ['move', 0.5],
+            ['move', 0.5],
+            ['move', 0.5],
+            ['move', 0.5],
+            ['spin', 90],
+            # ['move', 0.5],
+            # ['move', 0.5],
+            # ['move', 0.5],
+            # ['move', 0.5],
+            # ['spin', 90],
+            # ['move', 0.5],
+            # ['move', 0.5],
+            # ['move', 0.5],
+            # ['move', 0.5],
+            # ['spin', 90],
+            # ['move', 0.5],
+            # ['move', 0.5],
+            # ['move', 0.5],
+            # ['move', 0.5],
+            # ['spin', 90],
+            # # octogon
+            # ['move', 0.5],
+            # ['move', 0.5],
+            # ['spin', 45],
+            # ['move', 0.5],
+            # ['move', 0.5],
+            # ['spin', 45],
+            # ['move', 0.5],
+            # ['move', 0.5],
+            # ['spin', 45],
+            # ['move', 0.5],
+            # ['move', 0.5],
+            # ['spin', 45],
+            # ['move', 0.5],
+            # ['move', 0.5],
+            # ['spin', 45],
+            # ['move', 0.5],
+            # ['move', 0.5],
+            # ['spin', 45],
+            # ['move', 0.5],
+            # ['move', 0.5],
+            # ['spin', 45],
+            # ['move', 0.5],
+            # ['move', 0.5],
+            # ['spin', 45],
+        ]
+        self.step_counter = 0
+
+    def next_step(self, msg):
+        if step_counter == len(steps):
+            self.update_and_plot()
+        elif step_counter > len(steps):
+            self.plot_final_landmarks()
+        else:
+            self.spin_and_track(self.steps[self.step_counter[0]], self.steps[self.step_counter[1]])
+        self.step_counter += 1
 
     def spin_and_track(self, type, distance):
         if type == 'move':
