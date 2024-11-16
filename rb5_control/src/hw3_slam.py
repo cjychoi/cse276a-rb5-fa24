@@ -154,18 +154,19 @@ class SlamControlNode(Node):
 
     def update_and_plot(self, msg):
         print("\nupdate and plot")
+        print(self.robot_positions[1:]
         self.ax.clear()
         self.set_plot_limits()
-        self.ax.plot(*zip(*self.robot_positions), 'bo-', label="Robot Path")
-
-        legend_labels = {"Robot Path": self.ax.plot([], [], 'bo-', label="Robot Path")[0]}
-        for x, y, name in self.detected_objects:
-            if x != 0.0 and y != 0.0:
-                color = self.colors(self.objects_to_detect.index(name))
-                if name not in legend_labels:
-                    legend_labels[name] = self.ax.plot(x, y, 'o', color=color, label=name)[0]
-                else:
-                    self.ax.plot(x, y, 'o', color=color)
+        self.ax.plot(*zip(*self.robot_positions[1:]), 'bo-', label="Robot Path")
+        
+        # legend_labels = {"Robot Path": self.ax.plot([], [], 'bo-', label="Robot Path")[0]}
+        # for x, y, name in self.detected_objects:
+        #     if x != 0.0 and y != 0.0:
+        #         color = self.colors(self.objects_to_detect.index(name))
+        #         if name not in legend_labels:
+        #             legend_labels[name] = self.ax.plot(x, y, 'o', color=color, label=name)[0]
+        #         else:
+        #             self.ax.plot(x, y, 'o', color=color)
 
         self.ax.legend(handles=legend_labels.values(), loc='lower left')
         plt.draw()
