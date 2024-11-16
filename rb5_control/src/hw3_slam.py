@@ -158,11 +158,14 @@ class SlamControlNode(Node):
     def move_forward(self, distance):
         print("Moving forward by 0.5 meters")
         control_input = [distance, 0.0]
+        print(control_input)
+        
         # self.ekf_slam.predict(control_input)
         state_msg = Float32MultiArray()
         state_msg.data = control_input
         self.movement_pub.publish(state_msg)
-
+        print('publisher done')
+        
         move_twist = Twist()
         move_twist.linear.x = 2.0
         self.twist_pub.publish(move_twist)
