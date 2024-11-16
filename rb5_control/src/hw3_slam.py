@@ -37,17 +37,17 @@ class SlamControlNode(Node):
         )
 
         # Subscription to start spin_and_track
-        self.object_sub = self.create_subscription(
+        self.spin_and_track_sub = self.create_subscription(
             Float32MultiArray, '/start_spin_and_track', self.spin_and_track, 10
         )
 
         # Subscription to start update_and_plot
-        self.object_sub = self.create_subscription(
+        self.update_and_plot_sub = self.create_subscription(
             Float32MultiArray, '/start_update_and_plot', self.update_and_plot, 10
         )
 
         # Subscription to start plot_final_landmarks
-        self.object_sub = self.create_subscription(
+        self.plot_final_landmarks_sub = self.create_subscription(
             Float32MultiArray, '/start_plot_final_landmarks', self.plot_final_landmarks, 10
         )
 
