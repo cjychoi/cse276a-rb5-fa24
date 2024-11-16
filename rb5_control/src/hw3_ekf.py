@@ -130,6 +130,7 @@ class EKFSLAM(Node):
 
     def movement_callback(self, msg):
         distance, angle = msg.data
+        print([distance, angle])
         self.predict([distance, angle])
 
     def update_callback(self, msg):
