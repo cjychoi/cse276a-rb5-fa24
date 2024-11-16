@@ -91,7 +91,7 @@ class SlamControlNode(Node):
         self.colors = msg.data
 
     def get_EKF_state(self, msg):
-        print('\n\n\n\n\n\n\n\n++++++++++WAITED*************\n\n\n\n\n\n\n')
+        # print('\n\n\n\n\n\n\n\n++++++++++WAITED*************\n\n\n\n\n\n\n')
         self.state = msg.data
         round(self.state[0], 1)
         round(self.state[1], 1)
@@ -104,7 +104,7 @@ class SlamControlNode(Node):
             self.object_callback()
 
     def get_image(self, msg):
-        print('\n\n\n\n\n\n\n\n++++++++++IMAGE*************\n\n\n\n\n\n\n')
+        # print('\n\n\n\n\n\n\n\n++++++++++IMAGE*************\n\n\n\n\n\n\n')
 
         self.image = msg.data
         self.image_update = True
@@ -129,7 +129,7 @@ class SlamControlNode(Node):
         self.object_pub.publish(state_msg)
 
         object_name = self.objects_to_detect[int(obj_index)]
-        print(f"Robot Position: (x={robot_x:.2f}, y={robot_y:.2f}, theta={theta:.2f})")
+        print(f"\nRobot Position: (x={robot_x:.2f}, y={robot_y:.2f}, theta={theta:.2f})")
         print(f"Detected {object_name} at world position (x={obj_x:.2f}, y={obj_y:.2f})")
 
         self.robot_positions.append([robot_x, robot_y])
@@ -182,7 +182,7 @@ class SlamControlNode(Node):
 
     def spin_and_track(self, msg):
         type, length = msg.data
-        if (type == 1.1):
+        if (type == 1.0):
             print('moving')
             self.move_forward(length)
             print('moved')
