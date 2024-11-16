@@ -26,8 +26,7 @@ class YoloDetectionNode(Node):
             'umbrella': 0.6,
             'teddy bear': 0.15,
             'backpack': 0.3,
-            'stop sign': 0.2,
-            'oven': 0.6
+            'stop sign': 0.2
         }
 
         # Load YOLOv8 model
