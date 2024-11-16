@@ -156,18 +156,19 @@ class SlamControlNode(Node):
     def update_and_plot(self, msg):
         print("\nupdate and plot")
         print(self.robot_positions[1:])
+        print(self.detected_objects[-8:])
         self.ax.clear()
         self.set_plot_limits()
         self.ax.plot(*zip(*self.robot_positions[1:]), 'bo-', label="Robot Path")
         
         legend_labels = {"Robot Path": self.ax.plot([], [], 'bo-', label="Robot Path")[0]}
-        # for x, y, name in self.detected_objects:
-        #     if x != 0.0 and y != 0.0:
-        #         color = self.colors(self.objects_to_detect.index(name))
-        #         if name not in legend_labels:
-        #             legend_labels[name] = self.ax.plot(x, y, 'o', color=color, label=name)[0]
-        #         else:
-        #             self.ax.plot(x, y, 'o', color=color)
+        for x, y, name in self.detected_objects[-8:]:
+            if x != 0.0 and y != 0.0:
+                color = self.colors(self.objects_to_detect.index(name))
+                if name not in legend_labels:
+                    legend_labels[name] = self.ax.plot(x, y, 'o', color=color, label=name)[0]
+                else:
+                    self.ax.plot(x, y, 'o', color=color)
 
         self.ax.legend(handles=legend_labels.values(), loc='lower left')
         plt.draw()
@@ -280,8 +281,9 @@ class SlamControlNode(Node):
 
         legend_labels = {"Robot Path": self.ax.plot([], [], 'bo-', label="Robot Path")[0]}
         for x, y, name in self.detected_objects:
-            color = self.colors(self.objects_to_detect.index(name))
-            legend_labels[name] = self.ax.plot(x, y, 'o', color=color, label=name)[0]
+            if int(x) != 0 and int(y) != 0:
+                color = self.colors(self.objects_to_detect.index(name))
+                legend_labels[name] = self.ax.plot(x, y, 'o', color=color, label=name)[0]
 
         self.ax.legend(handles=legend_labels.values(), loc='lower left')
         plt.title("Robot Path and Final Detected Object Positions")
@@ -306,6 +308,7 @@ class SlamControlNode(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = SlamControlNode()
+    print('ready')
 
     rclpy.spin(node)
     # print("SLAM 1")
