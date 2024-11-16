@@ -51,6 +51,8 @@ class SlamControlNode(Node):
             Float32MultiArray, '/start_plot_final_landmarks', self.plot_final_landmarks, 10
         )
 
+        self.done_pub = self.create_publisher(Bool, '/done_flag', 10)
+
         # Publisher to send updated SLAM state
         self.object_pub = self.create_publisher(Float32MultiArray, '/ekf_update', 10)
 
@@ -169,6 +171,9 @@ class SlamControlNode(Node):
         plt.draw()
         plt.pause(0.1)
         self.save_plot()
+        msg = Bool()
+        msg.data = True
+        self.done_pub.publish(msg)
 
     def save_plot(self):
         filename = 'slam_plot.png'
@@ -193,7 +198,10 @@ class SlamControlNode(Node):
         time.sleep(1)
 
         # self.plot_final_landmarks()
-        self.print_final_coordinates()
+        # self.print_final_coordinates()
+        msg = Bool()
+        msg.data = True
+        self.done_pub.publish(msg)
 
     def move_forward(self, distance):
         print("Moving forward by {distance} meters")
@@ -277,6 +285,9 @@ class SlamControlNode(Node):
         plt.ylabel("Y position (meters)")
         plt.show()
         self.save_plot()
+        msg = Bool()
+        msg.data = True
+        self.done_pub.publish(msg)
 
     def print_final_coordinates(self):
         # print("\nFinal Coordinates of Detected Objects:")
