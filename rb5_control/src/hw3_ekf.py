@@ -49,7 +49,7 @@ class EKFSLAM(Node):
     def predict(self, msg):
         """Predict step for EKF based on control input."""
         x, y, theta = self.state[0, 0], self.state[1, 0], self.state[2, 0]
-        distance, heading_change = msg.data
+        distance, heading_change = msg
 
         # Predict the new state based on control input
         new_x = x + distance * np.cos(theta)

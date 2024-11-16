@@ -81,7 +81,7 @@ class SlamControlNode(Node):
 
     def object_callback(self):
         distance, angle, obj_index = self.image
-        robot_x, robot_y, theta = self.state[0, 0], self.state[1, 0], self.state[2, 0]
+        robot_x, robot_y, theta = self.state[0][0], self.state[1][0], self.state[2][0]
         obj_x = robot_x + distance * np.cos(theta + angle)
         obj_y = robot_y + distance * np.sin(theta + angle)
 
@@ -173,7 +173,7 @@ class SlamControlNode(Node):
         move_twist.linear.x = 0.0
         self.twist_pub.publish(move_twist)
 
-        robot_x, robot_y = self.state[0, 0], self.state[1, 0]
+        robot_x, robot_y = self.state[0][0], self.state[1][0]
         self.robot_positions.append([robot_x, robot_y])
         print(f"Updated Position: x = {robot_x}, y = {robot_y}")
 
@@ -192,7 +192,7 @@ class SlamControlNode(Node):
         turn_twist.angular.z = 0.0
         self.twist_pub.publish(turn_twist)
 
-        print(f"Updated Heading (theta): {self.state[2, 0]} radians")
+        print(f"Updated Heading (theta): {self.state[2][0]} radians")
 
     def plot_final_landmarks(self):
         self.ax.clear()
@@ -215,8 +215,10 @@ class SlamControlNode(Node):
         print("\nFinal Coordinates of Detected Objects:")
         for i, obj_name in enumerate(self.objects_to_detect):
             landmark_idx = 3 + 2 * i
-            obj_x, obj_y = self.state[landmark_idx, 0], self.state[landmark_idx + 1, 0]
-            print(f"{obj_name}: (x = {obj_x:.2f}, y = {obj_y:.2f})")
+            obj_x, obj_y = self.state[landmark_idx][0], self.state[landmark_idx + 1][0]
+            print(f"{obj_name}: (x = {obj_x}, y = {obj_y})")
+
+        print(self.state[0], self.state[1], self.state[2])
 
 def main(args=None):
     rclpy.init(args=args)
@@ -235,10 +237,10 @@ def main(args=None):
         node.spin_and_track('spin', 90)
         time.sleep(1)
         
-    try:
-        rclpy.spin(node)
-    except KeyboardInterrupt:
-        pass
+    # try:
+    #     rclpy.spin(node)
+    # except KeyboardInterrupt:
+    #     pass
 
 
     # # TRY 2
