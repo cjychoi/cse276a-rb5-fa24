@@ -37,7 +37,7 @@ class SlamControlNode(Node):
         )
 
         # Publisher to send updated SLAM state
-        self.EKF_update_pub = self.create_publisher(Float32MultiArray, '/ekf_update', 10)
+        self.object_pub = self.create_publisher(Float32MultiArray, '/detected_object_info', 10)
 
         # Publisher to send updated SLAM state
         # self.EKF_predict_pub = self.create_publisher(Float32MultiArray, '/ekf_predict', 10)
@@ -89,7 +89,7 @@ class SlamControlNode(Node):
         # self.ekf_slam.update((obj_x, obj_y), int(obj_index))
         state_msg = Float32MultiArray()
         msg.data = [distance, angle_offset, float(self.objects_to_detect[obj_index])]
-        self.EKF_update_pub.publish(state_msg)
+        self.object_pub.publish(state_msg)
 
         object_name = self.objects_to_detect[int(obj_index)]
         print(f"Robot Position: (x={robot_x:.2f}, y={robot_y:.2f}, theta={theta:.2f})")
@@ -98,6 +98,8 @@ class SlamControlNode(Node):
         self.robot_positions.append([robot_x, robot_y])
         self.detected_objects.append((obj_x, obj_y, object_name))
         self.update_and_plot()
+        self.image_update = False
+        self.EKF_update = False
 
     def update_plot(self):
         state_data = self.state
