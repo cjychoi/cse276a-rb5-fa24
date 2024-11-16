@@ -58,15 +58,15 @@ class SlamControlNode(Node):
         self.spin_and_track('move', 0.0)
         time.sleep(1)
     
-        # # TRY 1
-        # # # Square movement
-        # for _ in range(1):
-        #     for _ in range(4):  # Stop every 0.5 meters
-        #         print("SLAM loop")
-        #         self.spin_and_track('move', 0.5)
-        #         time.sleep(1)
-        #     self.spin_and_track('spin', 90)
-        #     time.sleep(1)
+        # TRY 1
+        # Square movement
+        for _ in range(1):
+            for _ in range(4):  # Stop every 0.5 meters
+                print("SLAM loop")
+                self.spin_and_track('move', 0.5)
+                time.sleep(1)
+            self.spin_and_track('spin', 90)
+            time.sleep(1)
     
         # self.update_and_plot()
     def wait_for_state(self):
