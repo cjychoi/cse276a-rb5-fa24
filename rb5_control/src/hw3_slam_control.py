@@ -164,6 +164,19 @@ class SlamControlNode(Node):
         self.detected_objects = []  # Store positions of detected objects
   #      self.spin_and_track()
 
+        print("SLAM 1")
+        node.spin_and_track('move', 0.0)
+        time.sleep(1)
+    
+        # TRY 1
+        for _ in range(1):
+            for _ in range(4):  # Stop every 0.5 meters
+                print("SLAM loop")
+                node.spin_and_track('move', 0.5)
+                time.sleep(1)
+            node.spin_and_track('spin', 90)
+            time.sleep(1)
+
     def set_plot_limits(self):
         self.ax.set_xlim(-5, 5)
         self.ax.set_ylim(-5, 5)
@@ -302,26 +315,28 @@ def main(args=None):
     rclpy.init(args=args)
     node = SlamControlNode()
 
-    print("SLAM 1")
+    # print("SLAM 1")
 
     
-    node.spin_and_track('move', 0.0)
-    time.sleep(1)
+    # node.spin_and_track('move', 0.0)
+    # time.sleep(1)
 
-    # TRY 1
-    for _ in range(4):
-        for _ in range(4):  # Stop every 0.5 meters
-            print("SLAM loop")
-            node.spin_and_track('move', 0.5)
-            time.sleep(1)
-        node.spin_and_track('spin', 90)
-        time.sleep(1)
+    # # TRY 1
+    # for _ in range(4):
+    #     for _ in range(4):  # Stop every 0.5 meters
+    #         print("SLAM loop")
+    #         node.spin_and_track('move', 0.5)
+    #         time.sleep(1)
+    #     node.spin_and_track('spin', 90)
+    #     time.sleep(1)
 
-    try:
-        rclpy.spin(node)
-    except KeyboardInterrupt:
-        print('state: ', node.ekf_slam.state)
-        pass
+    # try:
+    #     rclpy.spin(node)
+    # except KeyboardInterrupt:
+    #     print('state: ', node.ekf_slam.state)
+    #     pass
+
+    rclpy.spin_once(node)
         
 
 
