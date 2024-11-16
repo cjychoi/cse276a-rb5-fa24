@@ -154,7 +154,7 @@ class SlamControlNode(Node):
 
     def update_and_plot(self, msg):
         print("\nupdate and plot")
-        print(self.robot_positions[1:]
+        print(self.robot_positions[1:])
         self.ax.clear()
         self.set_plot_limits()
         self.ax.plot(*zip(*self.robot_positions[1:]), 'bo-', label="Robot Path")
