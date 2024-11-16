@@ -23,7 +23,7 @@ class SlamControlNode(Node):
         # )
 
         self.ekf_state_sub = self.create_subscription(
-            Float32MultiArray, '/ekf_slam_state', '/get_EKF_state', 10
+            Float32MultiArray, '/ekf_slam_state', self.get_EKF_state, 10
         )
 
         # # Subscription to receive EKF SLAM colors
@@ -156,7 +156,7 @@ class SlamControlNode(Node):
         self.print_final_coordinates()
 
     def move_forward(self, distance):
-        print("Moving forward by 0.5 meters")
+        print("Moving forward by {distance} meters")
         control_input = [distance, 0.0]
         print(control_input)
         
@@ -173,6 +173,10 @@ class SlamControlNode(Node):
         move_twist.linear.x = 0.0
         self.twist_pub.publish(move_twist)
 
+        print("\nmove forward self state:")
+        print(self.state[0][0])
+        print(self.state[1][0])
+        print("\n")
         robot_x, robot_y = self.state[0][0], self.state[1][0]
         self.robot_positions.append([robot_x, robot_y])
         print(f"Updated Position: x = {robot_x}, y = {robot_y}")
@@ -230,12 +234,13 @@ class SlamControlNode(Node):
         self.save_plot()
 
     def print_final_coordinates(self):
-        print("\nFinal Coordinates of Detected Objects:")
-        for i, obj_name in enumerate(self.objects_to_detect):
-            landmark_idx = 3 + 2 * i
-            obj_x, obj_y = self.state[landmark_idx][0], self.state[landmark_idx + 1][0]
-            print(f"{obj_name}: (x = {obj_x}, y = {obj_y})")
+        # print("\nFinal Coordinates of Detected Objects:")
+        # for i, obj_name in enumerate(self.objects_to_detect):
+        #     landmark_idx = 3 + 2 * i
+        #     obj_x, obj_y = self.state[landmark_idx][0], self.state[landmark_idx + 1][0]
+        #     print(f"{obj_name}: (x = {obj_x}, y = {obj_y})")
 
+        print("\n Self State:")
         print(self.state[0], self.state[1], self.state[2])
 
 def main(args=None):

@@ -79,27 +79,40 @@ class EKFSLAM(Node):
         self.state_pub.publish(state_msg)
 
     def update(self, measurement, obj_index):
-        """Update step for EKF using the landmark position relative to world frame."""        
+        """Update step for EKF using the landmark position relative to the robot's original pose."""
+        print('starting update - print')
         x, y, theta = self.state[0, 0], self.state[1, 0], self.state[2, 0]
-        obj_x, obj_y = measurement  # World coordinates of the detected object
+        distance, angle = measurement  # Distance and angle relative to the robot
+
+        # Calculate landmark's position in the world frame (robot's original pose)
+        world_x = x + distance * np.cos(theta + angle)
+        world_y = y + distance * np.sin(theta + angle)
+
+        # Update state with the calculated landmark position
+        print('found object index is : ', obj_index)
         landmark_idx = 3 + 2 * int(obj_index)
-        
+        self.state[landmark_idx, 0] = world_x
+        self.state[landmark_idx + 1, 0] = world_y
+        print('object found at ', self.state[landmark_idx, 0], ', ', self.state[landmark_idx + 1, 0])
+
+        # Initialize landmarks if needed (large initial uncertainty)
         if self.P[landmark_idx, landmark_idx] > 999:
-            self.state[landmark_idx, 0] = obj_x
-            self.state[landmark_idx + 1, 0] = obj_y
             self.P[landmark_idx:landmark_idx + 2, landmark_idx:landmark_idx + 2] = np.eye(2) * 100
 
         # Compute measurement prediction
-        delta_x = self.state[landmark_idx, 0] - x
-        delta_y = self.state[landmark_idx + 1, 0] - y
+        delta_x = world_x - x
+        delta_y = world_y - y
         q = delta_x**2 + delta_y**2
         predicted_distance = np.sqrt(q)
         predicted_bearing = np.arctan2(delta_y, delta_x) - theta
 
-        actual_distance = np.sqrt((obj_x - x)**2 + (obj_y - y)**2)
-        actual_bearing = np.arctan2(obj_y - y, obj_x - x) - theta
+        # Compute the actual measurement
+        actual_distance = distance
+        actual_bearing = angle
         innovation = np.array([[actual_distance - predicted_distance], [actual_bearing - predicted_bearing]])
-        innovation[1, 0] = (innovation[1, 0] + np.pi) % (2 * np.pi) - np.pi  # Normalize bearing
+
+        # Normalize bearing
+        innovation[1, 0] = (innovation[1, 0] + np.pi) % (2 * np.pi) - np.pi
 
         # Calculate Jacobian H of the measurement function
         H = np.zeros((2, len(self.state)))
@@ -122,11 +135,65 @@ class EKFSLAM(Node):
         self.state += K @ innovation
         self.P = (np.eye(len(self.state)) - K @ H) @ self.P
 
+        self.state[0, 0] = x
+        self.state[1, 0] = y
+        self.state[2, 0] = theta
         print('update state: ', self.state)
         # self.publish_slam_state()
         state_msg = Float32MultiArray()
         state_msg.data = np.concatenate((self.state[:3].flatten(), self.state[3:].flatten())).tolist()
         self.state_pub.publish(state_msg)
+    
+
+    # def update(self, measurement, obj_index):
+    #     """Update step for EKF using the landmark position relative to world frame."""        
+    #     x, y, theta = self.state[0, 0], self.state[1, 0], self.state[2, 0]
+    #     obj_x, obj_y = measurement  # World coordinates of the detected object
+    #     landmark_idx = 3 + 2 * int(obj_index)
+        
+    #     if self.P[landmark_idx, landmark_idx] > 999:
+    #         self.state[landmark_idx, 0] = obj_x
+    #         self.state[landmark_idx + 1, 0] = obj_y
+    #         self.P[landmark_idx:landmark_idx + 2, landmark_idx:landmark_idx + 2] = np.eye(2) * 100
+
+    #     # Compute measurement prediction
+    #     delta_x = self.state[landmark_idx, 0] - x
+    #     delta_y = self.state[landmark_idx + 1, 0] - y
+    #     q = delta_x**2 + delta_y**2
+    #     predicted_distance = np.sqrt(q)
+    #     predicted_bearing = np.arctan2(delta_y, delta_x) - theta
+
+    #     actual_distance = np.sqrt((obj_x - x)**2 + (obj_y - y)**2)
+    #     actual_bearing = np.arctan2(obj_y - y, obj_x - x) - theta
+    #     innovation = np.array([[actual_distance - predicted_distance], [actual_bearing - predicted_bearing]])
+    #     innovation[1, 0] = (innovation[1, 0] + np.pi) % (2 * np.pi) - np.pi  # Normalize bearing
+
+    #     # Calculate Jacobian H of the measurement function
+    #     H = np.zeros((2, len(self.state)))
+    #     H[0, 0] = -delta_x / predicted_distance
+    #     H[0, 1] = -delta_y / predicted_distance
+    #     H[1, 0] = delta_y / q
+    #     H[1, 1] = -delta_x / q
+    #     H[0, landmark_idx] = delta_x / predicted_distance
+    #     H[0, landmark_idx + 1] = delta_y / predicted_distance
+    #     H[1, landmark_idx] = -delta_y / q
+    #     H[1, landmark_idx + 1] = delta_x / q
+
+    #     # Compute the innovation covariance
+    #     S = H @ self.P @ H.T + self.R
+
+    #     # Compute the Kalman gain
+    #     K = self.P @ H.T @ np.linalg.inv(S)
+
+    #     # Update the state and covariance matrix
+    #     self.state += K @ innovation
+    #     self.P = (np.eye(len(self.state)) - K @ H) @ self.P
+
+    #     print('update state: ', self.state)
+    #     # self.publish_slam_state()
+    #     state_msg = Float32MultiArray()
+    #     state_msg.data = np.concatenate((self.state[:3].flatten(), self.state[3:].flatten())).tolist()
+    #     self.state_pub.publish(state_msg)
 
     def movement_callback(self, msg):
         distance, angle = msg.data
@@ -135,7 +202,7 @@ class EKFSLAM(Node):
 
     def update_callback(self, msg):
         obj_x, obj_y, obj_index = msg.data
-        self.update([obj_x, obj_y], int(obj_index))
+        self.update([obj_x, obj_y], int(obj_index)-1)
 
     # def publish_slam_state(self):
     #     state_msg = Float32MultiArray()
