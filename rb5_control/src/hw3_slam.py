@@ -40,7 +40,7 @@ class SlamControlNode(Node):
         self.EKF_update_pub = self.create_publisher(Float32MultiArray, '/ekf_update', 10)
 
         # Publisher to send updated SLAM state
-        self.EKF_predict_pub = self.create_publisher(Float32MultiArray, '/ekf_predict', 10)
+        # self.EKF_predict_pub = self.create_publisher(Float32MultiArray, '/ekf_predict', 10)
 
         
         self.objects_to_detect = ['tv', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'backpack', 'stop sign', 'oven', 'airplane']
@@ -159,7 +159,7 @@ class SlamControlNode(Node):
         # self.ekf_slam.predict(control_input)
         state_msg = Float32MultiArray()
         state_msg.data = control_input
-        self.EKF_predict_pub.publish(state_msg)
+        self.movement_pub.publish(state_msg)
 
         move_twist = Twist()
         move_twist.linear.x = 2.0
@@ -178,7 +178,7 @@ class SlamControlNode(Node):
         # self.ekf_slam.predict(control_input)
         state_msg = Float32MultiArray()
         state_msg.data = control_input
-        self.EKF_predict_pub.publish(state_msg)
+        self.movement_pub.publish(state_msg)
 
         turn_twist = Twist()
         turn_twist.angular.z = 8.0
