@@ -72,6 +72,8 @@ class EKFSLAM(Node):
         F[1, 2] = distance * np.cos(theta)
         self.P = F @ self.P @ F.T + Q_expanded
 
+        print('predict state: ', self.state)
+
     def update(self, measurement, obj_index):
         """Update step for EKF using the landmark position relative to world frame."""        
         x, y, theta = self.state[0, 0], self.state[1, 0], self.state[2, 0]
@@ -115,6 +117,8 @@ class EKFSLAM(Node):
         # Update the state and covariance matrix
         self.state += K @ innovation
         self.P = (np.eye(len(self.state)) - K @ H) @ self.P
+
+        print('update state: ', self.state)
 
     def movement_callback(self, msg):
         distance, angle = msg.data
