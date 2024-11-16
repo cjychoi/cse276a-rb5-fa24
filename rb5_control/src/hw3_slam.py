@@ -151,6 +151,7 @@ class SlamControlNode(Node):
             self.detected_objects.append((obj_x, obj_y, self.objects_to_detect[(i-2)//2]))
         # self.update_and_plot()
         print('robot positions: ', self.robot_positions)
+        print(' detected objects: ', self.detected_objects
 
     def update_and_plot(self, msg):
         print("\nupdate and plot")
