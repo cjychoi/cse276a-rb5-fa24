@@ -37,7 +37,7 @@ class SlamControlNode(Node):
         )
 
         # Publisher to send updated SLAM state
-        self.object_pub = self.create_publisher(Float32MultiArray, '/detected_object_info', 10)
+        self.object_pub = self.create_publisher(Float32MultiArray, '/ekf_update', 10)
 
         # Publisher to send updated SLAM state
         # self.EKF_predict_pub = self.create_publisher(Float32MultiArray, '/ekf_predict', 10)
@@ -61,11 +61,10 @@ class SlamControlNode(Node):
         self.state = msg.data
         round(self.state[0], 1)
         round(self.state[1], 1)
-        print('\n\n\n state: ', self.state, '\n\n\n')
-        print('\n\n\n msg: ', msg.data, '\n\n\n')
+        # print('\n\n\n state: ', self.state, '\n\n\n')
+        # print('\n\n\n msg: ', msg.data, '\n\n\n')
         
         self.EKF_update = True
-        self.update_plot()
 
         if (self.image_update == True) and (self.EKF_update == True):
             self.object_callback()
@@ -99,33 +98,38 @@ class SlamControlNode(Node):
 
         self.robot_positions.append([robot_x, robot_y])
         self.detected_objects.append((obj_x, obj_y, object_name))
-        self.update_and_plot()
+        # self.update_and_plot()
         self.image_update = False
         self.EKF_update = False
 
     def update_plot(self):
         state_data = self.state
         robot_x, robot_y, theta = state_data[:3]
+        robot_x, robot_y, theta = robot_x[0], robot_y[0], theta[0]
+        print('update plot state data', self.state)
         self.robot_positions.append([robot_x, robot_y])
         # self.detected_objects.append((obj_x, obj_y, object_name))
         
         for i in range(3, len(state_data), 2):
             obj_x, obj_y = state_data[i], state_data[i+1]
             self.detected_objects.append((obj_x, obj_y, self.objects_to_detect[(i-2)//2]))
-        self.update_and_plot()
+        # self.update_and_plot()
+        print('robot positions: ', self.robot_positions)
 
     def update_and_plot(self):
+        print("\nupdate and plot")
         self.ax.clear()
         self.set_plot_limits()
         self.ax.plot(*zip(*self.robot_positions), 'bo-', label="Robot Path")
 
         legend_labels = {"Robot Path": self.ax.plot([], [], 'bo-', label="Robot Path")[0]}
         for x, y, name in self.detected_objects:
-            color = self.colors(self.objects_to_detect.index(name))
-            if name not in legend_labels:
-                legend_labels[name] = self.ax.plot(x, y, 'o', color=color, label=name)[0]
-            else:
-                self.ax.plot(x, y, 'o', color=color)
+            if x != 0.0 and y != 0.0:
+                color = self.colors(self.objects_to_detect.index(name))
+                if name not in legend_labels:
+                    legend_labels[name] = self.ax.plot(x, y, 'o', color=color, label=name)[0]
+                else:
+                    self.ax.plot(x, y, 'o', color=color)
 
         self.ax.legend(handles=legend_labels.values(), loc='lower left')
         plt.draw()
@@ -151,10 +155,10 @@ class SlamControlNode(Node):
                 self.turn_45_degrees()            # MAKE NEW FUNCTION FOR 45 DEGREE TURN FOR OCTOGON
             print('spun')
 
-        self.save_plot()
+        # self.save_plot()
         time.sleep(1)
 
-        self.plot_final_landmarks()
+        # self.plot_final_landmarks()
         self.print_final_coordinates()
 
     def move_forward(self, distance):
@@ -175,14 +179,17 @@ class SlamControlNode(Node):
         move_twist.linear.x = 0.0
         self.twist_pub.publish(move_twist)
 
-        print("\nmove forward self state:")
-        print(self.state[0][0])
-        print(self.state[1][0])
-        print("\n")
-        robot_x, robot_y = self.state[0][0], self.state[1][0]
-        self.robot_positions.append([robot_x, robot_y])
-        print(f"Updated Position: x = {robot_x}, y = {robot_y}")
-        print("robot positions list: ", self.robot_positions)
+        print('update plot')
+        self.update_plot()
+
+        # print("\nmove forward self state:")
+        # print(self.state[0][0])
+        # print(self.state[1][0])
+        # print("\n")
+        # robot_x, robot_y = self.state[0][0], self.state[1][0]
+        # self.robot_positions.append([robot_x, robot_y])
+        # print(f"Updated Position: x = {robot_x}, y = {robot_y}")
+        # print("robot positions list: ", self.robot_positions)
 
     def turn_90_degrees(self):
         print("Turning 90 degrees")
@@ -200,6 +207,9 @@ class SlamControlNode(Node):
         self.twist_pub.publish(turn_twist)
 
         print(f"Updated Heading (theta): {self.state[2][0]} radians")
+
+        print('update plot')
+        self.update_plot()
 
     def turn_45_degrees(self):
         print("Turning 45 degrees")
@@ -255,13 +265,16 @@ def main(args=None):
 
     # TRY 1
     # # Square movement
-    # for _ in range(1):
-    #     for _ in range(4):  # Stop every 0.5 meters
-    #         print("SLAM loop")
-    #         node.spin_and_track('move', 0.5)
-    #         time.sleep(1)
-    #     node.spin_and_track('spin', 90)
-    #     time.sleep(1)
+    for _ in range(1):
+        for _ in range(4):  # Stop every 0.5 meters
+            print("SLAM loop")
+            node.spin_and_track('move', 0.5)
+            time.sleep(1)
+        node.spin_and_track('spin', 90)
+        time.sleep(1)
+
+    node.update_and_plot()
+    # node.plot_final_landmarks()
 
     # node.spin_and_track('move', 0.5)
     # time.sleep(1)
