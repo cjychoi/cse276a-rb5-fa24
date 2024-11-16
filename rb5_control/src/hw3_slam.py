@@ -36,6 +36,21 @@ class SlamControlNode(Node):
             Float32MultiArray, '/detected_object_info', self.get_image, 10
         )
 
+        # Subscription to start spin_and_track
+        self.object_sub = self.create_subscription(
+            Float32MultiArray, '/start_spin_and_track', self.spin_and_track, 10
+        )
+
+        # Subscription to start update_and_plot
+        self.object_sub = self.create_subscription(
+            Float32MultiArray, '/start_update_and_plot', self.update_and_plot, 10
+        )
+
+        # Subscription to start plot_final_landmarks
+        self.object_sub = self.create_subscription(
+            Float32MultiArray, '/start_plot_final_landmarks', self.plot_final_landmarks, 10
+        )
+
         # Publisher to send updated SLAM state
         self.object_pub = self.create_publisher(Float32MultiArray, '/ekf_update', 10)
 
@@ -54,19 +69,19 @@ class SlamControlNode(Node):
 
         self.state = np.zeros((3 + 2 * len(self.objects_to_detect), 1))  # [x, y, theta, x1, y1, x2, y2, ...]
 
-        print("SLAM 1")
-        self.spin_and_track('move', 0.0)
-        time.sleep(1)
+        # print("SLAM 1")
+        # self.spin_and_track('move', 0.0)
+        # time.sleep(1)
     
-        # TRY 1
-        # Square movement
-        for _ in range(1):
-            for _ in range(4):  # Stop every 0.5 meters
-                print("SLAM loop")
-                self.spin_and_track('move', 0.5)
-                time.sleep(1)
-            self.spin_and_track('spin', 90)
-            time.sleep(1)
+        # # TRY 1
+        # # Square movement
+        # for _ in range(1):
+        #     for _ in range(4):  # Stop every 0.5 meters
+        #         print("SLAM loop")
+        #         self.spin_and_track('move', 0.5)
+        #         time.sleep(1)
+        #     self.spin_and_track('spin', 90)
+        #     time.sleep(1)
     
         # self.update_and_plot()
 
@@ -135,7 +150,7 @@ class SlamControlNode(Node):
         # self.update_and_plot()
         print('robot positions: ', self.robot_positions)
 
-    def update_and_plot(self):
+    def update_and_plot(self, msg):
         print("\nupdate and plot")
         self.ax.clear()
         self.set_plot_limits()
@@ -160,13 +175,13 @@ class SlamControlNode(Node):
         self.fig.savefig(filename)
         print(f"Plot saved as {filename}")
 
-    def spin_and_track(self, type, length):
-        
-        if (type == 'move'):
+    def spin_and_track(self, msg):
+        type, length = msg.data
+        if (type == 1.1):
             print('moving')
             self.move_forward(length)
             print('moved')
-        elif (type == 'spin'):
+        elif (type == 2.0):
             print('spinning')
             if (length == 90):
                 self.turn_90_degrees()
@@ -247,7 +262,7 @@ class SlamControlNode(Node):
 
         print(f"Updated Heading (theta): {self.state[2][0]} radians")
 
-    def plot_final_landmarks(self):
+    def plot_final_landmarks(self, msg):
         self.ax.clear()
         self.set_plot_limits()
         self.ax.plot(*zip(*self.robot_positions), 'bo-', label="Robot Path")
@@ -277,6 +292,8 @@ class SlamControlNode(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = SlamControlNode()
+
+    rclpy.spin(node)
     # print("SLAM 1")
 
     # node.spin_and_track('move', 0.0)
@@ -307,10 +324,10 @@ def main(args=None):
     #     node.spin_and_track('spin', 45)
     #     time.sleep(1)
         
-    try:
-        rclpy.spin(node)
-    except KeyboardInterrupt:
-        pass
+    # try:
+    #     rclpy.spin(node)
+    # except KeyboardInterrupt:
+    #     pass
 
 
     # # TRY 2
