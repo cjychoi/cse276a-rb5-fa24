@@ -23,7 +23,7 @@ class SlamControlNode(Node):
         # )
 
         self.ekf_state_sub = self.create_subscription(
-            Float32MultiArray, '/ekf_slam_state', '/get_EKF_state', 10
+            Float32MultiArray, '/ekf_slam_state', self.get_EKF_state, 10
         )
 
         # # Subscription to receive EKF SLAM colors
@@ -33,7 +33,7 @@ class SlamControlNode(Node):
         
         # Subscription for detected object information
         self.object_sub = self.create_subscription(
-            Float32MultiArray, '/detected_object_info', '/get_image', 10
+            Float32MultiArray, '/detected_object_info', self.get_image, 10
         )
 
         # Publisher to send updated SLAM state
@@ -43,7 +43,7 @@ class SlamControlNode(Node):
         # self.EKF_predict_pub = self.create_publisher(Float32MultiArray, '/ekf_predict', 10)
 
         
-        self.objects_to_detect = ['tv', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'backpack', 'stop sign', 'oven', 'airplane']
+        self.objects_to_detect = ['tv', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'backpack', 'stop sign']
         # self.ekf_slam = EKFSLAM(self.objects_to_detect)
         self.fig, self.ax = plt.subplots()
         self.set_plot_limits()
@@ -59,6 +59,8 @@ class SlamControlNode(Node):
 
     def get_EKF_state(self, msg):
         self.state = msg.data
+        round(self.state[0], 1)
+        round(self.state[1], 1)
         print('\n\n\n state: ', self.state, '\n\n\n')
         print('\n\n\n msg: ', msg.data, '\n\n\n')
         
@@ -81,14 +83,14 @@ class SlamControlNode(Node):
 
     def object_callback(self):
         distance, angle, obj_index = self.image
-        robot_x, robot_y, theta = self.state[0][0], self.state[1][0], self.state[2][0]
+        robot_x, robot_y, theta = self.state[0], self.state[1], self.state[2]
         obj_x = robot_x + distance * np.cos(theta + angle)
         obj_y = robot_y + distance * np.sin(theta + angle)
 
         # Update EKF with the world-frame coordinates of the detected object
         # self.ekf_slam.update((obj_x, obj_y), int(obj_index))
         state_msg = Float32MultiArray()
-        state_msg.data = [obj_x, obj_y, float(self.objects_to_detect[obj_index])]
+        state_msg.data = [obj_x, obj_y, obj_index]
         self.object_pub.publish(state_msg)
 
         object_name = self.objects_to_detect[int(obj_index)]
@@ -253,13 +255,13 @@ def main(args=None):
 
     # TRY 1
     # # Square movement
-    for _ in range(1):
-        for _ in range(4):  # Stop every 0.5 meters
-            print("SLAM loop")
-            node.spin_and_track('move', 0.5)
-            time.sleep(1)
-        node.spin_and_track('spin', 90)
-        time.sleep(1)
+    # for _ in range(1):
+    #     for _ in range(4):  # Stop every 0.5 meters
+    #         print("SLAM loop")
+    #         node.spin_and_track('move', 0.5)
+    #         time.sleep(1)
+    #     node.spin_and_track('spin', 90)
+    #     time.sleep(1)
 
     # node.spin_and_track('move', 0.5)
     # time.sleep(1)
