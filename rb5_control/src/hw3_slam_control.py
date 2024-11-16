@@ -165,16 +165,16 @@ class SlamControlNode(Node):
   #      self.spin_and_track()
 
         print("SLAM 1")
-        node.spin_and_track('move', 0.0)
+        self.spin_and_track('move', 0.0)
         time.sleep(1)
     
         # TRY 1
         for _ in range(1):
             for _ in range(4):  # Stop every 0.5 meters
                 print("SLAM loop")
-                node.spin_and_track('move', 0.5)
+                self.spin_and_track('move', 0.5)
                 time.sleep(1)
-            node.spin_and_track('spin', 90)
+            self.spin_and_track('spin', 90)
             time.sleep(1)
 
     def set_plot_limits(self):
