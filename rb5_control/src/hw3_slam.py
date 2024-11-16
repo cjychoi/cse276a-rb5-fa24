@@ -69,13 +69,12 @@ class SlamControlNode(Node):
             time.sleep(1)
     
         # self.update_and_plot()
-    def wait_for_state(self):
-        print('\n\n\n\n\n\n\n\n++++++++++WAITED*************\n\n\n\n\n\n\n')
 
     def get_colors(self, msg):
         self.colors = msg.data
 
     def get_EKF_state(self, msg):
+        print('\n\n\n\n\n\n\n\n++++++++++WAITED*************\n\n\n\n\n\n\n')
         self.state = msg.data
         round(self.state[0], 1)
         round(self.state[1], 1)
