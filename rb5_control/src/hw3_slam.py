@@ -1,4 +1,4 @@
-# hw3_slam_control.py - Adjusted to calculate object positions relative to the robot's current position and update EKF SLAM
+# hw3_slam.py - Adjusted to calculate object positions relative to the robot's current position and update EKF SLAM
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
@@ -88,7 +88,7 @@ class SlamControlNode(Node):
         # Update EKF with the world-frame coordinates of the detected object
         # self.ekf_slam.update((obj_x, obj_y), int(obj_index))
         state_msg = Float32MultiArray()
-        msg.data = [distance, angle_offset, float(self.objects_to_detect[obj_index])]
+        state_msg.data = [obj_x, obj_y, float(self.objects_to_detect[obj_index])]
         self.object_pub.publish(state_msg)
 
         object_name = self.objects_to_detect[int(obj_index)]
@@ -248,25 +248,25 @@ def main(args=None):
 
     # TRY 1
     # # Square movement
-    # for _ in range(1):
-    #     for _ in range(4):  # Stop every 0.5 meters
-    #         print("SLAM loop")
-    #         node.spin_and_track('move', 0.5)
-    #         time.sleep(1)
-    #     node.spin_and_track('spin', 90)
-    #     time.sleep(1)
-
-    node.spin_and_track('move', 0.5)
-    time.sleep(1)
-
-    # Octogon movement
-    for _ in range(8):
-        for _ in range(2):  # Stop every 0.5 meters
+    for _ in range(1):
+        for _ in range(4):  # Stop every 0.5 meters
             print("SLAM loop")
             node.spin_and_track('move', 0.5)
             time.sleep(1)
-        node.spin_and_track('spin', 45)
+        node.spin_and_track('spin', 90)
         time.sleep(1)
+
+    # node.spin_and_track('move', 0.5)
+    # time.sleep(1)
+
+    # Octogon movement
+    # for _ in range(8):
+    #     for _ in range(2):  # Stop every 0.5 meters
+    #         print("SLAM loop")
+    #         node.spin_and_track('move', 0.5)
+    #         time.sleep(1)
+    #     node.spin_and_track('spin', 45)
+    #     time.sleep(1)
         
     # try:
     #     rclpy.spin(node)
