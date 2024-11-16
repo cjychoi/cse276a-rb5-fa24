@@ -73,8 +73,12 @@ class MovementCommands(Node):
         self.step_counter = 0
 
     def next_step(self, msg):
+        print("\nnext_step")
+        print(len(self.steps))
         if self.step_counter == len(self.steps):
+            print("\n IF")
             self.update_and_plot()
+            print("\n update and plot")
         elif self.step_counter > len(self.steps):
             self.plot_final_landmarks()
         else:
