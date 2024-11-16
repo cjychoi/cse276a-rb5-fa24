@@ -1,7 +1,7 @@
 # hw3_slam.py - Adjusted to calculate object positions relative to the robot's current position and update EKF SLAM
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float32MultiArray
+from std_msgs.msg import Float32MultiArray, Bool
 from geometry_msgs.msg import Twist
 import numpy as np
 import matplotlib.pyplot as plt
@@ -19,13 +19,13 @@ class MovementCommands(Node):
 
 
     def spin_and_track(self, type, distance):
-        if type == 'move:
+        if type == 'move':
             msg = Float32MultiArray()
-            msg.data = [1.0, distance]
+            msg.data = [1.0, float(distance)]
             self.spin_and_track_pub.publish(msg)
         else:
             msg = Float32MultiArray()
-            msg.data = [2.0, distance]
+            msg.data = [2.0, float(distance)]
             self.spin_and_track_pub.publish(msg)
 
     def update_and_plot(self):

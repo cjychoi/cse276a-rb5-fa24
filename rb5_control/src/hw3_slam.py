@@ -1,7 +1,7 @@
 # hw3_slam.py - Adjusted to calculate object positions relative to the robot's current position and update EKF SLAM
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float32MultiArray
+from std_msgs.msg import Float32MultiArray, Bool
 from geometry_msgs.msg import Twist
 import numpy as np
 import matplotlib.pyplot as plt
@@ -139,7 +139,7 @@ class SlamControlNode(Node):
     def update_plot(self):
         state_data = self.state
         robot_x, robot_y, theta = state_data[:3]
-        robot_x, robot_y, theta = robot_x[0], robot_y[0], theta[0]
+        # robot_x, robot_y, theta = robot_x[0], robot_y[0], theta[0]
         print('update plot state data', self.state)
         self.robot_positions.append([robot_x, robot_y])
         # self.detected_objects.append((obj_x, obj_y, object_name))
@@ -239,8 +239,7 @@ class SlamControlNode(Node):
         time.sleep(np.pi / 2)
         turn_twist.angular.z = 0.0
         self.twist_pub.publish(turn_twist)
-
-        print(f"Updated Heading (theta): {self.state[2][0]} radians")
+        print(f"Updated Heading (theta): {self.state[2]} radians")
 
         print('update plot')
         self.update_plot()
