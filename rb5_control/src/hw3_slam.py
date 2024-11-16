@@ -100,8 +100,8 @@ class SlamControlNode(Node):
         
         self.EKF_update = True
 
-        if (self.image_update == True) and (self.EKF_update == True):
-            self.object_callback()
+        # if (self.image_update == True) and (self.EKF_update == True):
+        #     self.object_callback()
 
     def get_image(self, msg):
         # print('\n\n\n\n\n\n\n\n++++++++++IMAGE*************\n\n\n\n\n\n\n')
@@ -109,8 +109,8 @@ class SlamControlNode(Node):
         self.image = msg.data
         self.image_update = True
 
-        if (self.image_update == True) and (self.EKF_update == True):
-            self.object_callback()
+        # if (self.image_update == True) and (self.EKF_update == True):
+        #     self.object_callback()
         
     def set_plot_limits(self):
         self.ax.set_xlim(-5, 5)
@@ -221,8 +221,8 @@ class SlamControlNode(Node):
         move_twist.linear.x = 0.0
         self.twist_pub.publish(move_twist)
 
-        # print('update plot')
-        # self.update_plot()
+        print('update plot')
+        self.update_plot()
 
         # print("\nmove forward self state:")
         # print(self.state[0][0])
@@ -249,8 +249,8 @@ class SlamControlNode(Node):
         self.twist_pub.publish(turn_twist)
         print(f"Updated Heading (theta): {self.state[2]} radians")
 
-        # print('update plot')
-        # self.update_plot()
+        print('update plot')
+        self.update_plot()
 
     def turn_45_degrees(self):
         print("Turning 45 degrees")
@@ -268,6 +268,9 @@ class SlamControlNode(Node):
         self.twist_pub.publish(turn_twist)
 
         print(f"Updated Heading (theta): {self.state[2][0]} radians")
+
+        print('update plot')
+        self.update_plot()
 
     def plot_final_landmarks(self, msg):
         self.ax.clear()
