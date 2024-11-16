@@ -159,7 +159,7 @@ class SlamControlNode(Node):
         self.set_plot_limits()
         self.ax.plot(*zip(*self.robot_positions[1:]), 'bo-', label="Robot Path")
         
-        # legend_labels = {"Robot Path": self.ax.plot([], [], 'bo-', label="Robot Path")[0]}
+        legend_labels = {"Robot Path": self.ax.plot([], [], 'bo-', label="Robot Path")[0]}
         # for x, y, name in self.detected_objects:
         #     if x != 0.0 and y != 0.0:
         #         color = self.colors(self.objects_to_detect.index(name))
@@ -267,8 +267,7 @@ class SlamControlNode(Node):
         time.sleep(np.pi / 4)
         turn_twist.angular.z = 0.0
         self.twist_pub.publish(turn_twist)
-
-        print(f"Updated Heading (theta): {self.state[2][0]} radians")
+        print(f"Updated Heading (theta): {self.state[2]} radians")
 
         print('update plot')
         self.update_plot()

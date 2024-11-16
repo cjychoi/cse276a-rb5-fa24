@@ -29,21 +29,23 @@ class MovementCommands(Node):
             ['move', 0.5],
             ['move', 0.5],
             ['spin', 90],
+            ['move', 0.5],
+            ['move', 0.5],
+            ['move', 0.5],
+            ['move', 0.5],
+            ['spin', 90],
+            ['move', 0.5],
+            ['move', 0.5],
+            ['move', 0.5],
+            ['move', 0.5],
+            ['spin', 90],
+            ['move', 0.5],
+            ['move', 0.5],
+            ['move', 0.5],
+            ['move', 0.5],
+            ['spin', 90],
+            # # move to start ocotogon
             # ['move', 0.5],
-            # ['move', 0.5],
-            # ['move', 0.5],
-            # ['move', 0.5],
-            # ['spin', 90],
-            # ['move', 0.5],
-            # ['move', 0.5],
-            # ['move', 0.5],
-            # ['move', 0.5],
-            # ['spin', 90],
-            # ['move', 0.5],
-            # ['move', 0.5],
-            # ['move', 0.5],
-            # ['move', 0.5],
-            # ['spin', 90],
             # # octogon
             # ['move', 0.5],
             # ['move', 0.5],
@@ -80,8 +82,8 @@ class MovementCommands(Node):
             print("\n IF")
             self.update_and_plot()
             print("\n update and plot")
-        elif self.step_counter > len(self.steps):
-            self.plot_final_landmarks()
+        # elif self.step_counter > len(self.steps):
+            # self.plot_final_landmarks()
         else:
             self.spin_and_track(self.steps[self.step_counter][0], self.steps[self.step_counter][1])
 
