@@ -23,7 +23,7 @@ class SlamControlNode(Node):
         # )
 
         self.ekf_state_sub = self.create_subscription(
-            Float32MultiArray, '/ekf_slam_state', self.get_EKF_state, 10
+            Float32MultiArray, '/ekf_slam_state', '/get_EKF_state', 10
         )
 
         # # Subscription to receive EKF SLAM colors
@@ -273,10 +273,10 @@ def main(args=None):
     #     node.spin_and_track('spin', 45)
     #     time.sleep(1)
         
-    # try:
-    #     rclpy.spin(node)
-    # except KeyboardInterrupt:
-    #     pass
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
 
 
     # # TRY 2

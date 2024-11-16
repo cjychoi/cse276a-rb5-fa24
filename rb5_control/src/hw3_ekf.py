@@ -142,7 +142,10 @@ class EKFSLAM(Node):
         # self.publish_slam_state()
         state_msg = Float32MultiArray()
         state_msg.data = np.concatenate((self.state[:3].flatten(), self.state[3:].flatten())).tolist()
+        print("\n ekf state msg:")
+        print(state_msg.data)
         self.state_pub.publish(state_msg)
+        
     
 
     # def update(self, measurement, obj_index):
