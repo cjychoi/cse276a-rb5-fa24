@@ -70,9 +70,10 @@ class MovementCommands(Node):
             # ['move', 0.5],
             # ['spin', 45],
         ]
-        self.step_counter = 0
+        self.step_counter = -1
 
     def next_step(self, msg):
+        self.step_counter += 1
         print("\nnext_step")
         print(len(self.steps))
         if self.step_counter == len(self.steps):
@@ -83,7 +84,6 @@ class MovementCommands(Node):
             self.plot_final_landmarks()
         else:
             self.spin_and_track(self.steps[self.step_counter][0], self.steps[self.step_counter][1])
-        self.step_counter += 1
 
     def spin_and_track(self, type, distance):
         if type == 'move':
