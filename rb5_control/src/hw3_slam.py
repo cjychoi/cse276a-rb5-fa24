@@ -43,12 +43,12 @@ class SlamControlNode(Node):
 
         # Subscription to start update_and_plot
         self.update_and_plot_sub = self.create_subscription(
-            Float32MultiArray, '/start_update_and_plot', self.update_and_plot, 10
+            Bool, '/start_update_and_plot', self.update_and_plot, 10
         )
 
         # Subscription to start plot_final_landmarks
         self.plot_final_landmarks_sub = self.create_subscription(
-            Float32MultiArray, '/start_plot_final_landmarks', self.plot_final_landmarks, 10
+            Bool, '/start_plot_final_landmarks', self.plot_final_landmarks, 10
         )
 
         self.done_pub = self.create_publisher(Bool, '/done_flag', 10)
