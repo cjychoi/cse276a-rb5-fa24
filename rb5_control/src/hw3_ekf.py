@@ -37,10 +37,10 @@ class EKFSLAM(Node):
             Float32MultiArray, '/ekf_update', self.update_callback, 10
         )
 
-        # Subscriber to receive predict data
-        self.predict_sub = self.create_subscription(
-            Float32MultiArray, '/ekf_predict', self.predict, 10
-        )
+        # # Subscriber to receive predict data
+        # self.predict_sub = self.create_subscription(
+        #     Float32MultiArray, '/ekf_predict', self.predict, 10
+        # )
 
         # Publisher to send updated SLAM state
         self.state_pub = self.create_publisher(Float32MultiArray, '/ekf_slam_state', 10)
