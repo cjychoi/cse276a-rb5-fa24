@@ -221,8 +221,8 @@ class SlamControlNode(Node):
         move_twist.linear.x = 0.0
         self.twist_pub.publish(move_twist)
 
-        print('update plot')
-        self.update_plot()
+        # print('update plot')
+        # self.update_plot()
 
         # print("\nmove forward self state:")
         # print(self.state[0][0])
@@ -249,8 +249,8 @@ class SlamControlNode(Node):
         self.twist_pub.publish(turn_twist)
         print(f"Updated Heading (theta): {self.state[2]} radians")
 
-        print('update plot')
-        self.update_plot()
+        # print('update plot')
+        # self.update_plot()
 
     def turn_45_degrees(self):
         print("Turning 45 degrees")
