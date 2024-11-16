@@ -146,7 +146,7 @@ class SlamControlNode(Node):
             if (length == 90):
                 self.turn_90_degrees()
             elif (length == 45):
-                self.turn_90_degrees()            # MAKE NEW FUNCTION FOR 45 DEGREE TURN FOR OCTOGON
+                self.turn_45_degrees()            # MAKE NEW FUNCTION FOR 45 DEGREE TURN FOR OCTOGON
             print('spun')
 
         self.save_plot()
@@ -176,6 +176,7 @@ class SlamControlNode(Node):
         robot_x, robot_y = self.state[0][0], self.state[1][0]
         self.robot_positions.append([robot_x, robot_y])
         print(f"Updated Position: x = {robot_x}, y = {robot_y}")
+        print("robot positions list: ", self.robot_positions)
 
     def turn_90_degrees(self):
         print("Turning 90 degrees")
@@ -189,6 +190,23 @@ class SlamControlNode(Node):
         turn_twist.angular.z = 8.0
         self.twist_pub.publish(turn_twist)
         time.sleep(np.pi / 2)
+        turn_twist.angular.z = 0.0
+        self.twist_pub.publish(turn_twist)
+
+        print(f"Updated Heading (theta): {self.state[2][0]} radians")
+
+    def turn_45_degrees(self):
+        print("Turning 45 degrees")
+        control_input = [0.0, np.pi / 4]
+        # self.ekf_slam.predict(control_input)
+        state_msg = Float32MultiArray()
+        state_msg.data = control_input
+        self.movement_pub.publish(state_msg)
+
+        turn_twist = Twist()
+        turn_twist.angular.z = 8.0
+        self.twist_pub.publish(turn_twist)
+        time.sleep(np.pi / 4)
         turn_twist.angular.z = 0.0
         self.twist_pub.publish(turn_twist)
 
@@ -229,12 +247,25 @@ def main(args=None):
     time.sleep(1)
 
     # TRY 1
-    for _ in range(1):
-        for _ in range(4):  # Stop every 0.5 meters
+    # # Square movement
+    # for _ in range(1):
+    #     for _ in range(4):  # Stop every 0.5 meters
+    #         print("SLAM loop")
+    #         node.spin_and_track('move', 0.5)
+    #         time.sleep(1)
+    #     node.spin_and_track('spin', 90)
+    #     time.sleep(1)
+
+    node.spin_and_track('move', 0.5)
+    time.sleep(1)
+
+    # Octogon movement
+    for _ in range(8):
+        for _ in range(2):  # Stop every 0.5 meters
             print("SLAM loop")
             node.spin_and_track('move', 0.5)
             time.sleep(1)
-        node.spin_and_track('spin', 90)
+        node.spin_and_track('spin', 45)
         time.sleep(1)
         
     # try:
