@@ -60,7 +60,7 @@ class SlamControlNode(Node):
         # self.EKF_predict_pub = self.create_publisher(Float32MultiArray, '/ekf_predict', 10)
 
         
-        self.objects_to_detect = ['laptop', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'backpack', 'stop sign']
+        self.objects_to_detect = ['laptop', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'keyboard', 'stop sign']
         # self.ekf_slam = EKFSLAM(self.objects_to_detect)
         self.fig, self.ax = plt.subplots()
         self.set_plot_limits()
@@ -248,7 +248,7 @@ class SlamControlNode(Node):
         self.movement_pub.publish(state_msg)
 
         turn_twist = Twist()
-        turn_twist.angular.z = 8.5
+        turn_twist.angular.z = 8.7
         self.twist_pub.publish(turn_twist)
         time.sleep(np.pi / 2)
         turn_twist.angular.z = 0.0
@@ -267,7 +267,7 @@ class SlamControlNode(Node):
         self.movement_pub.publish(state_msg)
 
         turn_twist = Twist()
-        turn_twist.angular.z = 8.0
+        turn_twist.angular.z = 8.7
         self.twist_pub.publish(turn_twist)
         time.sleep(np.pi / 4)
         turn_twist.angular.z = 0.0
