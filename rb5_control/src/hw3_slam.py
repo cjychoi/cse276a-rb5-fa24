@@ -60,7 +60,7 @@ class SlamControlNode(Node):
         # self.EKF_predict_pub = self.create_publisher(Float32MultiArray, '/ekf_predict', 10)
 
         
-        self.objects_to_detect = ['tv', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'backpack', 'stop sign']
+        self.objects_to_detect = ['laptop', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'backpack', 'stop sign']
         # self.ekf_slam = EKFSLAM(self.objects_to_detect)
         self.fig, self.ax = plt.subplots()
         self.set_plot_limits()
@@ -130,7 +130,7 @@ class SlamControlNode(Node):
 
         object_name = self.objects_to_detect[int(obj_index)]
         print(f"\nRobot Position: (x={robot_x:.2f}, y={robot_y:.2f}, theta={theta:.2f})")
-        print(f"Detected {object_name} at world position (x={obj_x:.2f}, y={obj_y:.2f})")
+        print(f"Detected {object_name} (index {obj_index}) at world position (x={obj_x:.2f}, y={obj_y:.2f})")
 
         self.robot_positions.append([robot_x, robot_y])
         self.detected_objects.append((obj_x, obj_y, object_name))
@@ -156,7 +156,10 @@ class SlamControlNode(Node):
     def update_and_plot(self, msg):
         print("\nupdate and plot")
         print(self.robot_positions[1:])
+        print("\n")
         print(self.detected_objects[-8:])
+        print("\n")
+        print(self.objects_to_detect)
         self.ax.clear()
         self.set_plot_limits()
         self.ax.plot(*zip(*self.robot_positions[1:]), 'bo-', label="Robot Path")
@@ -245,7 +248,7 @@ class SlamControlNode(Node):
         self.movement_pub.publish(state_msg)
 
         turn_twist = Twist()
-        turn_twist.angular.z = 8.0
+        turn_twist.angular.z = 8.5
         self.twist_pub.publish(turn_twist)
         time.sleep(np.pi / 2)
         turn_twist.angular.z = 0.0

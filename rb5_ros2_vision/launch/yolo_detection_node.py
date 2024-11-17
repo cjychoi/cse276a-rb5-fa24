@@ -19,12 +19,12 @@ class YoloDetectionNode(Node):
 
         # Objects to detect and their known widths (in meters)
         self.objects_to_detect = {
-            'tv': 1.6,
-            'bottle': 0.1,
+            'laptop': 0.35,
+            'bottle': 0.05,
             'potted plant': 0.15,
-            'suitcase': 0.5,
-            'umbrella': 0.6,
-            'teddy bear': 0.15,
+            'suitcase': 0.3,
+            'umbrella': 0.8,
+            'teddy bear': 0.2,
             'backpack': 0.3,
             'stop sign': 0.2
         }
@@ -72,11 +72,12 @@ class YoloDetectionNode(Node):
         # Print detected object details
         print(f"Detected {object_name} - Distance: {distance:.2f} m, Angle: {angle_offset:.2f} radians\n")
 
-        print(f"\n\n\n\n checking format: {float(list(self.objects_to_detect.keys()).index(object_name))} \n\n\n\n")
+        # print(f"\n\n\n\n checking format: {float(list(self.objects_to_detect.keys()).index(object_name))} \n\n\n\n")
 
         # Publish object info (distance and angle relative to the robot's pose)
         msg = Float32MultiArray()
-        msg.data = [distance, angle_offset, float(list(self.objects_to_detect.keys()).index(object_name))]
+        obj_index = float(list(self.objects_to_detect.keys()).index(object_name))
+        msg.data = [distance, angle_offset, obj_index]
         self.publisher_.publish(msg)
 
 def main(args=None):

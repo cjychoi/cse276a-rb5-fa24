@@ -205,7 +205,7 @@ class EKFSLAM(Node):
 
     def update_callback(self, msg):
         obj_x, obj_y, obj_index = msg.data
-        self.update([obj_x, obj_y], int(obj_index)-1)
+        self.update([obj_x, obj_y], int(obj_index))
 
     # def publish_slam_state(self):
     #     state_msg = Float32MultiArray()
@@ -219,7 +219,7 @@ class EKFSLAM(Node):
     
 def main(args=None):
     rclpy.init(args=args)
-    node = EKFSLAM(object_list=['tv', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'backpack', 'stop sign'])
+    node = EKFSLAM(object_list=['laptop', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'backpack', 'stop sign'])
     print("EKF running...")
     try:
         rclpy.spin(node)
