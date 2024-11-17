@@ -44,7 +44,7 @@ class EKFSLAM(Node):
 
         # Publisher to send updated SLAM state
         self.state_pub = self.create_publisher(Float32MultiArray, '/ekf_slam_state', 10)
-        
+        self.covariance_pub = self.create_publisher(Float32MultiArray, '/ekf_slam_covariances', 10)
 
     def predict(self, msg):
         """Predict step for EKF based on control input."""
@@ -142,9 +142,23 @@ class EKFSLAM(Node):
         # self.publish_slam_state()
         state_msg = Float32MultiArray()
         state_msg.data = np.concatenate((self.state[:3].flatten(), self.state[3:].flatten())).tolist()
+
         print("\n ekf state msg:")
         print(state_msg.data)
-        self.state_pub.publish(state_msg)
+        self.state_pub.publish(state_msg)        
+
+        # Prepare covariance data for publishing
+        num_landmarks = (len(self.state) - 3) // 2
+        covariance_data = []
+        for i in range(num_landmarks):
+            idx = 3 + 2 * i
+            covariance_matrix = self.P[idx:idx + 2, idx:idx + 2]
+            covariance_data.extend(covariance_matrix.flatten().tolist())
+
+        # Publish covariance data
+        covariance_msg = Float32MultiArray()
+        covariance_msg.data = covariance_data
+        self.covariance_pub.publish(covariance_msg)
         
     
 
@@ -219,7 +233,7 @@ class EKFSLAM(Node):
     
 def main(args=None):
     rclpy.init(args=args)
-    node = EKFSLAM(object_list=['laptop', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'keyboard', 'stop sign'])
+    node = EKFSLAM(object_list=['laptop', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'keyboard', 'stop sign', 'bird', 'cat', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe'])
     print("EKF running...")
     try:
         rclpy.spin(node)

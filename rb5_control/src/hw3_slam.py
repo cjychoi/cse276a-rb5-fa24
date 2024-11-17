@@ -5,6 +5,7 @@ from std_msgs.msg import Float32MultiArray, Bool
 from geometry_msgs.msg import Twist
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.patches import Ellipse
 import time
 
 class SlamControlNode(Node):
@@ -51,6 +52,10 @@ class SlamControlNode(Node):
             Bool, '/start_plot_final_landmarks', self.plot_final_landmarks, 10
         )
 
+        self.covariance_sub = self.create_subscription(
+            Float32MultiArray, '/ekf_slam_covariances', self.update_covariances, 10
+        )
+
         self.done_pub = self.create_publisher(Bool, '/done_flag', 10)
 
         # Publisher to send updated SLAM state
@@ -60,9 +65,20 @@ class SlamControlNode(Node):
         # self.EKF_predict_pub = self.create_publisher(Float32MultiArray, '/ekf_predict', 10)
 
         
-        self.objects_to_detect = ['laptop', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'keyboard', 'stop sign']
+        self.objects_to_detect = ['laptop', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'keyboard', 'stop sign', 'bird', 'cat', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe']
+        self.error_checking = {
+            "bottle": (0, -0.2),
+            "stop sign": (2.1, 0),
+            "potted plant": (2.1, 1.5),
+            "teddy bear": (1.4, -0.3),
+            "umbrella": (-0.7, 0.2),
+            "keyboard": (0.4, 1.3),
+            "suitcase": (-0.2, 1.9),
+            "laptop": (1.3, 1.6)
+        }
         # self.ekf_slam = EKFSLAM(self.objects_to_detect)
         self.fig, self.ax = plt.subplots()
+        self.landmark_covariances = {}
         self.set_plot_limits()
         self.robot_positions = []  # Store estimated robot positions from EKF
         self.detected_objects = []  # Store positions of detected objects
@@ -102,6 +118,13 @@ class SlamControlNode(Node):
 
         # if (self.image_update == True) and (self.EKF_update == True):
         #     self.object_callback()
+
+    def update_covariances(self, msg):
+        """ Callback to update landmark covariance data. """
+        num_landmarks = len(msg.data) // 4  # Each covariance matrix is 2x2
+        for i in range(num_landmarks):
+            covariance_matrix = np.array(msg.data[i * 4:(i + 1) * 4]).reshape(2, 2)
+            self.landmark_covariances[f"landmark_{i}"] = covariance_matrix
 
     def get_image(self, msg):
         # print('\n\n\n\n\n\n\n\n++++++++++IMAGE*************\n\n\n\n\n\n\n')
@@ -173,10 +196,53 @@ class SlamControlNode(Node):
                 else:
                     self.ax.plot(x, y, 'o', color=color)
 
+                
+        for i in range(len(self.detected_objects[-8:])):
+            # Plot covariance ellipse if available
+            if f"landmark_{i}" in self.landmark_covariances:
+                covariance_matrix = self.landmark_covariances[f"landmark_{i}"]
+                eigenvalues, eigenvectors = np.linalg.eig(covariance_matrix)
+
+                angle = np.degrees(np.arctan2(*eigenvectors[:, 0][::-1]))
+                width, height = 2 * np.sqrt(eigenvalues)  # 2-sigma ellipse
+                ellipse = Ellipse((x, y), width, height, angle=angle, edgecolor='blue', facecolor='none')
+                self.ax.add_patch(ellipse)
+
         self.ax.legend(handles=legend_labels.values(), loc='lower left')
         plt.draw()
         plt.pause(0.1)
+        print(self.landmark_covariances)
         self.save_plot()
+
+        # Dictionary to store errors for each landmark
+        errors = {landmark: [] for landmark in self.error_checking}
+
+        # Calculate errors for detected landmarks
+        for obj in self.detected_objects:
+            # print(obj)
+            # name = obj[2]  # Name of the landmark
+            # detected_position = [obj[0], obj[1]]  # Detected (x, y) position
+            (detected_x, detected_y, name) = obj
+            # print(detected_x, detected_y, name, '\n')
+            if name in self.objects_to_detect:
+                true_position = self.error_checking[name]
+                # print('true_position: ', true_position)
+                # Compute Euclidean distance error
+                error = [(detected_x - true_position[0]),(detected_y - true_position[1])]
+                errors[name].append(error)
+            print('errors: ', errors)
+        
+        # Compute average errors for each landmark
+        average_errors = {name: (np.mean(vals) if vals else None) for name, vals in errors.items()}
+        print(average_errors)
+        # Print out average errors
+        print("Average errors for landmarks:")
+        for name, avg_err in average_errors.items():
+            if avg_err is not None:
+                print(f"{name}: {avg_err:.3f} meters")
+            else:
+                print(f"{name}: No detections")
+
         msg = Bool()
         msg.data = True
         self.done_pub.publish(msg)
@@ -248,7 +314,7 @@ class SlamControlNode(Node):
         self.movement_pub.publish(state_msg)
 
         turn_twist = Twist()
-        turn_twist.angular.z = 8.7
+        turn_twist.angular.z = 8.6
         self.twist_pub.publish(turn_twist)
         time.sleep(np.pi / 2)
         turn_twist.angular.z = 0.0
