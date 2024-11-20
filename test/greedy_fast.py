@@ -9,6 +9,10 @@ def to_grid(x, y, resolution=0.1, grid_size=3.0):
     grid_y = max(0, min(int(y / resolution), max_index))
     return grid_x, grid_y
 
+# Convert grid indices back to coordinates
+def to_coordinates(grid_x, grid_y, resolution=0.1):
+    return grid_x * resolution, grid_y * resolution
+
 # Heuristic function (Euclidean distance)
 def heuristic(a, b):
     return np.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
@@ -52,22 +56,35 @@ def greedy_search(grid, start, goal):
 
     return None  # No path found
 
-# Plot the path
-def plot_path(grid, path, start, goal, obstacles, center_obstacle, resolution=0.1):
-    plt.figure(figsize=(8, 8))
-    plt.imshow(grid.T, cmap="Greys", origin="lower")
+# Updated Plot Function
+def plot_path(path, start, goal, obstacles, center_obstacle, resolution=0.1):
+    plt.figure(figsize=(6, 6))
+    
+    # Plot the path
     if path:
         px, py = zip(*path)
         plt.plot(np.array(px) * resolution, np.array(py) * resolution, color="red", lw=2, label="Path")
+    
+    # Plot obstacles as points
     plt.scatter(*zip(*obstacles), c="blue", label="Landmarks")
-    plt.gca().add_patch(plt.Rectangle(center_obstacle[0], 0.6, 0.6, color="blue", alpha=0.5, label="Center Obstacle"))
+    
+    # Plot the center obstacle as a rectangle
+    plt.gca().add_patch(
+        plt.Rectangle(center_obstacle[0], 0.6, 0.6, color="blue", alpha=0.5, label="Center Obstacle")
+    )
+    
+    # Plot start and goal points
     plt.scatter([start[0]], [start[1]], color="green", label="Start", zorder=5)
     plt.scatter([goal[0]], [goal[1]], color="purple", label="Goal", zorder=5)
+    
+    # Add labels, grid, and legend
     plt.legend()
-    plt.grid()
     plt.title("Shortest Path (Greedy Search)")
     plt.xlabel("X (meters)")
     plt.ylabel("Y (meters)")
+    plt.xlim(0, 3)  # Adjust limits as per your grid size
+    plt.ylim(0, 3)  # Adjust limits as per your grid size
+    plt.grid()
     plt.show()
 
 # Configuration
@@ -93,5 +110,21 @@ grid[cx1:cx2+1, cy1:cy2+1] = 1
 # Find shortest path
 path = greedy_search(grid, start, goal)
 
+# Convert grid indices back to coordinates for waypoints
+waypoints = [tuple(round(coord, 1) for coord in to_coordinates(px, py, resolution)) for px, py in path]
+print("Waypoints (in meters):")
+for waypoint in waypoints:
+    print(waypoint)
+
+total_distance = 0.0
+for i in range(1, len(waypoints)):
+    prev = waypoints[i - 1]
+    curr = waypoints[i]
+    # Compute Euclidean distance between consecutive waypoints
+    total_distance += np.sqrt((curr[0] - prev[0]) ** 2 + (curr[1] - prev[1]) ** 2)
+
+# Print total distance
+print(f"Total Moving Distance: {round(total_distance, 2)} meters")
+
 # Plot the result
-plot_path(grid, path, start, goal, obstacle_positions, center_obstacle)
+plot_path(path, start, goal, obstacle_positions, center_obstacle, resolution)
