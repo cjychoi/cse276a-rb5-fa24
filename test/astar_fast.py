@@ -33,6 +33,14 @@ def a_star(grid, start, goal):
     g_score = {start: 0}
     f_score = {start: heuristic(start, goal)}
     
+    # Define all possible moves, including diagonal and intermediate directions
+    moves = [
+        (-1, 0), (1, 0), (0, -1), (0, 1),  # Cardinal directions
+        (-1, -1), (-1, 1), (1, -1), (1, 1),  # Diagonal directions
+        (-2, -1), (-2, 1), (2, -1), (2, 1),  # Intermediate angles
+        (-1, -2), (-1, 2), (1, -2), (1, 2)
+    ]
+
     while open_set:
         _, current = heapq.heappop(open_set)
         
@@ -44,18 +52,14 @@ def a_star(grid, start, goal):
             path.append(start)
             return path[::-1]
         
-        neighbors = [
-            (current[0] + dx, current[1] + dy)
-            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]
-        ]
-        
-        for neighbor in neighbors:
+        for dx, dy in moves:
+            neighbor = (current[0] + dx, current[1] + dy)
             if (
                 0 <= neighbor[0] < grid.shape[0] and
                 0 <= neighbor[1] < grid.shape[1] and
                 grid[neighbor[0], neighbor[1]] == 0
             ):
-                tentative_g_score = g_score[current] + 1
+                tentative_g_score = g_score[current] + heuristic(current, neighbor)
                 if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
                     came_from[neighbor] = current
                     g_score[neighbor] = tentative_g_score
@@ -90,7 +94,7 @@ def plot_path(grid, path, resolution=0.1):
     plt.scatter([goal[0]], [goal[1]], color="purple", label="Goal", zorder=5)
     plt.legend()
     plt.grid()
-    plt.title("Pathfinding in 3x3 Grid")
+    plt.title("Pathfinding in 3x3 Grid with Flexible Turns")
     plt.xlabel("X (meters)")
     plt.ylabel("Y (meters)")
     plt.show()
