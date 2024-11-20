@@ -17,7 +17,7 @@ def to_coordinates(grid_x, grid_y, resolution=0.1):
 def heuristic(a, b):
     return np.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
 
-# Greedy Search Algorithm
+# Greedy Search Algorithm with Diagonal Movement
 def greedy_search(grid, start, goal):
     start = to_grid(*start)
     goal = to_grid(*goal)
@@ -40,7 +40,10 @@ def greedy_search(grid, start, goal):
 
         neighbors = [
             (current[0] + dx, current[1] + dy)
-            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]
+            for dx, dy in [
+                (-1, 0), (1, 0), (0, -1), (0, 1),  # Cardinal directions
+                (-1, -1), (-1, 1), (1, -1), (1, 1)  # Diagonal directions
+            ]
         ]
 
         for neighbor in neighbors:
@@ -58,7 +61,7 @@ def greedy_search(grid, start, goal):
 
 # Updated Plot Function
 def plot_path(path, start, goal, obstacles, center_obstacle, resolution=0.1):
-    plt.figure(figsize=(6, 6))
+    plt.figure(figsize=(8, 8))
     
     # Plot the path
     if path:
@@ -79,7 +82,7 @@ def plot_path(path, start, goal, obstacles, center_obstacle, resolution=0.1):
     
     # Add labels, grid, and legend
     plt.legend()
-    plt.title("Shortest Path (Greedy Search)")
+    plt.title("Shortest Path with Diagonal Movement")
     plt.xlabel("X (meters)")
     plt.ylabel("Y (meters)")
     plt.xlim(0, 3)  # Adjust limits as per your grid size
@@ -112,10 +115,13 @@ path = greedy_search(grid, start, goal)
 
 # Convert grid indices back to coordinates for waypoints
 waypoints = [tuple(round(coord, 1) for coord in to_coordinates(px, py, resolution)) for px, py in path]
+
+# Print waypoints
 print("Waypoints (in meters):")
 for waypoint in waypoints:
     print(waypoint)
 
+# Calculate the total moving distance
 total_distance = 0.0
 for i in range(1, len(waypoints)):
     prev = waypoints[i - 1]
