@@ -245,7 +245,7 @@ if __name__ == "__main__":
         print(waypoint)
 
     waypoint_list = []
-    move_list
+    move_list = []
 
     # Assume the robot is initially facing directly up (90 degrees)
     initial_orientation = np.radians(90)  # Convert 90 degrees to radians
