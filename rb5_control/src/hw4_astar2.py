@@ -6,6 +6,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import heapq
 
+# Initialize the MegaPiController
+mpi_ctrl = MegaPiController(port='/dev/ttyUSB0', verbose=True)
+time.sleep(1)  # Allow some time for the connection to establish
+
 # Define the grid and obstacles
 grid_size = 3.0
 obstacle_positions = [
@@ -193,27 +197,27 @@ print(f"Total Moving Distance: {round(total_distance, 2)} meters")
 print(waypoint_list)
 print(move_list)
 
-def rotate_to_angle(self, angle_diff):    # rotate robot to rotational goal by amount of time
+def rotate_to_angle(angle_diff):    # rotate robot to rotational goal by amount of time
     # Calculate rotation time based on angle difference
-    rotation_time = abs(angle_diff) / self.rad_per_sec
-    self.mpi_ctrl.carRotate(self.k_w if angle_diff > 0 else -self.k_w)
+    rotation_time = abs(angle_diff) / rad_per_sec
+    mpi_ctrl.carRotate(-k_w if angle_diff > 0 else k_w)
     time.sleep(rotation_time)
-    self.mpi_ctrl.carStop()
+    mpi_ctrl.carStop()
 
-def move_straight(self, distance):        # move robot straight by amount of time
+def move_straight(distance):        # move robot straight by amount of time
     # Calculate movement time based on distance
-    movement_time = abs(distance) / (self.dist_per_sec / 100)  # Convert cm/s to m/s
-    self.mpi_ctrl.carStraight(self.k_v)
+    movement_time = abs(distance) / (dist_per_sec / 100)  # Convert cm/s to m/s
+    mpi_ctrl.carStraight(k_v)
     time.sleep(movement_time)
-    self.mpi_ctrl.carStop()
+    mpi_ctrl.carStop()
     time.sleep(2)
 
 # Control parameters prepared from calibration
-self.k_v = 30  # Speed for straight movement
-self.k_w = 58  # Speed for rotational movement
-self.dist_per_sec = 10 / 1  # 10 cm per 1 second at speed 30 for straight movement   
-self.rad_per_sec = math.pi / 2  # Pi radians per 2 seconds at speed 55 for rotational movement
-self.tolerance = 0.1  # Distance tolerance to waypoint (meters)
+k_v = 30  # Speed for straight movement
+k_w = 65  # Speed for rotational movement
+dist_per_sec = 10 / 1  # 10 cm per 1 second at speed 30 for straight movement   
+rad_per_sec = math.pi / 2  # Pi radians per 2 seconds at speed 55 for rotational movement
+tolerance = 0.1  # Distance tolerance to waypoint (meters)
 
 for move in move_list:
     dist, rot = move
