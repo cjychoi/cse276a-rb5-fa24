@@ -278,7 +278,7 @@ if __name__ == "__main__":
             print(f"Rotation at this waypoint: {round(angle_diff, 2)} degrees")
             print(f"Angle at this waypoint: {round(np.degrees(angle), 2)} degrees")
         prev_angle = angle
-        waypoint_list.append((waypoints[i][0], waypoints[i][1], angle))
+        waypoint_list.append((waypoints[i][0], waypoints[i][1], round(np.radians(angle), 2)))
         
         # Compute Euclidean distance between consecutive waypoints
         distance = np.sqrt((curr[0] - prev[0]) ** 2 + (curr[1] - prev[1]) ** 2)
