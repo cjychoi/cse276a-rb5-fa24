@@ -179,7 +179,7 @@ for i in range(1, len(waypoints)):
     print(f"Moving Distance to Next Waypoint: {round(distance, 2)} meters")
     total_distance += distance
 
-    move_list.append((distance, round(np.radians(angle), 2)))
+    move_list.append((distance, round(np.radians(angle_diff), 2)))
 
 # Print total distance
 print(f"Total Moving Distance: {round(total_distance, 2)} meters")
