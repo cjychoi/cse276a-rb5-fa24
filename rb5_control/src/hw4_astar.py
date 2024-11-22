@@ -103,14 +103,14 @@ current_position = [0.0, 0.0, 0.0]        # initialize global array to hold curr
 
 class WaypointNavigator:    #class to hold all functions
     global current_position    # declare current_position as global array
-    def __init__(self, waypoint_file):
+    def __init__(self, waypoints):
 
         # Initialize the MegaPiController
         self.mpi_ctrl = MegaPiController(port='/dev/ttyUSB0', verbose=True)
         time.sleep(1)  # Allow some time for the connection to establish
 
         # Load waypoints from a file
-        self.waypoints = self.load_waypoints(waypoint_file)
+        self.waypoints = waypoints
         self.current_waypoint_idx = 0
 
         # Control parameters prepared from calibration
@@ -119,15 +119,6 @@ class WaypointNavigator:    #class to hold all functions
         self.dist_per_sec = 10 / 1  # 10 cm per 1 second at speed 30 for straight movement   
         self.rad_per_sec = math.pi / 2  # Pi radians per 2 seconds at speed 55 for rotational movement
         self.tolerance = 0.1  # Distance tolerance to waypoint (meters)
-
-    def load_waypoints(self, filename):        # load waypoints from file
-        waypoints = []
-        with open(filename, 'r') as f:        # open file, read waypoints line-by-line, put into array of arrays
-            for line in f.readlines():
-                x, y, theta = map(float, line.strip().split(','))      
-                waypoints.append((x, y, theta))
-        print('waypoints: ', waypoints)
-        return waypoints
 
     def calculate_distance(self, x1, y1, x2, y2):        # calculate distance of goal from current location of robot
         return (math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2))/2
@@ -243,6 +234,8 @@ if __name__ == "__main__":
     for waypoint in waypoints:
         print(waypoint)
 
+    waypoint_list = []
+
     # Assume the robot is initially facing directly up (90 degrees)
     initial_orientation = np.radians(90)  # Convert 90 degrees to radians
 
@@ -265,7 +258,8 @@ if __name__ == "__main__":
 
     # Output the required angle of rotation
     print(f"Angle of rotation to face the first waypoint: {round(angle_of_rotation, 2)} degrees")
-
+    waypoint_list.append((start_waypoint[0], start_waypoint[1], round(angle_of_rotation, 2)))
+    
     prev_angle = None
 
     # Calculate the total moving distance
@@ -284,6 +278,7 @@ if __name__ == "__main__":
             print(f"Rotation at this waypoint: {round(angle_diff, 2)} degrees")
             print(f"Angle at this waypoint: {round(np.degrees(angle), 2)} degrees")
         prev_angle = angle
+        waypoint_list.append((waypoints[i][0], waypoints[i][1], angle))
         
         # Compute Euclidean distance between consecutive waypoints
         distance = np.sqrt((curr[0] - prev[0]) ** 2 + (curr[1] - prev[1]) ** 2)
@@ -295,5 +290,5 @@ if __name__ == "__main__":
 
     plot_path(grid, path)
     # Assuming waypoints.txt is the file with the list of waypoints    
-    navigator = WaypointNavigator(waypoint_file='waypoints.txt')       # load list of waypoints into program
+    navigator = WaypointNavigator(waypoints = waypoint_list)       # load list of waypoints into program
     navigator.start_navigation()                                       # start movement
