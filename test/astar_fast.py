@@ -84,19 +84,34 @@ path = a_star(grid, start, goal)
 # Plot grid and path
 def plot_path(grid, path, resolution=0.1):
     plt.figure(figsize=(8, 8))
-    plt.imshow(grid.T, cmap="Greys", origin="lower")
+    # plt.imshow(grid.T, cmap="Greys", origin="lower")
+    
+    # Plot the path
     if path:
         px, py = zip(*path)
         plt.plot(np.array(px) * resolution, np.array(py) * resolution, color="red", lw=2, label="Path")
+    
+    # Plot obstacles
     plt.scatter(*zip(*obstacle_positions), c="blue", label="Landmarks")
+    
+    # Plot the center obstacle as a rectangle
+    # plt.gca().add_patch(
+    #     plt.Rectangle(center_obstacle[0], 0.6, 0.6, color="blue", alpha=0.5, label="Center Obstacle")
+    # )
     plt.gca().add_patch(plt.Rectangle((1.2, 1.2), 0.6, 0.6, color="blue", alpha=0.5, label="Center Obstacle"))
+    
+    # Plot start and goal points
     plt.scatter([start[0]], [start[1]], color="green", label="Start", zorder=5)
     plt.scatter([goal[0]], [goal[1]], color="purple", label="Goal", zorder=5)
+    
+    # Add labels, grid, and legend
     plt.legend()
     plt.grid()
     plt.title("Pathfinding in 3x3 Grid with Flexible Turns")
     plt.xlabel("X (meters)")
     plt.ylabel("Y (meters)")
+    plt.xlim(0, 3)  # Adjust limits as per your grid size
+    plt.ylim(0, 3)  # Adjust limits as per your grid size
     plt.show()
 
 plot_path(grid, path)
