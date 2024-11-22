@@ -165,37 +165,45 @@ class WaypointNavigator:    #class to hold all functions
         time.sleep(movement_time)
         self.mpi_ctrl.carStop()
 
-    def navigate_to_waypoint(self, x_goal, y_goal, theta_goal):        #m move robot to x,y,theta goal position
+    def navigate_to_waypoint(self, distance, angle):        #m move robot to x,y,theta goal position
         print('navigate to waypoint')
-        while not self.reached_waypoint(x_goal, y_goal):        # while not in position, checked by comparing goal position and current position
-            x, y, theta = self.get_current_position()
 
-            # Calculate distance and angle to the goal
-            distance = self.calculate_distance(x, y, x_goal, y_goal)   
-            print('distance: ', distance)
-            angle_to_goal = self.calculate_angle(x, y, x_goal, y_goal) 
-            angle_diff = angle_to_goal - theta
-            print('angle_to_goal: ', angle_to_goal, ' | theta: ', theta)
-            print('angle_diff: ', angle_diff)
+        print('distance: ', distance)
+        print('angle_to_goal: ', angle)
+        self.move_straight(distance)
+        self.rotate_to_angle(angle_diff)
+        
+        # while not self.reached_waypoint(x_goal, y_goal):        # while not in position, checked by comparing goal position and current position
+        #     x, y, theta = self.get_current_position()
 
-            if abs(angle_diff) > 0.1:  # Rotate first if not facing the goal
-                self.rotate_to_angle(angle_diff)
-                self.set_current_position([x, y, angle_to_goal])       
-            else:  # Move straight if facing the goal
-                self.move_straight(distance)
-                # rotate to theta goal position
-                angle_to_goal = self.calculate_angle(x, y, x_goal, y_goal)
-                angle_diff = theta_goal - angle_to_goal
-                self.rotate_to_angle(angle_diff)
-                self.set_current_position([x_goal, y_goal, theta_goal])
+        #     # Calculate distance and angle to the goal
+        #     distance = self.calculate_distance(x, y, x_goal, y_goal)   
+        #     print('distance: ', distance)
+        #     angle_to_goal = self.calculate_angle(x, y, x_goal, y_goal) 
+        #     angle_diff = angle_to_goal - theta
+        #     print('angle_to_goal: ', angle_to_goal, ' | theta: ', theta)
+        #     print('angle_diff: ', angle_diff)
+
+        #     if abs(angle_diff) > 0.1:  # Rotate first if not facing the goal
+        #         self.rotate_to_angle(angle_diff)
+        #         self.set_current_position([x, y, angle_to_goal])       
+        #     else:  # Move straight if facing the goal
+        #         self.move_straight(distance)
+        #         # rotate to theta goal position
+        #         angle_to_goal = self.calculate_angle(x, y, x_goal, y_goal)
+        #         angle_diff = theta_goal - angle_to_goal
+        #         self.rotate_to_angle(angle_diff)
+        #         self.set_current_position([x_goal, y_goal, theta_goal])
 
     def start_navigation(self):    # start movement of robot to waypoints
         for waypoint in self.waypoints:    # for each waypoint, set x,y,theta goal and travel to goal position
-            x_goal, y_goal, theta_goal = waypoint
-            print(f"Navigating to waypoint: {x_goal}, {y_goal}, {theta_goal}")
-            if (waypoint != current_position):
-                self.navigate_to_waypoint(x_goal, y_goal, theta_goal)  
-                self.set_current_position(waypoint)
+            # x_goal, y_goal, theta_goal = waypoint
+            distance, angle = waypoint
+            # print(f"Navigating to waypoint: {x_goal}, {y_goal}, {theta_goal}")
+            print(f"Navigating to waypoint: {distance} m, {angle} radians")
+            # if (waypoint != current_position):
+            self.navigate_to_waypoint(distance, angle)  
+                # self.set_current_position(waypoint)
 
         print("All waypoints reached.")
         self.mpi_ctrl.carStop()
@@ -293,7 +301,8 @@ if __name__ == "__main__":
     print(f"Total Moving Distance: {round(total_distance, 2)} meters\n\n")
 
     # plot_path(grid, path)
+    # print(waypoint_list)
     print(move_list)
     # Assuming waypoints.txt is the file with the list of waypoints    
-    navigator = WaypointNavigator(waypoints = waypoint_list)       # load list of waypoints into program
+    navigator = WaypointNavigator(waypoints = move_list)       # load list of waypoints into program
     navigator.start_navigation()                                       # start movement
