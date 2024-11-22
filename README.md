@@ -34,11 +34,9 @@ Members: Andrew Choi (A69033628), Nishanth Chidambaram (A69031827)
 
 
 ### Navigate to the source code
-```cd src/rb5_ros2/rb5_ros2_control/rb5_ros2_control```
+```cd src/rb5_ros2/rb5_control/src```
 ``` cd src/rb5_ros2/rb5_ros2_vision/launch ```
 
-Build workspace & Source
-```source /opt/ros/foxy/setup.bash && cd /root/cse276a_ws && colcon build && source install/setup.bash```
 
 ### Run on 4 terminals
 After sourcing
@@ -46,8 +44,6 @@ After sourcing
 
 	```ros2 launch rb5_ros2_vision rb_camera_main_ocv_launch.py```
 3. twist
-   
-	```python3 src/rb5_ros2/rb5_control/src/mpi_twist_control_node.py```
 
 	```ros2 run rb5_control mpi_twist_control_node.py```
 
@@ -59,7 +55,7 @@ After sourcing
 
 7. motion
 	
- 	```cd src/rb5_ros2/rb5_control/src/ && python3 hw1_solution.py```
+ 	```cd src/rb5_ros2/rb5_control/src/ && python3 {solution}```
 
 ---
 ## HW1
@@ -75,7 +71,13 @@ Run hw 1 code
 
 ## HW3
 [HW3 Report](https://docs.google.com/document/d/12vi6x22ai03davU3_yrkwaHJN8hiRHjM2HlS1EhhmJg/edit?tab=t.0)
-[Demo Video]
+[Demo Video](https://youtu.be/4EBOz49WoVc)
 
 Landmark Objects
-- TV -> Bottle -> Potted Plant -> Suitcase -> Umbrella -> Teddy bear -> Backpack -> Stop sign
+- ‘laptop’, 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', ‘keyboard’, and 'stop sign'
+
+## HW4
+[HW4 Report](https://docs.google.com/document/d/1OKB0q6fRi_fIca6uiOqjtX5arRY1b2-387cWHQHw1nY/edit?tab=t.0)
+[Demo Video]
+
+
