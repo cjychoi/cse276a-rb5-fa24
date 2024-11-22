@@ -75,7 +75,13 @@ Run hw 1 code
 
 ## HW3
 [HW3 Report](https://docs.google.com/document/d/12vi6x22ai03davU3_yrkwaHJN8hiRHjM2HlS1EhhmJg/edit?tab=t.0)
-[Demo Video]
+[Demo Video](https://youtu.be/4EBOz49WoVc)
 
 Landmark Objects
-- TV -> Bottle -> Potted Plant -> Suitcase -> Umbrella -> Teddy bear -> Backpack -> Stop sign
+- ‘laptop’, 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', ‘keyboard’, and 'stop sign'
+
+## HW4
+[HW4 Report](https://docs.google.com/document/d/1OKB0q6fRi_fIca6uiOqjtX5arRY1b2-387cWHQHw1nY/edit?tab=t.0)
+[Demo Video]
+
+
