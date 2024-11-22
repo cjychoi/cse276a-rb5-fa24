@@ -216,15 +216,15 @@ if __name__ == '__main__':
 
     print(move_list)
 
-  rotate_to_angle(move_list[0][1])
+    rotate_to_angle(move_list[0][1])
 
-  for move in move_list[1:]:
+    for move in move_list[1:]:
     
-    dist, rot = move
-    print(dist, rot)
-    
-    rotate_to_angle(rot)
-    move_straight(dist)
+        dist, rot = move
+        print(dist, rot)
+        
+        rotate_to_angle(rot)
+        move_straight(dist)
 
     # Plot the path
     plot_path(world_grid, safety_path, center_obstacle)
