@@ -114,8 +114,8 @@ class WaypointNavigator:    #class to hold all functions
         self.current_waypoint_idx = 0
 
         # Control parameters prepared from calibration
-        self.k_v = 30  # Speed for straight movement
-        self.k_w = 55  # Speed for rotational movement
+        self.k_v = 35  # Speed for straight movement
+        self.k_w = 45  # Speed for rotational movement
         self.dist_per_sec = 10 / 1  # 10 cm per 1 second at speed 30 for straight movement   
         self.rad_per_sec = math.pi / 2  # Pi radians per 2 seconds at speed 55 for rotational movement
         self.tolerance = 0.1  # Distance tolerance to waypoint (meters)
@@ -149,7 +149,7 @@ class WaypointNavigator:    #class to hold all functions
         current_position[0] = waypoint[0]
         current_position[1] = waypoint[1]
         current_position[2] = waypoint[2]
-        print('set current position: ', waypoint)
+        print('\nSet current position: ', waypoint)
 
     def rotate_to_angle(self, angle_diff):    # rotate robot to rotational goal by amount of time
         # Calculate rotation time based on angle difference
@@ -277,8 +277,8 @@ if __name__ == "__main__":
             angle_diff = np.degrees(angle - prev_angle)
             print(f"Rotation at this waypoint: {round(angle_diff, 2)} degrees")
             print(f"Angle at this waypoint: {round(np.degrees(angle), 2)} degrees")
+            waypoint_list.append((waypoints[i][0], waypoints[i][1], round(np.radians(angle_diff), 2)))
         prev_angle = angle
-        waypoint_list.append((waypoints[i][0], waypoints[i][1], round(np.radians(angle), 2)))
         
         # Compute Euclidean distance between consecutive waypoints
         distance = np.sqrt((curr[0] - prev[0]) ** 2 + (curr[1] - prev[1]) ** 2)
