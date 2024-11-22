@@ -231,6 +231,13 @@ if __name__ == '__main__':
 
     print(move_list)
 
+    # Control parameters prepared from calibration
+    k_v = 28  # Speed for straight movement
+    k_w = 65  # Speed for rotational movement
+    dist_per_sec = 10 / 1  # 10 cm per 1 second at speed 30 for straight movement   
+    rad_per_sec = math.pi / 2  # Pi radians per 2 seconds at speed 55 for rotational movement
+    tolerance = 0.1  # Distance tolerance to waypoint (meters)
+
     rotate_to_angle(move_list[0][1])
 
     for move in move_list[1:]:
