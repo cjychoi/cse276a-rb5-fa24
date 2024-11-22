@@ -1,16 +1,10 @@
+# imports
+import time
+import math
+from mpi_control import MegaPiController
 import numpy as np
 import matplotlib.pyplot as plt
 import heapq
-
-# Define the grid and obstacles
-grid_size = 3.0
-obstacle_positions = [
-    (0.3, 0), (2.7, 0), (0, 0.3), (3, 0.3), 
-    (0, 2.7), (0.3, 3), (3, 2.7), (2.7, 3)
-]
-center_obstacle = [(1.2, 1.2), (1.8, 1.8)]  # Define as top-left and bottom-right corners
-start = (2.4, 0.3)
-goal = (0.6, 2.4)
 
 # Convert coordinates to grid indices
 def to_grid(x, y, resolution=0.1, grid_size=3.0):
@@ -68,23 +62,9 @@ def a_star(grid, start, goal):
     
     return None  # No path found
 
-# Generate grid and mark obstacles
-resolution = 0.1
-grid = np.zeros((int(grid_size / resolution), int(grid_size / resolution)))
-for x, y in obstacle_positions:
-    gx, gy = to_grid(x, y, resolution)
-    grid[gx, gy] = 1
-cx1, cy1 = to_grid(*center_obstacle[0], resolution)
-cx2, cy2 = to_grid(*center_obstacle[1], resolution)
-grid[cx1:cx2+1, cy1:cy2+1] = 1
-
-# Find shortest path
-path = a_star(grid, start, goal)
-
 # Plot grid and path
 def plot_path(grid, path, resolution=0.1):
     plt.figure(figsize=(8, 8))
-    # plt.imshow(grid.T, cmap="Greys", origin="lower")
     
     # Plot the path
     if path:
@@ -95,9 +75,6 @@ def plot_path(grid, path, resolution=0.1):
     plt.scatter(*zip(*obstacle_positions), c="blue", label="Landmarks")
     
     # Plot the center obstacle as a rectangle
-    # plt.gca().add_patch(
-    #     plt.Rectangle(center_obstacle[0], 0.6, 0.6, color="blue", alpha=0.5, label="Center Obstacle")
-    # )
     plt.gca().add_patch(plt.Rectangle((1.2, 1.2), 0.6, 0.6, color="blue", alpha=0.5, label="Center Obstacle"))
     
     # Plot start and goal points
@@ -118,73 +95,111 @@ def plot_path(grid, path, resolution=0.1):
 def to_coordinates(grid_x, grid_y, resolution=0.1):
     return grid_x * resolution, grid_y * resolution
 
-# Convert grid indices back to coordinates for waypoints
-waypoints = [tuple(round(coord, 1) for coord in to_coordinates(px, py, resolution)) for px, py in path]
+# Initialize global current position
+current_position = [0.0, 0.0, 0.0]
 
-# Print waypoints
-print("Waypoints (in meters):")
-for waypoint in waypoints:
-    print(waypoint)
+class WaypointNavigator:
+    def __init__(self, waypoints):
+        global current_position
+        self.mpi_ctrl = MegaPiController(port='/dev/ttyUSB0', verbose=True)
+        time.sleep(1)  # Allow some time for the connection to establish
 
-waypoint_list = []
-move_list = []
+        self.waypoints = waypoints
+        self.current_waypoint_idx = 0
 
-# Assume the robot is initially facing directly up (90 degrees)
-initial_orientation = np.radians(90)  # Convert 90 degrees to radians
+        # Control parameters (calibrated)
+        self.k_v = 30  # Speed for straight movement
+        self.k_w = 58  # Speed for rotational movement
+        self.dist_per_sec = 10 / 1  # 10 cm per second at speed 30 for straight movement   
+        self.rad_per_sec = math.pi / 2  # Pi radians per 2 seconds at speed 55 for rotational movement
+        self.tolerance = 0.1  # Distance tolerance to waypoint (meters)
 
-# Get the start and the first waypoint
-start_waypoint = waypoints[0]
-first_waypoint = waypoints[1]
+    def calculate_distance(self, x1, y1, x2, y2):
+        return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
-# Calculate the direction vector from start to the first waypoint
-direction_vector = (first_waypoint[0] - start_waypoint[0], first_waypoint[1] - start_waypoint[1])
+    def calculate_angle(self, x1, y1, x2, y2):
+        return math.atan2(y2 - y1, x2 - x1)
 
-# Calculate the angle of the direction vector (in radians)
-angle_to_first_waypoint = np.arctan2(direction_vector[1], direction_vector[0])
+    def reached_waypoint(self, x_goal, y_goal):
+        x, y, _ = self.get_current_position()
+        distance = self.calculate_distance(x, y, x_goal, y_goal)
+        return distance < self.tolerance
 
-# Calculate the angle of rotation needed to face the first waypoint
-# Rotation = angle_to_first_waypoint - initial_orientation
-angle_of_rotation = np.degrees(angle_to_first_waypoint - initial_orientation)
+    def get_current_position(self):
+        return current_position[0], current_position[1], current_position[2]
 
-# Normalize the angle to [-180, 180] range
-angle_of_rotation = (angle_of_rotation + 180) % 360 - 180
+    def set_current_position(self, waypoint):
+        current_position[0], current_position[1], current_position[2] = waypoint
+        print('Current position set to:', waypoint)
 
-# Output the required angle of rotation
-print(f"Angle of rotation to face the first waypoint: {round(angle_of_rotation, 2)} degrees")
-waypoint_list.append((start_waypoint[0], start_waypoint[1], round(np.radians(angle_of_rotation), 2)))
-move_list.append((0, round(np.radians(angle_of_rotation), 2)))
+    def rotate_to_angle(self, angle_diff):
+        rotation_time = abs(angle_diff) / self.rad_per_sec
+        self.mpi_ctrl.carRotate(self.k_w if angle_diff > 0 else -self.k_w)
+        time.sleep(rotation_time)
+        self.mpi_ctrl.carStop()
 
-prev_angle = None
+    def move_straight(self, distance):
+        movement_time = abs(distance) / (self.dist_per_sec / 100)
+        self.mpi_ctrl.carStraight(self.k_v)
+        time.sleep(movement_time)
+        self.mpi_ctrl.carStop()
 
-# Calculate the total moving distance
-total_distance = 0.0
-for i in range(1, len(waypoints)):
-    prev = waypoints[i - 1]
-    curr = waypoints[i]
+    def navigate_to_waypoint(self, x_goal, y_goal, theta_goal):
+        print('Navigating to waypoint...')
+        while not self.reached_waypoint(x_goal, y_goal):
+            x, y, theta = self.get_current_position()
 
-    # Calculate direction vector between consecutive waypoints
-    direction_vector = (curr[0] - prev[0], curr[1] - prev[1])
-    # Calculate angle of the direction vector (in radians)
-    angle = np.arctan2(direction_vector[1], direction_vector[0])  # Angle in radians
-    # If there's a previous angle, compute the rotation needed
-    if prev_angle is not None:
-        angle_diff = np.degrees(angle - prev_angle)
-        print(f"Rotation at this waypoint: {round(angle_diff, 2)} degrees")
-        print(f"Angle at this waypoint: {round(np.degrees(angle), 2)} degrees")
-    prev_angle = angle
-    waypoint_list.append((waypoints[i][0], waypoints[i][1], round(np.radians(angle), 2)))
-    
-    # Compute Euclidean distance between consecutive waypoints
-    distance = np.sqrt((curr[0] - prev[0]) ** 2 + (curr[1] - prev[1]) ** 2)
-    print(f"Moving Distance to Next Waypoint: {round(distance, 2)} meters")
-    total_distance += distance
+            # Calculate distance and angle to the goal
+            distance = self.calculate_distance(x, y, x_goal, y_goal)
+            angle_to_goal = self.calculate_angle(x, y, x_goal, y_goal)
+            angle_diff = angle_to_goal - theta
 
-    move_list.append((distance, round(np.radians(angle_diff), 2)))
+            if abs(angle_diff) > 0.1:
+                self.rotate_to_angle(angle_diff)
+                self.set_current_position([x, y, angle_to_goal])
+            else:
+                self.move_straight(distance)
+                self.rotate_to_angle(theta_goal - angle_to_goal)
+                self.set_current_position([x_goal, y_goal, theta_goal])
 
-# Print total distance
-print(f"Total Moving Distance: {round(total_distance, 2)} meters")
+    def start_navigation(self):
+        for waypoint in self.waypoints:
+            x_goal, y_goal, theta_goal = waypoint
+            print(f"Navigating to waypoint: {x_goal}, {y_goal}, {theta_goal}")
+            self.navigate_to_waypoint(x_goal, y_goal, theta_goal)
 
-print(waypoint_list)
-print(move_list)
+        print("All waypoints reached.")
+        self.mpi_ctrl.carStop()
+        self.mpi_ctrl.close()
 
-plot_path(grid, path)
+if __name__ == "__main__":
+    # Define the grid and obstacles
+    grid_size = 3.0
+    obstacle_positions = [
+        (0.3, 0), (2.7, 0), (0, 0.3), (3, 0.3), 
+        (0, 2.7), (0.3, 3), (3, 2.7), (2.7, 3)
+    ]
+    center_obstacle = [(1.2, 1.2), (1.8, 1.8)]
+    start = (2.4, 0.3)
+    goal = (0.6, 2.4)
+
+    # Generate grid and mark obstacles
+    resolution = 0.1
+    grid = np.zeros((int(grid_size / resolution), int(grid_size / resolution)))
+    for x, y in obstacle_positions:
+        gx, gy = to_grid(x, y)
+        grid[gx, gy] = 1
+    for x, y in np.ndindex(grid.shape):
+        if 1.2 <= x * resolution <= 1.8 and 1.2 <= y * resolution <= 1.8:
+            grid[x, y] = 1
+
+    # Find path
+    path = a_star(grid, start, goal)
+    print(f"Found path: {path}")
+    plot_path(grid, path)
+
+    # Convert path back to coordinates
+    if path:
+        waypoints = [to_coordinates(gx, gy) + (0,) for gx, gy in path]  # Include theta=0 for each waypoint
+        navigator = WaypointNavigator(waypoints)
+        navigator.start_navigation()
