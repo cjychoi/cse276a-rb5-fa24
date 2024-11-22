@@ -5,7 +5,7 @@ import math
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import time
-# from mpi_control import MegaPiController
+from mpi_control import MegaPiController
 import heapq
 
 def create_world(length, width):
