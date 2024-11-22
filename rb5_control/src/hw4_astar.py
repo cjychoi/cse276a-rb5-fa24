@@ -298,7 +298,7 @@ if __name__ == "__main__":
         print(f"Moving Distance to Next Waypoint: {round(distance, 2)} meters")
         total_distance += distance
 
-        move_list.append((distance, round(np.radians(angle), 2)))
+        move_list.append((distance*100, round(np.radians(angle), 2)))
 
     # Print total distance
     print(f"Total Moving Distance: {round(total_distance, 2)} meters\n\n")
