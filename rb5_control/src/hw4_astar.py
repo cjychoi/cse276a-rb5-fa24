@@ -288,7 +288,8 @@ if __name__ == "__main__":
     # Print total distance
     print(f"Total Moving Distance: {round(total_distance, 2)} meters")
 
-    plot_path(grid, path)
+    # plot_path(grid, path)
+    print(waypoint_list)
     # Assuming waypoints.txt is the file with the list of waypoints    
     navigator = WaypointNavigator(waypoints = waypoint_list)       # load list of waypoints into program
     navigator.start_navigation()                                       # start movement
