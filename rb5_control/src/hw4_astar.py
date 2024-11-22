@@ -235,6 +235,7 @@ if __name__ == "__main__":
         print(waypoint)
 
     waypoint_list = []
+    move_list
 
     # Assume the robot is initially facing directly up (90 degrees)
     initial_orientation = np.radians(90)  # Convert 90 degrees to radians
@@ -259,6 +260,7 @@ if __name__ == "__main__":
     # Output the required angle of rotation
     print(f"Angle of rotation to face the first waypoint: {round(angle_of_rotation, 2)} degrees")
     waypoint_list.append((start_waypoint[0], start_waypoint[1], round(np.radians(angle_of_rotation), 2)))
+    move_list.append((0, round(np.radians(angle_of_rotation), 2)))
     
     prev_angle = None
 
@@ -285,11 +287,13 @@ if __name__ == "__main__":
         print(f"Moving Distance to Next Waypoint: {round(distance, 2)} meters")
         total_distance += distance
 
+        move_list.append((distance, round(np.radians(angle), 2)))
+
     # Print total distance
     print(f"Total Moving Distance: {round(total_distance, 2)} meters\n\n")
 
     # plot_path(grid, path)
-    print(waypoint_list)
+    print(move_list)
     # Assuming waypoints.txt is the file with the list of waypoints    
     navigator = WaypointNavigator(waypoints = waypoint_list)       # load list of waypoints into program
     navigator.start_navigation()                                       # start movement
