@@ -1,3 +1,7 @@
+# imports
+import time
+import math
+from mpi_control import MegaPiController
 import numpy as np
 import matplotlib.pyplot as plt
 import heapq
@@ -188,5 +192,35 @@ print(f"Total Moving Distance: {round(total_distance, 2)} meters")
 
 print(waypoint_list)
 print(move_list)
+
+def rotate_to_angle(self, angle_diff):    # rotate robot to rotational goal by amount of time
+    # Calculate rotation time based on angle difference
+    rotation_time = abs(angle_diff) / self.rad_per_sec
+    self.mpi_ctrl.carRotate(self.k_w if angle_diff > 0 else -self.k_w)
+    time.sleep(rotation_time)
+    self.mpi_ctrl.carStop()
+
+def move_straight(self, distance):        # move robot straight by amount of time
+    # Calculate movement time based on distance
+    movement_time = abs(distance) / (self.dist_per_sec / 100)  # Convert cm/s to m/s
+    self.mpi_ctrl.carStraight(self.k_v)
+    time.sleep(movement_time)
+    self.mpi_ctrl.carStop()
+    time.sleep(2)
+
+# Control parameters prepared from calibration
+self.k_v = 30  # Speed for straight movement
+self.k_w = 58  # Speed for rotational movement
+self.dist_per_sec = 10 / 1  # 10 cm per 1 second at speed 30 for straight movement   
+self.rad_per_sec = math.pi / 2  # Pi radians per 2 seconds at speed 55 for rotational movement
+self.tolerance = 0.1  # Distance tolerance to waypoint (meters)
+
+for move in move_list:
+    dist, rot = move
+    print(dist, rot)
+    
+    move_straight(dist)
+    rotate_to_angle(rot)
+
 
 plot_path(grid, path)
