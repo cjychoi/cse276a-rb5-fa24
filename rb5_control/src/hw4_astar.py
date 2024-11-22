@@ -287,6 +287,8 @@ if __name__ == "__main__":
             angle_diff = np.degrees(angle - prev_angle)
             print(f"Rotation at this waypoint: {round(angle_diff, 2)} degrees")
             print(f"Angle at this waypoint: {round(np.degrees(angle), 2)} degrees")
+        else:
+            angle_diff = 0.0
         prev_angle = angle
         waypoint_list.append((waypoints[i][0], waypoints[i][1], round(np.radians(angle), 2)))
         
