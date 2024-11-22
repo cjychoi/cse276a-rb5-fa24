@@ -213,18 +213,20 @@ def move_straight(distance):        # move robot straight by amount of time
     time.sleep(2)
 
 # Control parameters prepared from calibration
-k_v = 30  # Speed for straight movement
+k_v = 28  # Speed for straight movement
 k_w = 65  # Speed for rotational movement
 dist_per_sec = 10 / 1  # 10 cm per 1 second at speed 30 for straight movement   
 rad_per_sec = math.pi / 2  # Pi radians per 2 seconds at speed 55 for rotational movement
 tolerance = 0.1  # Distance tolerance to waypoint (meters)
 
-for move in move_list:
+rotate_to_angle(move_list[0][1])
+
+for move in move_list[1:]:
+    
     dist, rot = move
     print(dist, rot)
     
-    move_straight(dist)
     rotate_to_angle(rot)
-
+    move_straight(dist)
 
 plot_path(grid, path)
