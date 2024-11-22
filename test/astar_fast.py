@@ -165,6 +165,7 @@ for i in range(1, len(waypoints)):
     if prev_angle is not None:
         angle_diff = np.degrees(angle - prev_angle)
         print(f"Rotation at this waypoint: {round(angle_diff, 2)} degrees")
+        print(f"Angle at this waypoint: {round(np.degrees(angle), 2)} degrees")
     prev_angle = angle
     
     # Compute Euclidean distance between consecutive waypoints
