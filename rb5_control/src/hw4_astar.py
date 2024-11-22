@@ -171,7 +171,9 @@ class WaypointNavigator:    #class to hold all functions
         print('distance: ', distance)
         print('angle_to_goal: ', angle)
         self.move_straight(distance)
+        time.sleep(1)
         self.rotate_to_angle(angle_diff)
+        time.sleep(1)
         
         # while not self.reached_waypoint(x_goal, y_goal):        # while not in position, checked by comparing goal position and current position
         #     x, y, theta = self.get_current_position()
