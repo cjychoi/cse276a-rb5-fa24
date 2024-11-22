@@ -147,6 +147,57 @@ if __name__ == '__main__':
     print("Safety Path (meters):")
     for waypoint in safety_path:
         print(waypoint)
+        
+    
+    # Assume the robot is initially facing directly up (90 degrees)
+    initial_orientation = np.radians(90)  # Convert 90 degrees to radians
+    
+    # Get the start and the first waypoint
+    start_waypoint = safety_path[0]
+    first_waypoint = safety_path[1]
+    
+    # Calculate the direction vector from start to the first waypoint
+    direction_vector = (first_waypoint[0] - start_waypoint[0], first_waypoint[1] - start_waypoint[1])
+    
+    # Calculate the angle of the direction vector (in radians)
+    angle_to_first_waypoint = np.arctan2(direction_vector[1], direction_vector[0])
+    
+    # Calculate the angle of rotation needed to face the first waypoint
+    # Rotation = angle_to_first_waypoint - initial_orientation
+    angle_of_rotation = np.degrees(angle_to_first_waypoint - initial_orientation)
+    
+    # Normalize the angle to [-180, 180] range
+    angle_of_rotation = (angle_of_rotation + 180) % 360 - 180
+    
+    # Output the required angle of rotation
+    print(f"Angle of rotation to face the first waypoint: {round(angle_of_rotation, 2)} degrees")
+    
+    prev_angle = None
+    
+    # Calculate the total moving distance
+    total_distance = 0.0
+    for i in range(1, len(safety_path)):
+        prev = safety_path[i - 1]
+        curr = safety_path[i]
+    
+        # Calculate direction vector between consecutive waypoints
+        direction_vector = (curr[0] - prev[0], curr[1] - prev[1])
+        # Calculate angle of the direction vector (in radians)
+        angle = np.arctan2(direction_vector[1], direction_vector[0])  # Angle in radians
+        # If there's a previous angle, compute the rotation needed
+        if prev_angle is not None:
+            angle_diff = np.degrees(angle - prev_angle)
+            print(f"Rotation at this waypoint: {round(angle_diff, 2)} degrees")
+            print(f"Angle at this waypoint: {round(np.degrees(angle), 2)} degrees")
+        prev_angle = angle
+        
+        # Compute Euclidean distance between consecutive waypoints
+        distance = np.sqrt((curr[0] - prev[0]) ** 2 + (curr[1] - prev[1]) ** 2)
+        print(f"Moving Distance to Next Waypoint: {round(distance, 2)} meters")
+        total_distance += distance
+    
+    # Print total distance
+    print(f"Total Moving Distance: {round(total_distance, 2)} meters")
 
     # Plot the path
     plot_path(world_grid, safety_path, center_obstacle)
