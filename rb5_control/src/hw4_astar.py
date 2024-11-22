@@ -258,7 +258,7 @@ if __name__ == "__main__":
 
     # Output the required angle of rotation
     print(f"Angle of rotation to face the first waypoint: {round(angle_of_rotation, 2)} degrees")
-    waypoint_list.append((start_waypoint[0], start_waypoint[1], round(angle_of_rotation, 2)))
+    waypoint_list.append((start_waypoint[0], start_waypoint[1], round(np.radians(angle_of_rotation), 2)))
     
     prev_angle = None
 
