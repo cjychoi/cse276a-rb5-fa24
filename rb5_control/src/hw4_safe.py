@@ -244,8 +244,9 @@ if __name__ == '__main__':
     
         dist, rot = move
         print(dist, rot)
-        
-        rotate_to_angle(rot, rad_per_sec, k_w)
+
+        if abs(rot) != 0.0:
+            rotate_to_angle(rot, rad_per_sec, k_w)
         move_straight(dist, dist_per_sec, k_v)
 
     # Plot the path
