@@ -286,7 +286,7 @@ if __name__ == "__main__":
         total_distance += distance
 
     # Print total distance
-    print(f"Total Moving Distance: {round(total_distance, 2)} meters")
+    print(f"Total Moving Distance: {round(total_distance, 2)} meters\n\n")
 
     # plot_path(grid, path)
     print(waypoint_list)
