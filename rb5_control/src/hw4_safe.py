@@ -142,6 +142,21 @@ def plot_path(grid, path, center_obstacle, resolution=0.1):
     plt.ylim(0, 3)  # Adjust limits as per your grid size
     plt.show()
 
+def rotate_to_angle(angle_diff):    # rotate robot to rotational goal by amount of time
+    # Calculate rotation time based on angle difference
+    rotation_time = abs(angle_diff) / rad_per_sec
+    mpi_ctrl.carRotate(-k_w if angle_diff > 0 else k_w)
+    time.sleep(rotation_time)
+    mpi_ctrl.carStop()
+
+def move_straight(distance):        # move robot straight by amount of time
+    # Calculate movement time based on distance
+    movement_time = abs(distance) / (dist_per_sec / 100)  # Convert cm/s to m/s
+    mpi_ctrl.carStraight(k_v)
+    time.sleep(movement_time)
+    mpi_ctrl.carStop()
+    # time.sleep(1)
+
 if __name__ == '__main__':
 
     # Initialize the MegaPiController
