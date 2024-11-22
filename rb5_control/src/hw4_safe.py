@@ -142,14 +142,14 @@ def plot_path(grid, path, center_obstacle, resolution=0.1):
     plt.ylim(0, 3)  # Adjust limits as per your grid size
     plt.show()
 
-def rotate_to_angle(angle_diff):    # rotate robot to rotational goal by amount of time
+def rotate_to_angle(angle_diff, rad_per_sec, k_w):    # rotate robot to rotational goal by amount of time
     # Calculate rotation time based on angle difference
     rotation_time = abs(angle_diff) / rad_per_sec
     mpi_ctrl.carRotate(-k_w if angle_diff > 0 else k_w)
     time.sleep(rotation_time)
     mpi_ctrl.carStop()
 
-def move_straight(distance):        # move robot straight by amount of time
+def move_straight(distance, dist_per_sec, k_v):        # move robot straight by amount of time
     # Calculate movement time based on distance
     movement_time = abs(distance) / (dist_per_sec / 100)  # Convert cm/s to m/s
     mpi_ctrl.carStraight(k_v)
@@ -238,15 +238,15 @@ if __name__ == '__main__':
     rad_per_sec = math.pi / 2  # Pi radians per 2 seconds at speed 55 for rotational movement
     tolerance = 0.1  # Distance tolerance to waypoint (meters)
 
-    rotate_to_angle(move_list[0][1])
+    rotate_to_angle(move_list[0][1], rad_per_sec, k_w)
 
     for move in move_list[1:]:
     
         dist, rot = move
         print(dist, rot)
         
-        rotate_to_angle(rot)
-        move_straight(dist)
+        rotate_to_angle(rot, rad_per_sec, k_w)
+        move_straight(dist, dist_per_sec, k_v)
 
     # Plot the path
     plot_path(world_grid, safety_path, center_obstacle)
