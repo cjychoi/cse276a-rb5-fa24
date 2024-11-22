@@ -126,6 +126,9 @@ print("Waypoints (in meters):")
 for waypoint in waypoints:
     print(waypoint)
 
+waypoint_list = []
+move_list = []
+
 # Assume the robot is initially facing directly up (90 degrees)
 initial_orientation = np.radians(90)  # Convert 90 degrees to radians
 
@@ -148,6 +151,8 @@ angle_of_rotation = (angle_of_rotation + 180) % 360 - 180
 
 # Output the required angle of rotation
 print(f"Angle of rotation to face the first waypoint: {round(angle_of_rotation, 2)} degrees")
+waypoint_list.append((start_waypoint[0], start_waypoint[1], round(np.radians(angle_of_rotation), 2)))
+move_list.append((0, round(np.radians(angle_of_rotation), 2)))
 
 prev_angle = None
 
@@ -167,13 +172,19 @@ for i in range(1, len(waypoints)):
         print(f"Rotation at this waypoint: {round(angle_diff, 2)} degrees")
         print(f"Angle at this waypoint: {round(np.degrees(angle), 2)} degrees")
     prev_angle = angle
+    waypoint_list.append((waypoints[i][0], waypoints[i][1], round(np.radians(angle), 2)))
     
     # Compute Euclidean distance between consecutive waypoints
     distance = np.sqrt((curr[0] - prev[0]) ** 2 + (curr[1] - prev[1]) ** 2)
     print(f"Moving Distance to Next Waypoint: {round(distance, 2)} meters")
     total_distance += distance
 
+    move_list.append((distance, round(np.radians(angle_diff), 2)))
+
 # Print total distance
 print(f"Total Moving Distance: {round(total_distance, 2)} meters")
+
+print(waypoint_list)
+print(move_list)
 
 plot_path(grid, path)
