@@ -114,8 +114,8 @@ class WaypointNavigator:    #class to hold all functions
         self.current_waypoint_idx = 0
 
         # Control parameters prepared from calibration
-        self.k_v = 35  # Speed for straight movement
-        self.k_w = 45  # Speed for rotational movement
+        self.k_v = 30  # Speed for straight movement
+        self.k_w = 58  # Speed for rotational movement
         self.dist_per_sec = 10 / 1  # 10 cm per 1 second at speed 30 for straight movement   
         self.rad_per_sec = math.pi / 2  # Pi radians per 2 seconds at speed 55 for rotational movement
         self.tolerance = 0.1  # Distance tolerance to waypoint (meters)
