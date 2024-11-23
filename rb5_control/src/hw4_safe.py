@@ -48,6 +48,14 @@ def safety_cost(cur, m, n, world_grid):
 def equals(goal, cur):
     return goal[0] == cur[0] and goal[1] == cur[1]
 
+def safety_cost(cur, m, n, world_grid):
+    d_obstacle = float('inf')
+    for i in range(m):
+        for j in range(n):
+            if world_grid[i, j] == 1:  # Check for obstacles
+                d_obstacle = min(d_obstacle, move_cost((i, j), cur))
+    return 1.0 / (d_obstacle + 1e-5)  # Inverse safety: lower cost if farther from obstacles
+
 def greedy_search(start, goal, m, n, world_grid, mw, hw, sw, mode='safety'):
     directions = [[-1, 0], [0, 1], [-1, 1], [1, 1], [1, 0], [0, -1], [-1, -1], [1, -1]]  # Diagonal + Cardinal
     cur = start
@@ -108,6 +116,20 @@ def generate_safety_path():
 
     # Convert to real-world coordinates and round to 1 decimal point
     path = [(round(p[0] * 0.1, 1), round(p[1] * 0.1, 1)) for p in safety_path]
+
+    # Calculate shortest distance to obstacle along the path
+    shortest_distance = float('inf')
+    for point in safety_path:
+        # Calculate the distance from the point to the closest obstacle
+        d_to_obstacle = safety_cost(point, m, n, world_grid)
+        # Keep track of the shortest distance
+        if d_to_obstacle < shortest_distance:
+            shortest_distance = d_to_obstacle
+
+    # Print the shortest distance to any obstacle
+    print(f"Shortest distance to an obstacle: {round(1 / shortest_distance, 2)} meters")  # Inverse of safety cost
+    
+    
     return world_grid, path, center_obstacle
 
 # Plot grid and path
