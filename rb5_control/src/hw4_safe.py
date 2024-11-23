@@ -235,7 +235,10 @@ if __name__ == '__main__':
         direction_vector = (curr[0] - prev[0], curr[1] - prev[1])
         # Calculate angle of the direction vector (in radians)
         angle = np.arctan2(direction_vector[1], direction_vector[0])  # Angle in radians
-        angle = (angle + 180) % 360 - 180
+        if angle > 180:
+            angle = angle - 360
+        if angle < -180:
+            angle = 360 - angle
         # If there's a previous angle, compute the rotation needed
         if prev_angle is not None:
             angle_diff = np.degrees(angle - prev_angle)
