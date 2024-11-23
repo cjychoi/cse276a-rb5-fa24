@@ -159,11 +159,8 @@ def move_straight(distance, dist_per_sec, k_v):        # move robot straight by 
 
 if __name__ == '__main__':
 
-    # store end time 
-    end = time.time() 
-     
-    # total time taken 
-    print(f"Total runtime of the program is {end - begin}") 
+    # store start time 
+    begin = time.time()
     
     # Initialize the MegaPiController
     mpi_ctrl = MegaPiController(port='/dev/ttyUSB0', verbose=True)
