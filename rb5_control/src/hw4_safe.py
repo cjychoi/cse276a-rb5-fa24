@@ -235,9 +235,11 @@ if __name__ == '__main__':
         direction_vector = (curr[0] - prev[0], curr[1] - prev[1])
         # Calculate angle of the direction vector (in radians)
         angle = np.arctan2(direction_vector[1], direction_vector[0])  # Angle in radians
+        angle = (angle + 180) % 360 - 180
         # If there's a previous angle, compute the rotation needed
         if prev_angle is not None:
             angle_diff = np.degrees(angle - prev_angle)
+            angle_diff = (angle_diff + 180) % 360 - 180
             print(f"Rotation at this waypoint: {round(angle_diff, 2)} degrees")
             print(f"Angle at this waypoint: {round(np.degrees(angle), 2)} degrees")
         else:
@@ -257,7 +259,7 @@ if __name__ == '__main__':
     print(move_list)
 
     # Control parameters prepared from calibration
-    k_v = 28  # Speed for straight movement
+    k_v = 27  # Speed for straight movement
     k_w = 50  # Speed for rotational movement
     dist_per_sec = 10 / 1  # 10 cm per 1 second at speed 30 for straight movement   
     rad_per_sec = math.pi / 2  # Pi radians per 2 seconds at speed 55 for rotational movement
@@ -271,10 +273,6 @@ if __name__ == '__main__':
         print(dist, rot)
 
         if abs(rot) != 0.0:
-            if angle > 180:
-                angle = angle - 360
-            if angle < -180:
-                angle = 360 - angle
             rotate_to_angle(rot, rad_per_sec, k_w)
         move_straight(dist, dist_per_sec, k_v)
 
