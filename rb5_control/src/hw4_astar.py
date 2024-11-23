@@ -8,6 +8,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import heapq
 
+# store start time 
+begin = time.time()
+
 # Initialize the MegaPiController
 mpi_ctrl = MegaPiController(port='/dev/ttyUSB0', verbose=True)
 time.sleep(1)  # Allow some time for the connection to establish
@@ -232,3 +235,9 @@ for move in move_list[1:]:
     move_straight(dist)
 
 plot_path(grid, path)
+
+# store end time 
+end = time.time() 
+ 
+# total time taken 
+print(f"Total runtime of the program is {end - begin}") 
