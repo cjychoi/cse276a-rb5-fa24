@@ -26,17 +26,7 @@ class YoloDetectionNode(Node):
             'umbrella': 1.0,
             'teddy bear': 0.2,
             'keyboard': 0.4,
-            'stop sign': 0.2,
-            'bird': 0.2,
-            'cat': 0.4,
-            'dog': 0.6,
-            'horse': 2.2,
-            'sheep': 1.1,
-            'cow': 2.2,
-            'elephant': 8.3,
-            'bear': 4.2,
-            'zebra': 2.2,
-            'giraffe': 20.0,
+            'stop sign': 0.2
         }
 
         # Load YOLOv8 model
