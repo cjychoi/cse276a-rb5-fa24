@@ -78,6 +78,9 @@ Landmark Objects
 
 ## HW4
 [HW4 Report](https://docs.google.com/document/d/1OKB0q6fRi_fIca6uiOqjtX5arRY1b2-387cWHQHw1nY/edit?tab=t.0)
-[Demo Video]
+
+[Demo Video - Maximum Safety](https://youtu.be/O-aZaTxJEKA)
+
+[Demo Video - Minimum Time](https://youtu.be/a3GNTMC-exk)
 
 
