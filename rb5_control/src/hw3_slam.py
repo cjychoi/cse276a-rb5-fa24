@@ -6,6 +6,7 @@ from geometry_msgs.msg import Twist
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+from hw5_square import make_square
 
 class SlamControlNode(Node):
     def __init__(self):
@@ -179,6 +180,7 @@ class SlamControlNode(Node):
         self.save_plot()
         msg = Bool()
         msg.data = True
+        make_square(self.detected_objects[-8:])
         self.done_pub.publish(msg)
 
     def save_plot(self):
@@ -314,68 +316,6 @@ def main(args=None):
     print('ready')
 
     rclpy.spin(node)
-    # print("SLAM 1")
-
-    # node.spin_and_track('move', 0.0)
-    # time.sleep(1)
-
-    # # TRY 1
-    # # # Square movement
-    # for _ in range(1):
-    #     for _ in range(4):  # Stop every 0.5 meters
-    #         print("SLAM loop")
-    #         node.spin_and_track('move', 0.5)
-    #         time.sleep(1)
-    #     node.spin_and_track('spin', 90)
-    #     time.sleep(1)
-
-    # node.update_and_plot()
-    # node.plot_final_landmarks()
-
-    # node.spin_and_track('move', 0.5)
-    # time.sleep(1)
-
-    # Octogon movement
-    # for _ in range(8):
-    #     for _ in range(2):  # Stop every 0.5 meters
-    #         print("SLAM loop")
-    #         node.spin_and_track('move', 0.5)
-    #         time.sleep(1)
-    #     node.spin_and_track('spin', 45)
-    #     time.sleep(1)
-        
-    # try:
-    #     rclpy.spin(node)
-    # except KeyboardInterrupt:
-    #     pass
-
-
-    # # TRY 2
-    # try:
-    #     rclpy.spin(node)
-    # except KeyboardInterrupt:
-    #     pass
-
-    # for _ in range(4):
-    #     for _ in range(4):  # Stop every 0.5 meters
-    #         node.spin_and_track('move', 0.5)
-    #         time.sleep(1)
-    #     node.spin_and_track('spin', 90)
-    #     time.sleep(1)
-
-
-    # # TRY 3
-    # for _ in range(4):
-    #     for _ in range(4):  # Stop every 0.5 meters
-    #         node.spin_and_track('move', 0.5)
-    #         time.sleep(1)
-    #         # rclpy.spin_once(node)
-    #         # time.sleep(1)
-    #     node.spin_and_track('spin', 90)
-    #     time.sleep(1)
-    #     # rclpy.spin_once(node)
-    #     # time.sleep(1)
-
 
     node.destroy_node()
     rclpy.shutdown()

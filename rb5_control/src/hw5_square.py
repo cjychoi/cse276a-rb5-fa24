@@ -37,23 +37,26 @@ def make_square(object_coords):
 
     for x, y, label in object_coords:
         angle = calculate_angle(x, y, center_x, center_y)
-        if 0 <= angle < 90:  # Quadrant 1
+        if 45 <= angle < 135:  # Quadrant 1
             quadrant_1.append((x, y))
-        elif 90 <= angle < 180:  # Quadrant 2
+        elif 135 <= angle < 225:  # Quadrant 2
             quadrant_2.append((x, y))
-        elif 180 <= angle < 270:  # Quadrant 3
+        elif 225 <= angle < 315:  # Quadrant 3
             quadrant_3.append((x, y))
         else:  # Quadrant 4
             quadrant_4.append((x, y))
 
+    # Define margins for each constraint
+    margin = 0.2
+
     # Calculate boundaries
-    top_boundary = min(y for x, y in quadrant_1) if quadrant_1 else center_y
-    left_boundary = max(x for x, y in quadrant_2) if quadrant_2 else center_x
-    bottom_boundary = max(y for x, y in quadrant_3) if quadrant_3 else center_y
-    right_boundary = min(x for x, y in quadrant_4) if quadrant_4 else center_x
+    top_boundary = (min(y for x, y in quadrant_1) if quadrant_1 else center_y) 
+    left_boundary = (max(x for x, y in quadrant_2)if quadrant_2 else center_x) 
+    bottom_boundary = (max(y for x, y in quadrant_3) if quadrant_3 else center_y) 
+    right_boundary = (min(x for x, y in quadrant_4) if quadrant_4 else center_x) 
 
     # Calculate the side of the largest square that fits
-    square_side = min(top_boundary - bottom_boundary, right_boundary - left_boundary)
+    square_side = min(top_boundary - bottom_boundary, right_boundary - left_boundary) - margin 
 
     # Calculate square coordinates
     square_start_x = center_x - square_side / 2
@@ -96,3 +99,6 @@ def make_square(object_coords):
     print(f"Largest square dimensions: {square_side}m x {square_side}m")
     print(f"Square center point: ({center_x}, {center_y})")
     print(f"Square coordinates: ({square_start_x}, {square_start_y}) to ({square_end_x}, {square_end_y})")
+
+# Test local
+# make_square([(2.2822766304016113, 4.08355188369751, 'laptop'), (-0.38436222076416016, 0.5081926584243774, 'bottle'), (3.153132915496826, 2.7433860301971436, 'potted plant'), (-0.6404055953025818, -0.3099810779094696, 'suitcase'), (-1.734462022781372, 1.1050945520401, 'umbrella'), (2.3787856101989746, -0.39087170362472534, 'teddy bear'), (2.4763317108154297, 4.186304569244385, 'keyboard'), (3.0441253185272217, -0.12209747731685638, 'stop sign')])
