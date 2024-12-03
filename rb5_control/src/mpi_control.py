@@ -69,7 +69,7 @@ class MegaPiController:
     def carSlide(self, speed):
         if self.verbose:
             print("CAR SLIDE:")
-        self.setFourMotors(speed, -speed, -speed, speed)
+        self.setFourMotors(-speed, speed, speed, -speed)
 
     def carMixed(self, v_straight, v_rotate, v_slide):
         if self.verbose:
@@ -91,14 +91,14 @@ if __name__ == "__main__":
 
     mpi_ctrl = MegaPiController(port="/dev/ttyUSB0", verbose=True)
     time.sleep(1)
-    mpi_ctrl.carStraight(30)
-    time.sleep(1)
+    # mpi_ctrl.carStraight(30)
+    # time.sleep(1)
     # mpi_ctrl.carStraight(-30)
     # time.sleep(4)
     # # mpi_ctrl.setFourMotors(0, 0, 30, 0)
     # # time.sleep(4)
-    # # mpi_ctrl.carSlide(55)
-    # time.sleep(4)
+    mpi_ctrl.carSlide(100)
+    time.sleep(5)
     # # mpi_ctrl.carRotate(55)
     # time.sleep(4)
     mpi_ctrl.carStop()
