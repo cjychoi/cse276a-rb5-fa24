@@ -13,7 +13,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def make_square(object_coords, robot_width=0.17, robot_height=0.20, start_x=0, start_y=0):
+def make_square(object_coords, robot_width, robot_height, start_x, start_y):
     # Extract x and y coordinates
     x_coords = np.array([coord[0] for coord in object_coords])
     y_coords = np.array([coord[1] for coord in object_coords])
@@ -126,7 +126,8 @@ def make_square(object_coords, robot_width=0.17, robot_height=0.20, start_x=0, s
 
     # Save the plot as a PNG file
     plt.savefig("robot_sweeping_path.png")
-    plt.show()
+    print("Path saved.")
+    # plt.show()
 
     # Output dimensions
     print(f"Largest square dimensions: {square_side}m x {square_side}m")
@@ -134,11 +135,11 @@ def make_square(object_coords, robot_width=0.17, robot_height=0.20, start_x=0, s
     print(f"Square coordinates: ({square_start_x}, {square_start_y}) to ({square_end_x}, {square_end_y})")
 
 # Test local with object coordinates
-make_square([(2.2822766304016113, 4.08355188369751, 'laptop'), 
-             (-0.38436222076416016, 0.5081926584243774, 'bottle'), 
-             (3.153132915496826, 2.7433860301971436, 'potted plant'), 
-             (-0.6404055953025818, -0.3099810779094696, 'suitcase'), 
-             (-1.734462022781372, 1.1050945520401, 'umbrella'), 
-             (2.3787856101989746, -0.39087170362472534, 'teddy bear'), 
-             (2.4763317108154297, 4.186304569244385, 'keyboard'), 
-             (3.0441253185272217, -0.12209747731685638, 'stop sign')])
+# make_square([(2.2822766304016113, 4.08355188369751, 'laptop'), 
+#              (-0.38436222076416016, 0.5081926584243774, 'bottle'), 
+#              (3.153132915496826, 2.7433860301971436, 'potted plant'), 
+#              (-0.6404055953025818, -0.3099810779094696, 'suitcase'), 
+#              (-1.734462022781372, 1.1050945520401, 'umbrella'), 
+#              (2.3787856101989746, -0.39087170362472534, 'teddy bear'), 
+#              (2.4763317108154297, 4.186304569244385, 'keyboard'), 
+#              (3.0441253185272217, -0.12209747731685638, 'stop sign')])

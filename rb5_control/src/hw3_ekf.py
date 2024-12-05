@@ -219,7 +219,7 @@ class EKFSLAM(Node):
     
 def main(args=None):
     rclpy.init(args=args)
-    node = EKFSLAM(object_list=['laptop', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'keyboard', 'stop sign'])
+    node = EKFSLAM(object_list=['laptop', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'keyboard', 'stop sign', 'bicycle', 'bowl', 'scissors', 'backpack'])
     print("EKF running...")
     try:
         rclpy.spin(node)

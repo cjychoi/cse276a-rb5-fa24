@@ -61,7 +61,7 @@ class SlamControlNode(Node):
         # self.EKF_predict_pub = self.create_publisher(Float32MultiArray, '/ekf_predict', 10)
 
         
-        self.objects_to_detect = ['laptop', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'keyboard', 'stop sign']
+        self.objects_to_detect = ['laptop', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'keyboard', 'stop sign', 'bicycle', 'bowl', 'scissors', 'backpack']
         # self.ekf_slam = EKFSLAM(self.objects_to_detect)
         self.fig, self.ax = plt.subplots()
         self.set_plot_limits()
@@ -166,6 +166,9 @@ class SlamControlNode(Node):
         self.ax.plot(*zip(*self.robot_positions[1:]), 'bo-', label="Robot Path")
         
         legend_labels = {"Robot Path": self.ax.plot([], [], 'bo-', label="Robot Path")[0]}
+        x = 0.0
+        y = 0.0
+
         for x, y, name in self.detected_objects[-8:]:
             if x != 0.0 and y != 0.0:
                 color = self.colors(self.objects_to_detect.index(name))
@@ -180,7 +183,10 @@ class SlamControlNode(Node):
         self.save_plot()
         msg = Bool()
         msg.data = True
-        make_square(self.detected_objects[-8:])
+
+        print("\nx and y values:")
+        print(x, y)
+        make_square(self.detected_objects[-8:], 0.17, 0.20, x, y)
         self.done_pub.publish(msg)
 
     def save_plot(self):
