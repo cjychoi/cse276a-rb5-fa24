@@ -158,7 +158,7 @@ class SlamControlNode(Node):
         print("\nupdate and plot")
         print(self.robot_positions[1:])
         print("\n")
-        print(self.detected_objects[-8:])
+        print(self.detected_objects[-12:])
         print("\n")
         print(self.objects_to_detect)
         self.ax.clear()
@@ -169,7 +169,7 @@ class SlamControlNode(Node):
         x = 0.0
         y = 0.0
 
-        for x, y, name in self.detected_objects[-8:]:
+        for x, y, name in self.detected_objects[-12:]:
             if x != 0.0 and y != 0.0:
                 color = self.colors(self.objects_to_detect.index(name))
                 if name not in legend_labels:
@@ -186,7 +186,7 @@ class SlamControlNode(Node):
 
         print("\nx and y values:")
         print(x, y)
-        make_square(self.detected_objects[-8:], 0.17, 0.20, x, y)
+        make_square(self.detected_objects[-12:], 0.17, 0.20, 0, 0)
         self.done_pub.publish(msg)
 
     def save_plot(self):
