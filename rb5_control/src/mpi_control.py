@@ -1,10 +1,10 @@
 from megapi import MegaPi
 
 
-MFR = 2  # port for motor front right
-MBL = 3  # port for motor back left
-MBR = 10  # port for motor back right
-MFL = 11  # port for motor front left
+MFL = 3  # port for motor front left
+MFR = 10  # port for motor front right
+MBL = 11  # port for motor back left
+MBR = 2  # port for motor back right
 
 
 class MegaPiController:
@@ -15,23 +15,24 @@ class MegaPiController:
             self.printConfiguration()
         self.bot = MegaPi()
         self.bot.start(port=port)
+        self.mfl = MFL  # port for motor front left
         self.mfr = MFR  # port for motor front right
         self.mbl = MBL  # port for motor back left
         self.mbr = MBR  # port for motor back right
-        self.mfl = MFL  # port for motor front left
 
     def printConfiguration(self):
         print("MegaPiController:")
         print("Communication Port:" + repr(self.port))
         print(
-            "Motor ports: MFR: "
+            "Motor ports: "
+            + " MFL: "
+            + repr(MFL)
+            + " MFR: "
             + repr(MFR)
             + " MBL: "
             + repr(MBL)
             + " MBR: "
             + repr(MBR)
-            + " MFL: "
-            + repr(MFL)
         )
 
     def setFourMotors(self, vfl=0, vfr=0, vbl=0, vbr=0):
@@ -64,7 +65,7 @@ class MegaPiController:
     def carRotate(self, speed):
         if self.verbose:
             print("CAR ROTATE:")
-        self.setFourMotors(speed, -speed, speed, -speed)
+        self.setFourMotors(-speed, speed, -speed, speed)
 
     def carSlide(self, speed):
         if self.verbose:
@@ -91,15 +92,15 @@ if __name__ == "__main__":
 
     mpi_ctrl = MegaPiController(port="/dev/ttyUSB0", verbose=True)
     time.sleep(1)
-    # mpi_ctrl.carStraight(30)
+    # mpi_ctrl.carStraight(50)
     # time.sleep(1)
     # mpi_ctrl.carStraight(-30)
     # time.sleep(4)
     # # mpi_ctrl.setFourMotors(0, 0, 30, 0)
     # # time.sleep(4)
-    mpi_ctrl.carSlide(100)
-    time.sleep(5)
-    # # mpi_ctrl.carRotate(55)
-    # time.sleep(4)
+    mpi_ctrl.carSlide(50)
+    time.sleep(4)
+    # mpi_ctrl.carRotate(50)
+    # time.sleep(1)
     mpi_ctrl.carStop()
     # print("If your program cannot be closed properly, check updated instructions in google doc.")
