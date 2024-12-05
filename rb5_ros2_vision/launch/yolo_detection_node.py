@@ -23,11 +23,11 @@ class YoloDetectionNode(Node):
             'bottle': 0.05,
             'potted plant': 0.15,
             'suitcase': 0.3,
-            'umbrella': 1.0,
+            'umbrella': 0.5,
             'teddy bear': 0.2,
             'keyboard': 0.4,
             'stop sign': 0.2,
-            'bicycle': 1.47,
+            'bicycle': 0.5,
             'bowl': 0.3,
             'scissors': 0.1,
             'backpack': 0.38

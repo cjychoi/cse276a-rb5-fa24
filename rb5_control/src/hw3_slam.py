@@ -186,7 +186,7 @@ class SlamControlNode(Node):
 
         print("\nx and y values:")
         print(x, y)
-        make_square(self.detected_objects[-12:], 0.17, 0.20, 0, 0)
+        make_square(self.detected_objects[-12:])
         self.done_pub.publish(msg)
 
     def save_plot(self):
@@ -256,7 +256,7 @@ class SlamControlNode(Node):
         self.movement_pub.publish(state_msg)
 
         turn_twist = Twist()
-        turn_twist.angular.z = 8.3
+        turn_twist.angular.z = 8.6
         self.twist_pub.publish(turn_twist)
         time.sleep(np.pi / 2)
         turn_twist.angular.z = 0.0
@@ -275,7 +275,7 @@ class SlamControlNode(Node):
         self.movement_pub.publish(state_msg)
 
         turn_twist = Twist()
-        turn_twist.angular.z = 8.3
+        turn_twist.angular.z = 8.6
         self.twist_pub.publish(turn_twist)
         time.sleep(np.pi / 4)
         turn_twist.angular.z = 0.0

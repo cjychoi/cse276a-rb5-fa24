@@ -85,7 +85,8 @@ class MovementCommands(Node):
             ['spin', 45],
             ['move', 0.5],
             ['move', 0.5],
-            ['spin', 45],
+            ['move', 0.5],
+            ['spin', 45]
         ]
         self.step_counter = -1
 

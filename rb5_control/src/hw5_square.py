@@ -1,20 +1,9 @@
+    # Updated coordinates
+
 import matplotlib.pyplot as plt
 import numpy as np
 
-    # Updated coordinates
-    # object_coords = [
-    #     (0, -0.2, "bottle"),
-    #     (2.1, 0, "stop sign"),
-    #     (2.1, 1.5, "potted plant"),
-    #     (1.4, -0.3, "teddy bear"),
-    #     (-0.7, 0.2, "umbrella"),
-    #     (-0.4, 1.3, "keyboard"),
-    #     (-0.2, 1.9, "suitcase"),
-    #     (1.3, 1.6, "laptop")
-    # ]
-
-def make_square(object_coords):
-
+def make_square(object_coords, robot_width=0.17, robot_height=0.20, start_x=0.5, start_y=0.0):
     # Extract x and y coordinates
     x_coords = np.array([coord[0] for coord in object_coords])
     y_coords = np.array([coord[1] for coord in object_coords])
@@ -64,7 +53,43 @@ def make_square(object_coords):
     square_end_x = square_start_x + square_side
     square_end_y = square_start_y + square_side
 
-    # Plot the points and the adjusted square
+    # Find the nearest corner of the square to the start point (0, 0)
+    corners = [
+        (square_start_x, square_start_y),
+        (square_end_x, square_start_y),
+        (square_start_x, square_end_y),
+        (square_end_x, square_end_y),
+    ]
+    nearest_corner = min(corners, key=lambda c: np.hypot(c[0] - start_x, c[1] - start_y))
+
+    # Define the robot's back-and-forth sweeping path (Roomba-like)
+    robot_path = [(start_x, start_y), nearest_corner]  # Start at (0,0) and move to nearest corner
+    current_x, current_y = nearest_corner
+    direction = 1  # 1 for right, -1 for left
+    step_y = robot_height  # The y-step is based on the height of the robot
+
+
+    while current_y <= square_end_y:
+        # Move along the x-axis
+        if direction == 1:  # Move right
+            robot_path.append((square_end_x, current_y))
+        else:  # Move left
+            robot_path.append((square_start_x, current_y))
+        
+        # After reaching one side, move up by the width of the robot and reverse direction
+        current_y += step_y
+        if current_y <= square_end_y:  # Add only if within bounds
+            robot_path.append((robot_path[-1][0], current_y))  # Move up in y direction
+        
+        # Switch direction for next horizontal movement
+        direction *= -1
+
+    # Print robot path points where the direction changes
+    print("Robot direction change points:")
+    for point in robot_path:
+        print(point)
+
+    # Plot the points, the adjusted square, and the robot's sweeping path
     plt.figure(figsize=(8, 8))
     for x, y, label in object_coords:
         plt.scatter(x, y, label=label)
@@ -74,25 +99,23 @@ def make_square(object_coords):
     square_y = [square_start_y, square_start_y, square_end_y, square_end_y, square_start_y]
     plt.plot(square_x, square_y, 'r-', label='Largest Square')
 
+    # Draw the robot's path
+    robot_x = [p[0] for p in robot_path]
+    robot_y = [p[1] for p in robot_path]
+    plt.plot(robot_x, robot_y, 'b--', label='Robot Path')
+
     # Mark the center point
     plt.scatter(center_x, center_y, color='black', label='Center Point (Centroid)')
 
-    # Plot quadrant lines
-    plt.plot([center_x, center_x + 2], [center_y, center_y + 2], 'k--')  # 45 degrees
-    plt.plot([center_x, center_x - 2], [center_y, center_y + 2], 'k--')  # 135 degrees
-    plt.plot([center_x, center_x - 2], [center_y, center_y - 2], 'k--')  # 225 degrees
-    plt.plot([center_x, center_x + 2], [center_y, center_y - 2], 'k--')  # 315 degrees
-
     # Plot aesthetics
-    # plt.legend()
-    plt.title("Largest Square Fit Using Quadrants")
+    plt.title("Robot Sweeping Path Covering the Square")
     plt.xlabel("X (meters)")
     plt.ylabel("Y (meters)")
     plt.grid(True)
     plt.axis('equal')
 
     # Save the plot as a PNG file
-    plt.savefig("square.png")
+    plt.savefig("robot_sweeping_path.png")
     plt.show()
 
     # Output dimensions
@@ -100,5 +123,5 @@ def make_square(object_coords):
     print(f"Square center point: ({center_x}, {center_y})")
     print(f"Square coordinates: ({square_start_x}, {square_start_y}) to ({square_end_x}, {square_end_y})")
 
-# Test local
-# make_square([(2.2822766304016113, 4.08355188369751, 'laptop'), (-0.38436222076416016, 0.5081926584243774, 'bottle'), (3.153132915496826, 2.7433860301971436, 'potted plant'), (-0.6404055953025818, -0.3099810779094696, 'suitcase'), (-1.734462022781372, 1.1050945520401, 'umbrella'), (2.3787856101989746, -0.39087170362472534, 'teddy bear'), (2.4763317108154297, 4.186304569244385, 'keyboard'), (3.0441253185272217, -0.12209747731685638, 'stop sign')])
+# Test local with object coordinates
+# make_square([(1.123410701751709, 3.786043405532837, 'laptop'), (-0.18596267700195312, 0.21542099118232727, 'bottle'), (3.3864262104034424, 2.8606085777282715, 'potted plant'), (0.3437591791152954, 3.9257864952087402, 'suitcase'), (1.373099684715271, 0.6129531264305115, 'umbrella'), (-0.8698845505714417, 0.7219505906105042, 'teddy bear'), (1.3916902542114258, 4.341032981872559, 'keyboard'), (3.0175771713256836, -0.2616259753704071, 'stop sign'), (-2.8316409587860107, 1.4042980670928955, 'bicycle'), (-0.3431287407875061, 3.56701397895813, 'bowl'), (0.0, 0.0, 'scissors'), (-1.1141973733901978, 2.5057241916656494, 'backpack')])
