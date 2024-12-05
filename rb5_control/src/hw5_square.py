@@ -13,7 +13,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def make_square(object_coords, robot_width, robot_height, start_x, start_y):
+def make_square(object_coords, robot_width=0.17, robot_height=0.20, start_x=0, start_y=0):
     # Extract x and y coordinates
     x_coords = np.array([coord[0] for coord in object_coords])
     y_coords = np.array([coord[1] for coord in object_coords])
@@ -22,40 +22,17 @@ def make_square(object_coords, robot_width, robot_height, start_x, start_y):
     center_x = np.mean(x_coords)
     center_y = np.mean(y_coords)
 
-    # Function to calculate angle relative to the center point
-    def calculate_angle(x, y, center_x, center_y):
-        dx = x - center_x
-        dy = y - center_y
-        return np.degrees(np.arctan2(dy, dx)) % 360
-
-    # Categorize points into quadrants based on their angles
-    quadrant_1 = []  # Top boundary
-    quadrant_2 = []  # Left boundary
-    quadrant_3 = []  # Bottom boundary
-    quadrant_4 = []  # Right boundary
-
-    for x, y, label in object_coords:
-        angle = calculate_angle(x, y, center_x, center_y)
-        if 45 <= angle < 135:  # Quadrant 1
-            quadrant_1.append((x, y))
-        elif 135 <= angle < 225:  # Quadrant 2
-            quadrant_2.append((x, y))
-        elif 225 <= angle < 315:  # Quadrant 3
-            quadrant_3.append((x, y))
-        else:  # Quadrant 4
-            quadrant_4.append((x, y))
-
     # Define margins for each constraint
     margin = 0.2
 
     # Calculate boundaries
-    top_boundary = (min(y for x, y in quadrant_1) if quadrant_1 else center_y) 
-    left_boundary = (max(x for x, y in quadrant_2)if quadrant_2 else center_x) 
-    bottom_boundary = (max(y for x, y in quadrant_3) if quadrant_3 else center_y) 
-    right_boundary = (min(x for x, y in quadrant_4) if quadrant_4 else center_x) 
+    top_boundary = np.max(y_coords) + margin
+    bottom_boundary = np.min(y_coords) - margin
+    left_boundary = np.min(x_coords) - margin
+    right_boundary = np.max(x_coords) + margin
 
     # Calculate the side of the largest square that fits
-    square_side = min(top_boundary - bottom_boundary, right_boundary - left_boundary) - margin 
+    square_side = min(top_boundary - bottom_boundary, right_boundary - left_boundary)
 
     # Calculate square coordinates
     square_start_x = center_x - square_side / 2
@@ -65,19 +42,34 @@ def make_square(object_coords, robot_width, robot_height, start_x, start_y):
 
     # Find the nearest corner of the square to the start point (0, 0)
     corners = [
-        (square_start_x, square_start_y),
-        (square_end_x, square_start_y),
-        (square_start_x, square_end_y),
-        (square_end_x, square_end_y),
+        (square_start_x, square_start_y),  # bottom-left
+        (square_end_x, square_start_y),    # bottom-right
+        (square_start_x, square_end_y),    # top-left
+        (square_end_x, square_end_y),      # top-right
     ]
     nearest_corner = min(corners, key=lambda c: np.hypot(c[0] - start_x, c[1] - start_y))
 
-    # Define the robot's back-and-forth sweeping path (Roomba-like)
-    robot_path = [(start_x, start_y), nearest_corner]  # Start at (0,0) and move to nearest corner
-    current_x, current_y = nearest_corner
+    # Determine the initial movement direction
+    robot_path = [(start_x, start_y)]  # Start at (0,0)
+
+    # If the nearest corner is on the left side
+    if nearest_corner == (square_start_x, square_start_y) or nearest_corner == (square_start_x, square_end_y):
+        robot_path.append((square_start_x, start_y))  # Move to the left edge (x-axis)
+    # If the nearest corner is on the right side
+    elif nearest_corner == (square_end_x, square_start_y) or nearest_corner == (square_end_x, square_end_y):
+        robot_path.append((square_end_x, start_y))  # Move to the right edge (x-axis)
+
+    # If the nearest corner is at the top
+    if nearest_corner == (square_start_x, square_end_y) or nearest_corner == (square_end_x, square_end_y):
+        robot_path.append((robot_path[-1][0], square_end_y))  # Move to the top (y-axis)
+    # If the nearest corner is at the bottom
+    elif nearest_corner == (square_start_x, square_start_y) or nearest_corner == (square_end_x, square_start_y):
+        robot_path.append((robot_path[-1][0], square_start_y))  # Move to the bottom (y-axis)
+
+    # Back-and-forth sweeping path (Roomba-like)
+    current_x, current_y = robot_path[-1]  # Start from the nearest corner
     direction = 1  # 1 for right, -1 for left
     step_y = robot_height  # The y-step is based on the height of the robot
-
 
     while current_y <= square_end_y:
         # Move along the x-axis
@@ -85,12 +77,12 @@ def make_square(object_coords, robot_width, robot_height, start_x, start_y):
             robot_path.append((square_end_x, current_y))
         else:  # Move left
             robot_path.append((square_start_x, current_y))
-        
+
         # After reaching one side, move up by the width of the robot and reverse direction
         current_y += step_y
         if current_y <= square_end_y:  # Add only if within bounds
             robot_path.append((robot_path[-1][0], current_y))  # Move up in y direction
-        
+
         # Switch direction for next horizontal movement
         direction *= -1
 
@@ -126,8 +118,7 @@ def make_square(object_coords, robot_width, robot_height, start_x, start_y):
 
     # Save the plot as a PNG file
     plt.savefig("robot_sweeping_path.png")
-    print("Path saved.")
-    # plt.show()
+    plt.show()
 
     # Output dimensions
     print(f"Largest square dimensions: {square_side}m x {square_side}m")
