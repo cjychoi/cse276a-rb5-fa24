@@ -83,4 +83,8 @@ Landmark Objects
 
 [Demo Video - Minimum Time](https://youtu.be/a3GNTMC-exk)
 
+## HW5
+[HW5 Report](https://docs.google.com/document/d/1CBKBt-J4ARTBTceRBNu50OjeHQpOhI9yhpc79_bvuUY/edit?tab=t.0)
+
+[Demo Video - Maximum Safety]()
 
