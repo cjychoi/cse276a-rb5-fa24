@@ -3,7 +3,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def make_square(object_coords, robot_width=0.17, robot_height=0.20, start_x=0.5, start_y=0.0):
+def make_square(object_coords, robot_width=0.20, robot_height=0.20, start_x=0.5, start_y=0.0):
     # Extract x and y coordinates
     x_coords = np.array([coord[0] for coord in object_coords])
     y_coords = np.array([coord[1] for coord in object_coords])
@@ -68,9 +68,10 @@ def make_square(object_coords, robot_width=0.17, robot_height=0.20, start_x=0.5,
     nearest_corner = min(corners, key=lambda c: np.hypot(c[0] - start_x, c[1] - start_y))
 
     # Generate a grid for segmenting the area
-    segment_size=0.2
+    segment_size=0.25
     x_segments = np.arange(square_start_x, square_end_x, segment_size)
     y_segments = np.arange(square_start_y, square_end_y, segment_size)
+    # Calculate the total number of segments
     total_segments = len(x_segments) * len(y_segments)
 
     # Define the robot's back-and-forth sweeping path (Roomba-like)
@@ -105,19 +106,30 @@ def make_square(object_coords, robot_width=0.17, robot_height=0.20, start_x=0.5,
     for x, y, label in object_coords:
         plt.scatter(x, y, label=label)
 
-    # Draw the grid and mark covered segments
+    # Track filled segments
     filled_segments = set()
+
+    # Function to determine if a point is inside a segment
+    def point_in_segment(px, py, seg_x, seg_y):
+        return seg_x <= px <= seg_x + segment_size and seg_y <= py <= seg_y + segment_size
+
+
+    # Check each path segment (line between two points)
     for i in range(len(robot_path) - 1):
-        # Get the path line segment from the current point to the next
         x0, y0 = robot_path[i]
         x1, y1 = robot_path[i+1]
-        # Determine which grid segments the robot passed through
-        for x in x_segments:
-            for y in y_segments:
-                if min(x0, x1) <= x <= max(x0, x1) and min(y0, y1) <= y <= max(y0, y1):
-                    filled_segments.add((x, y))  # Mark this segment as filled
 
-    # Plot the filled segments
+        # Check for each segment in the grid if the robot's path crosses it
+        for seg_x in x_segments:
+            for seg_y in y_segments:
+                # Check if either point of the path is inside the segment
+                if point_in_segment(x0, y0, seg_x, seg_y) or point_in_segment(x1, y1, seg_x, seg_y):
+                    filled_segments.add((seg_x, seg_y))
+
+                # Check if the path crosses the segment (by checking the bounding box)
+                if (min(x0, x1) < seg_x + segment_size and max(x0, x1) > seg_x and
+                    min(y0, y1) < seg_y + segment_size and max(y0, y1) > seg_y):
+                    filled_segments.add((seg_x, seg_y))    # Plot the filled segments
     for x, y in filled_segments:
         plt.fill([x, x+segment_size, x+segment_size, x], [y, y, y+segment_size, y+segment_size], color='yellow', alpha=0.5)
 
@@ -152,6 +164,11 @@ def make_square(object_coords, robot_width=0.17, robot_height=0.20, start_x=0.5,
     # Save the plot as a PNG file
     plt.savefig("robot_sweeping_path.png")
     plt.show()
+
+    # Calculate and print the coverage rate
+    coverage_rate = len(filled_segments) / total_segments
+    print(f"Coverage Rate: {coverage_rate * 100:.2f}%")
+    print(f"Filled Segments: {len(filled_segments)} / {total_segments}")
 
     # Output dimensions
     print(f"Largest square dimensions: {square_side}m x {square_side}m")
