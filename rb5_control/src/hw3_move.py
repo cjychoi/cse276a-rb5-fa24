@@ -23,19 +23,19 @@ class MovementCommands(Node):
         )
 
         self.steps = [
-            # # square
-            ['move', 0.5],
-            # ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
-            # ['spin', 90]
-            # ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
-            # ['spin', 90],
-            # ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
-            # ['spin', 90],
-            # ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
-            # ['spin', 90],
-            # # # # move to start ocotogon
+            # ['move', 0.5]
+            # square
+            ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
+            ['spin', 90],
+            ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
+            ['spin', 90],
+            ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
+            ['spin', 90],
+            ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
+            ['spin', 90],
+            # # move to start octagon
             # ['move', 0.5],
-            # # # octogon
+            # # # # octogon
             # ['move', 0.5], ['move', 0.5], ['move', 0.5],
             # ['spin', 45],
             # ['move', 0.5], ['move', 0.5], ['move', 0.5],
