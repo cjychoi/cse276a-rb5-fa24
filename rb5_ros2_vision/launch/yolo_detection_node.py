@@ -19,7 +19,6 @@ class YoloDetectionNode(Node):
 
         # Objects to detect and their known widths (in meters)
         self.objects_to_detect = {
-            'laptop': 0.36,
             'bottle': 0.05,
             'potted plant': 0.15,
             'suitcase': 0.3,
@@ -27,10 +26,7 @@ class YoloDetectionNode(Node):
             'teddy bear': 0.2,
             'keyboard': 0.4,
             'stop sign': 0.2,
-            'bicycle': 0.5,
-            'bowl': 0.3,
-            'scissors': 0.1,
-            'backpack': 0.38
+            'bowl': 0.3
         }
 
         # Load YOLOv8 model

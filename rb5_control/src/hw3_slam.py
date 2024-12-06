@@ -61,7 +61,7 @@ class SlamControlNode(Node):
         # self.EKF_predict_pub = self.create_publisher(Float32MultiArray, '/ekf_predict', 10)
 
         
-        self.objects_to_detect = ['laptop', 'bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'keyboard', 'stop sign', 'bicycle', 'bowl', 'scissors', 'backpack']
+        self.objects_to_detect = ['bottle', 'potted plant', 'suitcase', 'umbrella', 'teddy bear', 'keyboard', 'stop sign', 'bowl']
         # self.ekf_slam = EKFSLAM(self.objects_to_detect)
         self.fig, self.ax = plt.subplots()
         self.set_plot_limits()
@@ -158,7 +158,7 @@ class SlamControlNode(Node):
         print("\nupdate and plot")
         print(self.robot_positions[1:])
         print("\n")
-        print(self.detected_objects[-12:])
+        print(self.detected_objects[-8:])
         print("\n")
         print(self.objects_to_detect)
         self.ax.clear()
@@ -169,7 +169,7 @@ class SlamControlNode(Node):
         x = 0.0
         y = 0.0
 
-        for x, y, name in self.detected_objects[-12:]:
+        for x, y, name in self.detected_objects[-8:]:
             if x != 0.0 and y != 0.0:
                 color = self.colors(self.objects_to_detect.index(name))
                 if name not in legend_labels:
@@ -186,7 +186,7 @@ class SlamControlNode(Node):
 
         print("\nx and y values:")
         print(x, y)
-        make_square(self.detected_objects[-12:])
+        make_square(self.detected_objects[-8:])
         self.done_pub.publish(msg)
 
     def save_plot(self):
@@ -256,7 +256,7 @@ class SlamControlNode(Node):
         self.movement_pub.publish(state_msg)
 
         turn_twist = Twist()
-        turn_twist.angular.z = 8.6  # 8.5 FAH Carpet
+        turn_twist.angular.z = 8.5  # 8.5 FAH Carpet
         self.twist_pub.publish(turn_twist)
         time.sleep(np.pi / 2)
         turn_twist.angular.z = 0.0
@@ -275,7 +275,7 @@ class SlamControlNode(Node):
         self.movement_pub.publish(state_msg)
 
         turn_twist = Twist()
-        turn_twist.angular.z = 8.6
+        turn_twist.angular.z = 8.5
         self.twist_pub.publish(turn_twist)
         time.sleep(np.pi / 4)
         turn_twist.angular.z = 0.0
