@@ -229,7 +229,7 @@ class SlamControlNode(Node):
         print('publisher done')
         
         move_twist = Twist()
-        move_twist.linear.x = 2.0
+        move_twist.linear.x = 2.6   # 2.6 FAH Carpet
         self.twist_pub.publish(move_twist)
         time.sleep(distance / 0.5)
         move_twist.linear.x = 0.0
@@ -256,7 +256,7 @@ class SlamControlNode(Node):
         self.movement_pub.publish(state_msg)
 
         turn_twist = Twist()
-        turn_twist.angular.z = 8.6
+        turn_twist.angular.z = 8.5  # 8.5 FAH Carpet
         self.twist_pub.publish(turn_twist)
         time.sleep(np.pi / 2)
         turn_twist.angular.z = 0.0

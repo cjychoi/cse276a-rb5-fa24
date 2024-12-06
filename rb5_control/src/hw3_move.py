@@ -24,33 +24,34 @@ class MovementCommands(Node):
 
         self.steps = [
             # # square
-            ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
-            ['spin', 90],
-            ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
-            ['spin', 90],
-            ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
-            ['spin', 90],
-            ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
-            ['spin', 90],
-            # # # move to start ocotogon
             ['move', 0.5],
-            # # octogon
-            ['move', 0.5], ['move', 0.5], ['move', 0.5],
-            ['spin', 45],
-            ['move', 0.5], ['move', 0.5], ['move', 0.5],
-            ['spin', 45],
-            ['move', 0.5], ['move', 0.5], ['move', 0.5],
-            ['spin', 45],
-            ['move', 0.5], ['move', 0.5], ['move', 0.5],
-            ['spin', 45],
-            ['move', 0.5], ['move', 0.5], ['move', 0.5],
-            ['spin', 45],
-            ['move', 0.5], ['move', 0.5], ['move', 0.5],
-            ['spin', 45],
-            ['move', 0.5], ['move', 0.5], ['move', 0.5],
-            ['spin', 45],
-            ['move', 0.5], ['move', 0.5], ['move', 0.5],
-            ['spin', 45]
+            # ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
+            # ['spin', 90]
+            # ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
+            # ['spin', 90],
+            # ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
+            # ['spin', 90],
+            # ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
+            # ['spin', 90],
+            # # # # move to start ocotogon
+            # ['move', 0.5],
+            # # # octogon
+            # ['move', 0.5], ['move', 0.5], ['move', 0.5],
+            # ['spin', 45],
+            # ['move', 0.5], ['move', 0.5], ['move', 0.5],
+            # ['spin', 45],
+            # ['move', 0.5], ['move', 0.5], ['move', 0.5],
+            # ['spin', 45],
+            # ['move', 0.5], ['move', 0.5], ['move', 0.5],
+            # ['spin', 45],
+            # ['move', 0.5], ['move', 0.5], ['move', 0.5],
+            # ['spin', 45],
+            # ['move', 0.5], ['move', 0.5], ['move', 0.5],
+            # ['spin', 45],
+            # ['move', 0.5], ['move', 0.5], ['move', 0.5],
+            # ['spin', 45],
+            # ['move', 0.5], ['move', 0.5], ['move', 0.5],
+            # ['spin', 45]
         ]
         self.step_counter = -1
 
