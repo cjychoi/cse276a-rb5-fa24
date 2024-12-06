@@ -99,15 +99,6 @@ def make_square(object_coords, robot_width=0.17, robot_height=0.20, start_x=0.5,
     for x, y, label in object_coords:
         plt.scatter(x, y, label=label)
 
-    (x,y) = closest_q1
-    plt.scatter(x, y, color='black', label=label)
-    (x,y) = closest_q2
-    plt.scatter(x, y, color='black', label=label)
-    (x,y) = closest_q3
-    plt.scatter(x, y, color='black', label=label)
-    (x,y) = closest_q4
-    plt.scatter(x, y, color='black', label=label)
-
     # Draw the square
     square_x = [square_start_x, square_end_x, square_end_x, square_start_x, square_start_x]
     square_y = [square_start_y, square_start_y, square_end_y, square_end_y, square_start_y]
@@ -126,6 +117,7 @@ def make_square(object_coords, robot_width=0.17, robot_height=0.20, start_x=0.5,
     plt.xlabel("X (meters)")
     plt.ylabel("Y (meters)")
     plt.grid(True)
+    plt.legend()
     plt.axis('equal')
 
     # Save the plot as a PNG file
