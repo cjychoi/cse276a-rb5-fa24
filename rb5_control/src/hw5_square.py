@@ -153,8 +153,10 @@ def make_square(object_coords, robot_width=0.20, robot_height=0.20, start_x=0.5,
     # Mark the center point
     plt.scatter(center_x, center_y, color='black', label='Center Point (Centroid)')
 
+    coverage_rate = len(filled_segments) / total_segments
+
     # Plot aesthetics
-    plt.title("Robot Sweeping Path Covering the Square")
+    plt.title(f"Robot Sweeping Path Covering the Square - Coverage Rate {coverage_rate * 100:.2f}%")
     plt.xlabel("X (meters)")
     plt.ylabel("Y (meters)")
     plt.grid(True)
@@ -163,10 +165,10 @@ def make_square(object_coords, robot_width=0.20, robot_height=0.20, start_x=0.5,
 
     # Save the plot as a PNG file
     plt.savefig("robot_sweeping_path.png")
-    plt.show()
+    # plt.show()
 
     # Calculate and print the coverage rate
-    coverage_rate = len(filled_segments) / total_segments
+    
     print(f"Coverage Rate: {coverage_rate * 100:.2f}%")
     print(f"Filled Segments: {len(filled_segments)} / {total_segments}")
 
@@ -174,6 +176,8 @@ def make_square(object_coords, robot_width=0.20, robot_height=0.20, start_x=0.5,
     print(f"Largest square dimensions: {square_side}m x {square_side}m")
     print(f"Square center point: ({center_x}, {center_y})")
     print(f"Square coordinates: ({square_start_x}, {square_start_y}) to ({square_end_x}, {square_end_y})")
+
+    return square_side
 
 # Test local with object coordinates
 # make_square([(1.123410701751709, 3.786043405532837, 'laptop'), (-0.18596267700195312, 0.21542099118232727, 'bottle'), (3.3864262104034424, 2.8606085777282715, 'potted plant'), (0.3437591791152954, 3.9257864952087402, 'suitcase'), (1.373099684715271, 0.6129531264305115, 'umbrella'), (-0.8698845505714417, 0.7219505906105042, 'teddy bear'), (1.3916902542114258, 4.341032981872559, 'keyboard'), (3.0175771713256836, -0.2616259753704071, 'stop sign'), (-2.8316409587860107, 1.4042980670928955, 'bicycle'), (-0.3431287407875061, 3.56701397895813, 'bowl'), (0.0, 0.0, 'scissors'), (-1.1141973733901978, 2.5057241916656494, 'backpack')])

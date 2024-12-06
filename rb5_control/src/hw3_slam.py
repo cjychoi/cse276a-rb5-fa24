@@ -7,11 +7,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 from hw5_square import make_square
+from mpi_control import MegaPiController
 
 class SlamControlNode(Node):
     def __init__(self):
         super().__init__('slam_control_node')
-
+        self.mpi_ctrl = MegaPiController(port="/dev/ttyUSB0", verbose=True)
         self.image_update = False
         self.EKF_update = False
         
@@ -186,8 +187,41 @@ class SlamControlNode(Node):
 
         print("\nx and y values:")
         print(x, y)
-        make_square(self.detected_objects[-8:])
+        square_side = make_square(self.detected_objects[-8:])
+        print(square_side)
+        self.sweep(square_side)
         self.done_pub.publish(msg)
+
+    def sweep(self, sweep_length):
+        print("start sweep")
+        num_sweep = sweep_length / 0.2
+        cycles = int(num_sweep // 2)
+        extra = int(num_sweep % 2)
+        print(num_sweep, cycles, extra)
+
+        self.mpi_ctrl.carStraight(-60)
+        time.sleep(1 * .7)
+        self.mpi_ctrl.carStop()
+
+        for _ in range(cycles):
+            print("start cycle")
+            self.mpi_ctrl.carStraight(60)
+            time.sleep(sweep_length / .1 * .7)
+            self.mpi_ctrl.carStop()
+            self.mpi_ctrl.carSlide(50)
+            time.sleep(2)
+            self.mpi_ctrl.carStop()
+            self.mpi_ctrl.carStraight(-60)
+            time.sleep(sweep_length / .1 * .7)
+            self.mpi_ctrl.carStop()
+            self.mpi_ctrl.carSlide(50)
+            time.sleep(2)
+            self.mpi_ctrl.carStop()
+        if extra == 1:
+            print("do extra")
+            self.mpi_ctrl.carStraight(60)
+            time.sleep(sweep_length / .1 * .7)
+            self.mpi_ctrl.carStop()
 
     def save_plot(self):
         filename = 'slam_plot.png'
@@ -256,7 +290,7 @@ class SlamControlNode(Node):
         self.movement_pub.publish(state_msg)
 
         turn_twist = Twist()
-        turn_twist.angular.z = 8.5  # 8.5 FAH Carpet
+        turn_twist.angular.z = 8.6  # 8.5 FAH Carpet
         self.twist_pub.publish(turn_twist)
         time.sleep(np.pi / 2)
         turn_twist.angular.z = 0.0
@@ -275,7 +309,7 @@ class SlamControlNode(Node):
         self.movement_pub.publish(state_msg)
 
         turn_twist = Twist()
-        turn_twist.angular.z = 8.5
+        turn_twist.angular.z = 8.6
         self.twist_pub.publish(turn_twist)
         time.sleep(np.pi / 4)
         turn_twist.angular.z = 0.0
