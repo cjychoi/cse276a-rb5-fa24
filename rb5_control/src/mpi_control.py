@@ -54,23 +54,28 @@ class MegaPiController:
 
     def carStop(self):
         if self.verbose:
-            print("CAR STOP:")
+            print("\nCAR STOP:")
         self.setFourMotors()
 
     def carStraight(self, speed):
         if self.verbose:
-            print("CAR STRAIGHT:")
+            print("\nCAR STRAIGHT:")
         self.setFourMotors(speed, speed, speed, speed)
 
     def carRotate(self, speed):
         if self.verbose:
-            print("CAR ROTATE:")
+            print("\nCAR ROTATE:")
         self.setFourMotors(-speed, speed, -speed, speed)
 
     def carSlide(self, speed):
         if self.verbose:
-            print("CAR SLIDE:")
-        self.setFourMotors(-speed, speed, speed, -speed)
+            print("\nCAR SLIDE:")
+        self.setFourMotors(-speed , speed*2, speed*2, -speed)
+
+    def carFowardLeft(self, speed):
+        if self.verbose:
+            print("\nCAR FORWARD LEFT:")
+        self.setFourMotors(0 , speed*2, speed*2, 0)
 
     def carMixed(self, v_straight, v_rotate, v_slide):
         if self.verbose:
@@ -92,15 +97,84 @@ if __name__ == "__main__":
 
     mpi_ctrl = MegaPiController(port="/dev/ttyUSB0", verbose=True)
     time.sleep(1)
+
+    # FAH 3F Carpet Calibration
+
+        # Slide 50 - 1s = 0.1m
+        # mpi_ctrl.carSlide(50)
+        # time.sleep(1)
+
+        # Straight 60 - 0.7s = 0.1m
+        # mpi_ctrl.carStraight(50)
+        # time.sleep(0.5)
+
+        # Rotate 55 - 1s = 90 deg
+        # mpi_ctrl.carRotate(60)
+        # time.sleep(1)
+
+    mpi_ctrl.carStraight(50)
+    time.sleep(1)
+
+    mpi_ctrl.carRotate(55)
+    time.sleep(2)
+
+    mpi_ctrl.carStraight(50)
+    time.sleep(1)
+
+    mpi_ctrl.carRotate(55)
+    time.sleep(2)
+
+    # mpi_ctrl.carSlide(60)
+    # time.sleep(0.7)
+
+    # mpi_ctrl.carRotate(60)
+    # time.sleep(1)
+
     # mpi_ctrl.carStraight(50)
+    # time.sleep(0.5)
+
+    # mpi_ctrl.carStraight(30)
     # time.sleep(1)
-    # mpi_ctrl.carStraight(-30)
+    # mpi_ctrl.carRotate(55)
+    # time.sleep(1)
+
+    # mpi_ctrl.carStraight(50)
     # time.sleep(4)
-    # # mpi_ctrl.setFourMotors(0, 0, 30, 0)
-    # # time.sleep(4)
-    mpi_ctrl.carSlide(50)
-    time.sleep(4)
-    # mpi_ctrl.carRotate(50)
+    # mpi_ctrl.carRotate(-60)
     # time.sleep(1)
+    # mpi_ctrl.carStraight(30)
+    # time.sleep(1)
+    # mpi_ctrl.carRotate(-60)
+    # time.sleep(1)
+
+    # mpi_ctrl.carStraight(50)
+    # time.sleep(4)
+    # mpi_ctrl.carRotate(60)
+    # time.sleep(1)
+    # mpi_ctrl.carStraight(30)
+    # time.sleep(1)
+    # mpi_ctrl.carRotate(60)
+    # time.sleep(1)
+
+    # mpi_ctrl.carStraight(50)
+    # time.sleep(4)
+    # mpi_ctrl.carRotate(-60)
+    # time.sleep(1)
+    # mpi_ctrl.carStraight(30)
+    # time.sleep(1)
+    # mpi_ctrl.carRotate(-60)
+    # time.sleep(1)
+
+    # mpi_ctrl.carStraight(-50)
+    # time.sleep(4)
+    # mpi_ctrl.carFowardLeft(70)
+    # time.sleep(2)
+    # mpi_ctrl.carStraight(50)
+    # time.sleep(4)
+    # mpi_ctrl.carFowardLeft(70)
+    # time.sleep(2)
+    # mpi_ctrl.carStraight(-50)
+    # time.sleep(4)
+
     mpi_ctrl.carStop()
     # print("If your program cannot be closed properly, check updated instructions in google doc.")
