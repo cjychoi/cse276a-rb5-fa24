@@ -170,6 +170,8 @@ class SlamControlNode(Node):
         x = 0.0
         y = 0.0
 
+        print('\ntest: ', self.detected_objects[-8:])
+
         for x, y, name in self.detected_objects[-8:]:
             if x != 0.0 and y != 0.0:
                 color = self.colors(self.objects_to_detect.index(name))
@@ -211,12 +213,18 @@ class SlamControlNode(Node):
             self.mpi_ctrl.carSlide(70)
             time.sleep(1.1)
             self.mpi_ctrl.carStop()
-            self.mpi_ctrl.carStraight(-50)
+            # self.mpi_ctrl.carRotate(-45)
+            # time.sleep(0.2)
+            # self.mpi_ctrl.carStop()
+            self.mpi_ctrl.carStraight(-53)
             time.sleep(sweep_length / .1 * .5)
             self.mpi_ctrl.carStop()
             self.mpi_ctrl.carSlide(70)
             time.sleep(1.1)
             self.mpi_ctrl.carStop()
+            # self.mpi_ctrl.carRotate(50)
+            # time.sleep(0.1)
+            # self.mpi_ctrl.carStop()
         if extra == 1:
             print("do extra")
             self.mpi_ctrl.carStraight(50)
@@ -290,7 +298,7 @@ class SlamControlNode(Node):
         self.movement_pub.publish(state_msg)
 
         turn_twist = Twist()
-        turn_twist.angular.z = 9.5  # 9.5 FAH 4F / 8.5 FAH Carpet
+        turn_twist.angular.z = 9.3  # 9.5 FAH 4F / 8.5 FAH Carpet
         self.twist_pub.publish(turn_twist)
         time.sleep(np.pi / 2)
         turn_twist.angular.z = 0.0
@@ -309,9 +317,9 @@ class SlamControlNode(Node):
         self.movement_pub.publish(state_msg)
 
         turn_twist = Twist()
-        turn_twist.angular.z = 9.5
+        turn_twist.angular.z = 9.3
         self.twist_pub.publish(turn_twist)
-        time.sleep(np.pi / 4)
+        time.sleep(np.pi / 3.9)
         turn_twist.angular.z = 0.0
         self.twist_pub.publish(turn_twist)
         print(f"Updated Heading (theta): {self.state[2]} radians")
@@ -325,6 +333,9 @@ class SlamControlNode(Node):
         self.ax.plot(*zip(*self.robot_positions), 'bo-', label="Robot Path")
 
         legend_labels = {"Robot Path": self.ax.plot([], [], 'bo-', label="Robot Path")[0]}
+
+
+
         for x, y, name in self.detected_objects:
             if int(x) != 0 and int(y) != 0:
                 color = self.colors(self.objects_to_detect.index(name))

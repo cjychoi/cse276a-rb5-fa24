@@ -60,7 +60,10 @@ class MegaPiController:
     def carStraight(self, speed):
         if self.verbose:
             print("\nCAR STRAIGHT:")
-        self.setFourMotors(speed, speed, speed, speed)
+        if speed < 0:
+            self.setFourMotors(speed-3, speed, speed-3, speed)
+        else:
+            self.setFourMotors(speed+3, speed, speed+3, speed)
 
     def carRotate(self, speed):
         if self.verbose:
@@ -113,73 +116,8 @@ if __name__ == "__main__":
         # time.sleep(1)
 
     # FAH 4F Carpet
-    # Straight 50 - 0.5s - 0.1m
-    # Slide 70 - 1.1s - 0.2m
-
-    # 0.1m
-    # mpi_ctrl.carSlide(70)
-    # time.sleep(1.1)
-
-    # mpi_ctrl.carRotate(55)
-    # time.sleep(2)
-
-    # mpi_ctrl.carStraight(50)
-    # time.sleep(1)
-
-    # mpi_ctrl.carRotate(55)
-    # time.sleep(2)
-
-    # mpi_ctrl.carSlide(60)
-    # time.sleep(0.7)
-
-    # mpi_ctrl.carRotate(60)
-    # time.sleep(1)
-
-    # mpi_ctrl.carStraight(50)
-    # time.sleep(0.5)
-
-    # mpi_ctrl.carStraight(30)
-    # time.sleep(1)
-    # mpi_ctrl.carRotate(55)
-    # time.sleep(1)
-
-    # mpi_ctrl.carStraight(50)
-    # time.sleep(4)
-    # mpi_ctrl.carRotate(-60)
-    # time.sleep(1)
-    # mpi_ctrl.carStraight(30)
-    # time.sleep(1)
-    # mpi_ctrl.carRotate(-60)
-    # time.sleep(1)
-
-    # mpi_ctrl.carStraight(50)
-    # time.sleep(4)
-    # mpi_ctrl.carRotate(60)
-    # time.sleep(1)
-    # mpi_ctrl.carStraight(30)
-    # time.sleep(1)
-    # mpi_ctrl.carRotate(60)
-    # time.sleep(1)
-
-    # mpi_ctrl.carStraight(50)
-    # time.sleep(4)
-    # mpi_ctrl.carRotate(-60)
-    # time.sleep(1)
-    # mpi_ctrl.carStraight(30)
-    # time.sleep(1)
-    # mpi_ctrl.carRotate(-60)
-    # time.sleep(1)
-
-    # mpi_ctrl.carStraight(-50)
-    # time.sleep(4)
-    # mpi_ctrl.carFowardLeft(70)
-    # time.sleep(2)
-    # mpi_ctrl.carStraight(50)
-    # time.sleep(4)
-    # mpi_ctrl.carFowardLeft(70)
-    # time.sleep(2)
-    # mpi_ctrl.carStraight(-50)
-    # time.sleep(4)
+        # Straight 50 - 0.5s - 0.1m
+        # Slide 70 - 1.1s - 0.2m
 
     mpi_ctrl.carStop()
     # print("If your program cannot be closed properly, check updated instructions in google doc.")

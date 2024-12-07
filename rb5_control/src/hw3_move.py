@@ -23,37 +23,38 @@ class MovementCommands(Node):
         )
 
         self.steps = [
+            # ['move', 0.0]
             # Calibration
             # ['move', 0.5]
-            ['spin', 90]
+            # ['spin', 90]
             # square
-            # ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
-            # ['spin', 90],
-            # ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
-            # ['spin', 90],
-            # ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
-            # ['spin', 90],
-            # ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
-            # ['spin', 90],
+            ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
+            ['spin', 90],
+            ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
+            ['spin', 90],
+            ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
+            ['spin', 90],
+            ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
+            ['spin', 90],
             # # move to start octagon
-            # ['move', 0.5],
+            ['move', 0.5],
             # Octagon
-            # ['move', 0.5], ['move', 0.5], 
-            # ['spin', 45],
-            # ['move', 0.5], ['move', 0.5],
-            # ['spin', 45],
-            # ['move', 0.5], ['move', 0.5],
-            # ['spin', 45],
-            # ['move', 0.5], ['move', 0.5],
-            # ['spin', 45],
-            # ['move', 0.5], ['move', 0.5],
-            # ['spin', 45],
-            # ['move', 0.5], ['move', 0.5],
-            # ['spin', 45],
-            # ['move', 0.5], ['move', 0.5],
-            # ['spin', 45],
-            # ['move', 0.5], ['move', 0.5],
-            # ['spin', 45]
+            ['move', 0.5], ['move', 0.5], 
+            ['spin', 45],
+            ['move', 0.5], ['move', 0.5],
+            ['spin', 45],
+            ['move', 0.5], ['move', 0.5],
+            ['spin', 45],
+            ['move', 0.5], ['move', 0.5],
+            ['spin', 45],
+            ['move', 0.5], ['move', 0.5],
+            ['spin', 45],
+            ['move', 0.5], ['move', 0.5],
+            ['spin', 45],
+            ['move', 0.5], ['move', 0.5],
+            ['spin', 45],
+            ['move', 0.5], ['move', 0.5],
+            ['spin', 45]
         ]
         self.step_counter = -1
 
@@ -100,34 +101,6 @@ def main(args=None):
     time.sleep(1)
 
     rclpy.spin(node)
-
-    # # TRY 1
-    # # Square movement
-    # for _ in range(1):
-    #     for _ in range(4):  # Stop every 0.5 meters
-    #         print("SLAM loop")
-    #         node.spin_and_track('move', 0.5)
-    #         time.sleep(1)
-    #     node.spin_and_track('spin', 90)
-    #     time.sleep(1)
-
-    # node.update_and_plot()
-    # node.plot_final_landmarks()
-
-    # node.spin_and_track('move', 0.5)
-    # time.sleep(1)
-
-    # Octogon movement
-    # for _ in range(8):
-    #     for _ in range(2):  # Stop every 0.5 meters
-    #         print("SLAM loop")
-    #         node.spin_and_track('move', 0.5)
-    #         time.sleep(1)
-    #     node.spin_and_track('spin', 45)
-    #     time.sleep(1)
-        
-
-
 
     node.destroy_node()
     rclpy.shutdown()

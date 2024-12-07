@@ -78,7 +78,7 @@ def make_square(object_coords, robot_width=0.20, robot_height=0.20, start_x=0.5,
     robot_path = [(start_x, start_y), nearest_corner]  # Start at (0,0) and move to nearest corner
     current_x, current_y = nearest_corner
     direction = 1  # 1 for right, -1 for left
-    step_y = robot_height / 2  # The y-step is based on the height of the robot
+    step_y = robot_height  # The y-step is based on the height of the robot
 
 
     while current_y <= square_end_y:
