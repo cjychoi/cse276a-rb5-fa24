@@ -199,28 +199,28 @@ class SlamControlNode(Node):
         extra = int(num_sweep % 2)
         print(num_sweep, cycles, extra)
 
-        self.mpi_ctrl.carStraight(-60)
-        time.sleep(1 * .7)
+        self.mpi_ctrl.carStraight(-50)
+        time.sleep(5 * .5)  # move 50cm backwards
         self.mpi_ctrl.carStop()
 
         for _ in range(cycles):
             print("start cycle")
-            self.mpi_ctrl.carStraight(60)
-            time.sleep(sweep_length / .1 * .7)
+            self.mpi_ctrl.carStraight(50)
+            time.sleep(sweep_length / .1 * .5)
             self.mpi_ctrl.carStop()
-            self.mpi_ctrl.carSlide(50)
-            time.sleep(2)
+            self.mpi_ctrl.carSlide(70)
+            time.sleep(1.1)
             self.mpi_ctrl.carStop()
-            self.mpi_ctrl.carStraight(-60)
-            time.sleep(sweep_length / .1 * .7)
+            self.mpi_ctrl.carStraight(-50)
+            time.sleep(sweep_length / .1 * .5)
             self.mpi_ctrl.carStop()
-            self.mpi_ctrl.carSlide(50)
-            time.sleep(2)
+            self.mpi_ctrl.carSlide(70)
+            time.sleep(1.1)
             self.mpi_ctrl.carStop()
         if extra == 1:
             print("do extra")
-            self.mpi_ctrl.carStraight(60)
-            time.sleep(sweep_length / .1 * .7)
+            self.mpi_ctrl.carStraight(50)
+            time.sleep(sweep_length / .1 * .5)
             self.mpi_ctrl.carStop()
 
     def save_plot(self):
@@ -263,7 +263,7 @@ class SlamControlNode(Node):
         print('publisher done')
         
         move_twist = Twist()
-        move_twist.linear.x = 1.48   # 1.48 FAH Carpet
+        move_twist.linear.x = 1.6   # 1.6 FAH 4F / 1.48 FAH 3F Carpet 
         self.twist_pub.publish(move_twist)
         time.sleep(distance / 0.5 * 2)
         move_twist.linear.x = 0.0
@@ -290,7 +290,7 @@ class SlamControlNode(Node):
         self.movement_pub.publish(state_msg)
 
         turn_twist = Twist()
-        turn_twist.angular.z = 8.6  # 8.5 FAH Carpet
+        turn_twist.angular.z = 9.5  # 9.5 FAH 4F / 8.5 FAH Carpet
         self.twist_pub.publish(turn_twist)
         time.sleep(np.pi / 2)
         turn_twist.angular.z = 0.0
@@ -309,7 +309,7 @@ class SlamControlNode(Node):
         self.movement_pub.publish(state_msg)
 
         turn_twist = Twist()
-        turn_twist.angular.z = 8.6
+        turn_twist.angular.z = 9.5
         self.twist_pub.publish(turn_twist)
         time.sleep(np.pi / 4)
         turn_twist.angular.z = 0.0

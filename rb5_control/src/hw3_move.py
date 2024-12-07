@@ -23,16 +23,18 @@ class MovementCommands(Node):
         )
 
         self.steps = [
+            # Calibration
             # ['move', 0.5]
+            ['spin', 90]
             # square
-            ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
-            ['spin', 90],
-            ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
-            ['spin', 90],
-            ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
-            ['spin', 90],
-            ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
-            ['spin', 90],
+            # ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
+            # ['spin', 90],
+            # ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
+            # ['spin', 90],
+            # ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
+            # ['spin', 90],
+            # ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5], ['move', 0.5],
+            # ['spin', 90],
             # # move to start octagon
             # ['move', 0.5],
             # Octagon
