@@ -86,5 +86,5 @@ Landmark Objects
 ## HW5
 [HW5 Report](https://docs.google.com/document/d/1CBKBt-J4ARTBTceRBNu50OjeHQpOhI9yhpc79_bvuUY/edit?tab=t.0)
 
-[Demo Video - Maximum Safety](https://youtu.be/Qd-yW8YCU5o)
+[Demo Video](https://youtu.be/Qd-yW8YCU5o)
 
