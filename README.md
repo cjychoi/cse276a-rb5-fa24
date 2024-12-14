@@ -1,5 +1,5 @@
 # CSE 276A - Intro to Robotics - FA24
-Members: Andrew Choi (A69033628), Nishanth Chidambaram (A69031827)
+Members: Andrew Choi, Nishanth Chidambaram
 
 ### Connect to the RB5 robot
 ``` ssh root@10.42.0.1 ```
